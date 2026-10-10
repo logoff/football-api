@@ -11,6 +11,21 @@ curl localhost:8000/v1/competitions
 
 `just up` builds and starts the API and PostgreSQL. `just sync` clones the openfootball repositories into `.cache/sources`, applies migrations, and loads everything (about 20 seconds). Interactive docs: <http://localhost:8000/docs>.
 
+## Container image
+
+CI publishes the API image to GitHub Container Registry once type checks and tests pass:
+
+| Trigger        | Tags                                     |
+| -------------- | ---------------------------------------- |
+| push to `main` | `main`, `sha-<commit>`                   |
+| tag `v0.1.0`   | `0.1.0`, `0.1`, `latest`, `sha-<commit>` |
+
+```sh
+docker pull ghcr.io/logoff/football-api:latest
+```
+
+The image runs migrations and then the API on port 8000. It needs `DATABASE_URL`, and the database is populated with `just sync` from a checkout (see the Security posture section before exposing it).
+
 ## Requirements
 
 - [`uv`](https://docs.astral.sh/uv/)
@@ -71,3 +86,7 @@ just test        # pytest; db tests create throwaway databases on that postgres
 just typecheck   # pyright, strict
 just psql        # database shell
 ```
+
+## License
+
+The code is released under the [MIT License](LICENSE). The data it serves comes from [openfootball](https://github.com/openfootball) and [Wikidata](https://www.wikidata.org/), both CC0 (public domain).

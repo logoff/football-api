@@ -3,6 +3,8 @@ name = "football-api"
 version = "0.1.0"
 description = "Football statistics HTTP API sourced from openfootball (CC0) and Wikidata."
 readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     { name = "logoff", email = "juliocarlos@gmail.com" }
 ]
