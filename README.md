@@ -35,11 +35,10 @@ The image runs migrations and then the API on port 8000. It needs `DATABASE_URL`
 
 ## Security posture
 
-**v0.1 has no authentication and no rate limiting.** Both are meant to live in an API gateway added in a later change. Until then:
+**v0.1 has no authentication.** The API is read-only and serves public-domain data, so the risk is abuse rather than disclosure.
 
-- Every published port binds to `127.0.0.1` only (`docker-compose.yml`). Do not change this.
-- Do not expose the API or PostgreSQL to any other network, and do not put it behind a public reverse proxy.
-- The compose PostgreSQL password is a development default.
+- **Local and compose:** every published port binds to `127.0.0.1` only (`docker-compose.yml`). Keep it that way; the compose PostgreSQL password is a development default.
+- **Public deployments:** put the API behind a reverse proxy that terminates TLS and enforces a per-client rate limit and a cap on concurrent requests. API keys and per-key limits are planned for a later gateway change.
 
 ## Data coverage
 

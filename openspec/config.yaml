@@ -45,8 +45,10 @@ context: |
   params); there are no slugs. Timestamps in UTC (source offset on the line, else per-file
   configured time zone).
 
-  Auth: terminated at an API gateway in a future change, not in app
-  code. v0.1 app binds to 127.0.0.1 only.
+  Auth: none in app code. Local/compose binds to 127.0.0.1; public
+  deployments are read-only and rate-limited at a reverse proxy.
+  Deployment manifests live outside this repo. API keys come with a
+  future gateway change.
 
   Deployment: Docker Compose with locally built images (api + postgres).
   Self-hosted.
