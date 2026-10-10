@@ -28,6 +28,10 @@ migrate:
 sync: migrate
     uv run python -m football_api.sync
 
+# Sync one competition by Wikidata QID, e.g. `just sync-competition Q324867 --verify`
+sync-competition qid *flags: migrate
+    uv run python -m football_api.sync --competition {{qid}} {{flags}}
+
 # Open a psql shell on the stack's database
 psql:
     docker compose exec postgres psql -U football football

@@ -61,3 +61,16 @@ class Stage(StrEnum):
     SF = "SF"
     THIRD_PLACE = "THIRD_PLACE"
     FINAL = "FINAL"
+
+
+class VerificationStatus(StrEnum):
+    """How a stored result compares with a verification reference (match-verification spec)."""
+
+    VERIFIED = "VERIFIED"
+    MISMATCH = "MISMATCH"
+    UNCONFIRMED = "UNCONFIRMED"  # only the stored match has a score
+    SOURCE_BEHIND = "SOURCE_BEHIND"  # only the reference has one
+
+
+class VerificationReference(StrEnum):
+    WIKIPEDIA = "wikipedia"

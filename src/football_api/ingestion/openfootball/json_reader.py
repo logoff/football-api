@@ -27,7 +27,9 @@ def _pair(score: dict[str, Any], key: str) -> tuple[int, int] | None:
 
 
 def _score(raw: dict[str, Any]) -> ParsedScore | None:
-    score = cast(dict[str, Any], raw.get("score") or {})
+    value: Any = raw.get("score") or {}
+    # Some recent mirrors write a bare full-time pair (`"score": [0, 0]`) instead of `{"ft": [0, 0]}`.
+    score = cast(dict[str, Any], {"ft": value} if isinstance(value, list) else value)
     ft, et, pens = _pair(score, "ft"), _pair(score, "et"), _pair(score, "p")
     if ft is None:
         return None

@@ -3,10 +3,16 @@
 IDs are found the way a client finds them: by listing a resource and reading names.
 """
 
+from datetime import UTC, datetime
 from typing import Any, cast
 
 import httpx
 import pytest
+from sqlalchemy import delete
+
+from football_api.domain.enums import VerificationReference, VerificationStatus
+from football_api.infra.db import get_sessionmaker
+from football_api.infra.models import MatchVerification
 
 pytestmark = pytest.mark.db
 
@@ -193,3 +199,43 @@ async def test_openapi_documents_every_endpoint(client: httpx.AsyncClient) -> No
     assert {"competition_id", "season_id", "team_id"} <= params
     assert "slug" not in str(spec).lower()
     assert "coverage" in spec["info"]["description"].lower()
+
+
+async def test_verification_field_and_filter(client: httpx.AsyncClient) -> None:
+    """match-verification spec: `verification` on matches and the `?verification=` filter."""
+    pl_season = await season_id(client, "Premier League")
+    first, second, *_ = (await get(client, f"/v1/matches?season_id={pl_season}&limit=3"))["data"]
+    checked = datetime(2026, 10, 10, 12, 0, tzinfo=UTC)
+    async with get_sessionmaker()() as session, session.begin():
+        for match, status in ((first, VerificationStatus.VERIFIED), (second, VerificationStatus.MISMATCH)):
+            session.add(
+                MatchVerification(
+                    match_id=match["id"], reference=VerificationReference.WIKIPEDIA, status=status, checked_at=checked
+                )
+            )
+    try:
+        got = await get(client, f"/v1/matches/{first['id']}")
+        assert got["verification"] == {"status": "VERIFIED", "reference": "wikipedia", "checked_at": "2026-10-10T12:00:00Z"}
+        assert got["home_score"] == first["home_score"]
+
+        mismatches = (await get(client, "/v1/matches?verification=MISMATCH&limit=200"))["data"]
+        assert [m["id"] for m in mismatches] == [second["id"]]
+        assert (await get(client, "/v1/matches?verification=SOURCE_BEHIND"))["data"] == []
+
+        wc = await season_id(client, "FIFA World Cup")
+        [final] = (await get(client, f"/v1/matches?season_id={wc}&stage=FINAL"))["data"]
+        assert final["verification"] is None
+
+        assert_error(await get(client, "/v1/matches?verification=MAYBE", 422), "invalid_request")
+    finally:
+        async with get_sessionmaker()() as session, session.begin():
+            await session.execute(delete(MatchVerification))
+
+
+async def test_openapi_lists_verification_statuses(client: httpx.AsyncClient) -> None:
+    spec = await get(client, "/openapi.json")
+    params = {p["name"]: p for p in spec["paths"]["/v1/matches"]["get"]["parameters"]}
+    schema = params["verification"]["schema"]
+    enum_ref = next(s["$ref"] for s in schema["anyOf"] if "$ref" in s).rsplit("/", 1)[-1]
+    assert spec["components"]["schemas"][enum_ref]["enum"] == ["VERIFIED", "MISMATCH", "UNCONFIRMED", "SOURCE_BEHIND"]
+    assert "verification" in spec["components"]["schemas"]["MatchOut"]["properties"]

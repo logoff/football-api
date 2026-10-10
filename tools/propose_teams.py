@@ -28,7 +28,7 @@ from football_api.domain.enums import TeamKind
 from football_api.infra.settings import get_settings
 from football_api.ingestion.openfootball.squads import parse_more_squads, parse_per_team_squad
 from football_api.ingestion.openfootball.text_parser import parse_file
-from football_api.ingestion.seeds import SEEDS_DIR, load_competitions
+from football_api.ingestion.seeds import load_competitions
 
 USER_AGENT = "football-api/0.1 (self-hosted; openfootball ingest tooling)"
 BATCH = 20
@@ -83,20 +83,20 @@ def collect(sources: Path) -> dict[str, Group]:
     """Group source strings by base name (country suffix removed)."""
     groups: dict[str, Group] = {}
     for comp in load_competitions():
-        season = comp.season
         names: set[str] = set()
-        for m in parse_file(sources / season.file, start_year=season.start_year, display_path=season.file):
-            names |= {m.home, m.away}
-        if season.json_file:
-            data = json.loads((sources / season.json_file).read_text(encoding="utf-8"))
-            for m in cast(list[dict[str, str]], data["matches"]):
-                names |= {m["team1"], m["team2"]}
-        if season.squads:
-            for pattern in season.squads.files:
-                for path in sorted(sources.glob(pattern)):
-                    text = path.read_text(encoding="utf-8")
-                    squad = parse_more_squads(text) if season.squads.style == "more" else parse_per_team_squad(text)
-                    names |= {p.team for p in squad}
+        for season in comp.seasons:
+            for m in parse_file(sources / season.file, start_year=season.start_year, display_path=season.file):
+                names |= {m.home, m.away}
+            if season.json_file and (sources / season.json_file).exists():
+                data = json.loads((sources / season.json_file).read_text(encoding="utf-8"))
+                for m in cast(list[dict[str, str]], data["matches"]):
+                    names |= {m["team1"], m["team2"]}
+            if season.squads:
+                for pattern in season.squads.files:
+                    for path in sorted(sources.glob(pattern)):
+                        text = path.read_text(encoding="utf-8")
+                        squad = parse_more_squads(text) if season.squads.style == "more" else parse_per_team_squad(text)
+                        names |= {p.team for p in squad}
         for name in names:
             base = SUFFIX_RE.sub("", name)
             group = groups.setdefault(base, Group(kind=comp.team_kind))
@@ -256,7 +256,7 @@ def render(groups: dict[str, Group]) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--out", type=Path, default=SEEDS_DIR / "teams.yaml")
+    parser.add_argument("--out", type=Path, default=get_settings().seeds_dir / "teams.yaml")
     args = parser.parse_args()
     out = cast(Path, args.out)
     groups = collect(get_settings().sources_dir)

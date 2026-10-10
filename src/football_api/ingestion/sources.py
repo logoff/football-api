@@ -14,11 +14,11 @@ GITHUB = "https://github.com/openfootball"
 def repos_for(competitions: list[CompetitionSeed]) -> list[str]:
     repos: set[str] = set()
     for comp in competitions:
-        season = comp.season
-        paths = [season.file, *([season.json_file] if season.json_file else [])]
-        if season.squads:
-            paths += season.squads.files
-        repos |= {p.split("/", 1)[0] for p in paths}
+        for season in comp.seasons:
+            paths = [season.file, *([season.json_file] if season.json_file else [])]
+            if season.squads:
+                paths += season.squads.files
+            repos |= {p.split("/", 1)[0] for p in paths}
     return sorted(repos)
 
 

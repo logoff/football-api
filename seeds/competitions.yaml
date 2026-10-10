@@ -1,4 +1,4 @@
-# In-scope competitions and the source files for their one ingested season.
+# In-scope competitions and the source files for each ingested season (`seasons:`).
 #
 # tz: the time zone the file's kickoff times are written in, verified by hand.
 #     `inline` means every match line carries its own `UTC±N` offset (sync fails otherwise).
@@ -6,6 +6,8 @@
 #       (same match count as the text file and every match has a full-time score).
 # squads: `more` = one file, `== Team` sections, capitalised surnames, full dates of birth;
 #         `per-team` = one file per team, `=  Team - Tournament` header, birth years.
+# wikipedia: optional English Wikipedia article whose results grid verifies the season's scores
+#            (read only to compare; nothing from it is stored).
 # Verification notes for each tz are in design.md ("Source coverage").
 
 - name: Premier League
@@ -13,150 +15,236 @@
   team_kind: CLUB
   scope: DOMESTIC
   wikidata: Q9448
-  season:
-    label: 2024-25
-    start_year: 2024
-    file: england/2024-25/1-premierleague.txt
-    tz: Europe/London
-    json: football.json/2024-25/en.1.json
+  seasons:
+    - label: 2024-25
+      start_year: 2024
+      file: england/2024-25/1-premierleague.txt
+      tz: Europe/London
+      json: football.json/2024-25/en.1.json
 
 - name: La Liga
   country: "ES"
   team_kind: CLUB
   scope: DOMESTIC
   wikidata: Q324867
-  season:
-    label: 2024-25
-    start_year: 2024
-    file: espana/2024-25/1-liga.txt
-    tz: Europe/Madrid
-    json: football.json/2024-25/es.1.json
+  # Every season openfootball/espana has (2012-13 onwards).
+  seasons:
+    - label: 2012-13
+      start_year: 2012
+      file: espana/2012-13/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2012-13/es.1.json
+      wikipedia: "2012–13 La Liga"
+    - label: 2013-14
+      start_year: 2013
+      file: espana/2013-14/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2013-14/es.1.json
+      wikipedia: "2013–14 La Liga"
+    - label: 2014-15
+      start_year: 2014
+      file: espana/2014-15/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2014-15/es.1.json
+      wikipedia: "2014–15 La Liga"
+    - label: 2015-16
+      start_year: 2015
+      file: espana/2015-16/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2015-16/es.1.json
+      wikipedia: "2015–16 La Liga"
+    - label: 2016-17
+      start_year: 2016
+      file: espana/2016-17/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2016-17/es.1.json
+      wikipedia: "2016–17 La Liga"
+    - label: 2017-18
+      start_year: 2017
+      file: espana/2017-18/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2017-18/es.1.json
+      wikipedia: "2017–18 La Liga"
+    - label: 2018-19
+      start_year: 2018
+      file: espana/2018-19/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2018-19/es.1.json
+      wikipedia: "2018–19 La Liga"
+    - label: 2019-20
+      start_year: 2019
+      file: espana/2019-20/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2019-20/es.1.json
+      wikipedia: "2019–20 La Liga"
+    - label: 2020-21
+      start_year: 2020
+      file: espana/2020-21/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2020-21/es.1.json
+      wikipedia: "2020–21 La Liga"
+    - label: 2021-22
+      start_year: 2021
+      file: espana/2021-22/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2021-22/es.1.json
+      wikipedia: "2021–22 La Liga"
+    - label: 2022-23
+      start_year: 2022
+      file: espana/2022-23/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2022-23/es.1.json
+      wikipedia: "2022–23 La Liga"
+    - label: 2023-24
+      start_year: 2023
+      file: espana/2023-24/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2023-24/es.1.json
+      wikipedia: "2023–24 La Liga"
+    - label: 2024-25
+      start_year: 2024
+      file: espana/2024-25/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2024-25/es.1.json
+      wikipedia: "2024–25 La Liga"
+    - label: 2025-26
+      start_year: 2025
+      file: espana/2025-26/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2025-26/es.1.json
+      wikipedia: "2025–26 La Liga"
+    - label: 2026-27
+      start_year: 2026
+      file: espana/2026-27/1-liga.txt
+      tz: Europe/Madrid
+      json: football.json/2026-27/es.1.json
+      wikipedia: "2026–27 La Liga"
 
 - name: Bundesliga
   country: "DE"
   team_kind: CLUB
   scope: DOMESTIC
   wikidata: Q82595
-  season:
-    label: 2024-25
-    start_year: 2024
-    file: deutschland/2024-25/1-bundesliga.txt
-    tz: Europe/Berlin
-    json: football.json/2024-25/de.1.json
+  seasons:
+    - label: 2024-25
+      start_year: 2024
+      file: deutschland/2024-25/1-bundesliga.txt
+      tz: Europe/Berlin
+      json: football.json/2024-25/de.1.json
 
 - name: Serie A
   country: "IT"
   team_kind: CLUB
   scope: DOMESTIC
   wikidata: Q15804
-  season:
-    label: 2024-25
-    start_year: 2024
-    file: italy/2024-25/1-seriea.txt
-    tz: Europe/Rome
-    json: football.json/2024-25/it.1.json
+  seasons:
+    - label: 2024-25
+      start_year: 2024
+      file: italy/2024-25/1-seriea.txt
+      tz: Europe/Rome
+      json: football.json/2024-25/it.1.json
 
 - name: Ligue 1
   country: "FR"
   team_kind: CLUB
   scope: DOMESTIC
   wikidata: Q13394
-  season:
-    label: 2024-25
-    start_year: 2024
-    file: europe/france/2024-25_fr1.txt
-    tz: Europe/Paris
-    json: football.json/2024-25/fr.1.json
+  seasons:
+    - label: 2024-25
+      start_year: 2024
+      file: europe/france/2024-25_fr1.txt
+      tz: Europe/Paris
+      json: football.json/2024-25/fr.1.json
 
 - name: UEFA Champions League
   team_kind: CLUB
   scope: CONTINENTAL
   wikidata: Q18756
-  season:
-    label: 2024-25
-    start_year: 2024
-    file: champions-league/2024-25/cl.txt
-    tz: Europe/Berlin
-    json: football.json/2024-25/uefa.cl.json
+  seasons:
+    - label: 2024-25
+      start_year: 2024
+      file: champions-league/2024-25/cl.txt
+      tz: Europe/Berlin
+      json: football.json/2024-25/uefa.cl.json
 
 - name: UEFA Europa League
   team_kind: CLUB
   scope: CONTINENTAL
   wikidata: Q18760
-  season:
-    label: 2024-25
-    start_year: 2024
-    file: champions-league/2024-25/el.txt
-    tz: Europe/Berlin
+  seasons:
+    - label: 2024-25
+      start_year: 2024
+      file: champions-league/2024-25/el.txt
+      tz: Europe/Berlin
 
 - name: UEFA Conference League
   team_kind: CLUB
   scope: CONTINENTAL
   wikidata: Q59365764
-  season:
-    label: 2024-25
-    start_year: 2024
-    file: champions-league/2024-25/conf.txt
-    tz: Europe/Berlin
+  seasons:
+    - label: 2024-25
+      start_year: 2024
+      file: champions-league/2024-25/conf.txt
+      tz: Europe/Berlin
 
 - name: CONMEBOL Copa Libertadores
   team_kind: CLUB
   scope: CONTINENTAL
   wikidata: Q184795
-  season:
-    label: "2025"
-    start_year: 2025
-    file: south-america/copa-libertadores/2025_copal.txt
-    tz: America/Sao_Paulo
+  seasons:
+    - label: "2025"
+      start_year: 2025
+      file: south-america/copa-libertadores/2025_copal.txt
+      tz: America/Sao_Paulo
 
 - name: FIFA Club World Cup
   team_kind: CLUB
   scope: INTERCONTINENTAL
   wikidata: Q223366
-  season:
-    label: "2025"
-    start_year: 2025
-    file: club-worldcup/more/2025_clubworldcup-full.txt
-    tz: inline
-    squads:
-      style: more
-      files: [club-worldcup/more/2025_clubworldcup-squads.txt]
+  seasons:
+    - label: "2025"
+      start_year: 2025
+      file: club-worldcup/more/2025_clubworldcup-full.txt
+      tz: inline
+      squads:
+        style: more
+        files: [club-worldcup/more/2025_clubworldcup-squads.txt]
 
 - name: FIFA World Cup
   team_kind: NATIONAL
   scope: INTERCONTINENTAL
   wikidata: Q19317
-  season:
-    label: "2022"
-    start_year: 2022
-    file: worldcup/more/2022.txt
-    tz: inline
-    squads:
-      style: more
-      files: [worldcup/more/2022_squads.txt]
+  seasons:
+    - label: "2022"
+      start_year: 2022
+      file: worldcup/more/2022.txt
+      tz: inline
+      squads:
+        style: more
+        files: [worldcup/more/2022_squads.txt]
 
 - name: UEFA European Championship
   team_kind: NATIONAL
   scope: CONTINENTAL
   wikidata: Q260858
-  season:
-    label: "2024"
-    start_year: 2024
-    file: euro/2024--germany/euro.txt
-    tz: Europe/Berlin
-    squads:
-      style: per-team
-      files: [euro/2024--germany/squads/*.txt]
+  seasons:
+    - label: "2024"
+      start_year: 2024
+      file: euro/2024--germany/euro.txt
+      tz: Europe/Berlin
+      squads:
+        style: per-team
+        files: [euro/2024--germany/squads/*.txt]
 
 - name: CONMEBOL Copa América
   team_kind: NATIONAL
   scope: CONTINENTAL
   wikidata: Q178750
-  season:
-    label: "2024"
-    start_year: 2024
-    file: copa-america/2024--usa/copa.txt
-    tz: inline
-    squads:
-      style: per-team
-      files: [copa-america/2024--usa/squads/*.txt]
+  seasons:
+    - label: "2024"
+      start_year: 2024
+      file: copa-america/2024--usa/copa.txt
+      tz: inline
+      squads:
+        style: per-team
+        files: [copa-america/2024--usa/squads/*.txt]

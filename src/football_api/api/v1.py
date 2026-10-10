@@ -6,7 +6,7 @@ from datetime import UTC, date, datetime, time, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import Select, or_, select
+from sqlalchemy import Select, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from football_api.api.errors import ERROR_RESPONSES, ApiError, not_found
@@ -17,6 +17,7 @@ from football_api.api.schemas import (
     GoalPlayerRef,
     MatchCoverage,
     MatchOut,
+    MatchVerificationOut,
     Page,
     PlayerCoverage,
     PlayerOut,
@@ -27,12 +28,13 @@ from football_api.api.schemas import (
     TeamSeasonOut,
     VenueOut,
 )
-from football_api.domain.enums import Coverage, Stage, TeamKind
+from football_api.domain.enums import Coverage, Stage, TeamKind, VerificationReference, VerificationStatus
 from football_api.infra.db import session_dependency
 from football_api.infra.models import (
     Competition,
     Goal,
     Match,
+    MatchVerification,
     Player,
     PlayerTeamSeason,
     Season,
@@ -262,6 +264,15 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
     teams: dict[uuid.UUID, TeamOut] = {}
     venues: dict[uuid.UUID, VenueOut] = {}
     goals: dict[uuid.UUID, list[GoalOut]] = {}
+    verifications = {
+        v.match_id: MatchVerificationOut(status=v.status, reference=v.reference, checked_at=v.checked_at)
+        for v in await session.scalars(
+            select(MatchVerification).where(
+                MatchVerification.match_id.in_([m.id for m in matches]),
+                MatchVerification.reference == VerificationReference.WIKIPEDIA,
+            )
+        )
+    }
     if "teams" in expands:
         ids = {m.home_team_id for m in matches} | {m.away_team_id for m in matches}
         teams = {t.id: TeamOut.model_validate(t) for t in await session.scalars(select(Team).where(Team.id.in_(ids)))}
@@ -311,6 +322,7 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
             home_pens=m.home_pens,
             away_pens=m.away_pens,
             coverage=MatchCoverage(scorers=scorers_coverage),
+            verification=verifications.get(m.id),
         )
         if "teams" in expands:
             item.home_team, item.away_team = teams.get(m.home_team_id), teams.get(m.away_team_id)
@@ -334,6 +346,9 @@ async def list_matches(
     stage: Stage | None = None,
     from_: Annotated[date | None, Query(alias="from", description="Kickoff on or after this UTC date")] = None,
     to: Annotated[date | None, Query(description="Kickoff on or before this UTC date (inclusive)")] = None,
+    verification: Annotated[
+        VerificationStatus | None, Query(description="Only matches with this verification status")
+    ] = None,
     expand: MatchExpand = None,
     limit: Limit = DEFAULT_LIMIT,
     cursor: Cursor = None,
@@ -352,6 +367,14 @@ async def list_matches(
         stmt = stmt.where(Match.kickoff_utc >= datetime.combine(from_, time(0), tzinfo=UTC))
     if to:
         stmt = stmt.where(Match.kickoff_utc < datetime.combine(to + timedelta(days=1), time(0), tzinfo=UTC))
+    if verification:
+        stmt = stmt.where(
+            exists().where(
+                MatchVerification.match_id == Match.id,
+                MatchVerification.reference == VerificationReference.WIKIPEDIA,
+                MatchVerification.status == verification,
+            )
+        )
     rows: Sequence[MatchRow] = (
         await session.execute(apply_keyset(stmt, [Match.kickoff_utc, Match.id], limit, cursor))
     ).all()

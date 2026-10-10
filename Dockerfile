@@ -9,13 +9,19 @@ COPY README.md LICENSE ./
 COPY src ./src
 RUN uv sync --locked --no-dev --no-editable
 
-# Runtime stage: the venv, migrations, and nothing else.
+# Runtime stage: the venv, migrations, and git for `python -m football_api.sync`, which
+# clones the sources into SOURCES_DIR (point it at a writable volume when running the sync).
 FROM python:3.12-slim
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY --from=build /app/.venv /app/.venv
 COPY alembic.ini ./
 COPY migrations ./migrations
-ENV PATH=/app/.venv/bin:$PATH PYTHONUNBUFFERED=1
+COPY seeds ./seeds
+# HOME: `nobody` has none, and git needs one to run.
+ENV PATH=/app/.venv/bin:$PATH PYTHONUNBUFFERED=1 HOME=/tmp
 USER nobody
 EXPOSE 8000
 # 0.0.0.0 is the container's own interface; docker-compose.yml publishes it on 127.0.0.1 only.
