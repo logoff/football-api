@@ -56,4 +56,4 @@ Intercontinental club tournaments (1):
 - **Specs (all new):** `catalog`, `matches`, `ingestion`.
 - **Code:** green field — no prior implementation.
 - **Operational:** introduces a Postgres dependency and a periodic manual data-sync chore.
-- **Security posture:** because no in-app auth exists in v0.1, the API service MUST bind to localhost only. A future change will introduce a gateway service in compose before any non-loopback exposure.
+- **Security posture:** no in-app auth in v0.1. Local and compose deployments bind to localhost only; public deployments are read-only, unauthenticated, and rate-limited at the reverse proxy (see design.md, "Auth posture"). API keys and per-key limits arrive with a later gateway change.

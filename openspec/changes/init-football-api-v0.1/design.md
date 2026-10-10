@@ -170,7 +170,9 @@ In v0.1, the FastAPI application does **not** implement authentication or rate-l
 - TLS termination
 - Request logging for billing/analytics
 
-**Consequence:** the FastAPI service MUST bind to `127.0.0.1` only in v0.1. A subsequent change introduces the gateway service in compose before any public exposure.
+**Local and compose deployments** bind to `127.0.0.1` only.
+
+**Public deployments (decided 2026-10-10):** v0.1 may be exposed publicly with no authentication. That is acceptable because the API is read-only and serves public-domain (CC0) data: the risk is abuse, not disclosure. The reverse proxy in front of it acts as the minimal gateway: TLS, a per-client-IP rate limit and a cap on concurrent requests. API keys, per-key limits and request logging for billing still belong to the future gateway change. Deployment manifests are out of scope for this repository; it publishes multi-arch images and nothing more.
 
 ## Deployment
 
