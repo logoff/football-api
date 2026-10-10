@@ -1,0 +1,49 @@
+= World Cup 2022
+
+# Dates    Sun Nov 20 - Sun Dec 18 2022 (28d)
+# Teams    32
+# Matches  64
+# Venues   8 (in 5 cities)
+#   Lusail Stadium, Al Daayen (QAT)
+#   Al Bayt Stadium, Al Khor (QAT)
+#   Al Janoub Stadium, Al Wakrah (QAT)
+#   Ahmad Bin Ali Stadium, Ar-Rayyan (QAT)
+#   Khalifa International Stadium, Ar-Rayyan (QAT)
+#   Education City Stadium, Doha (QAT)
+#   Stadium 974, Doha (QAT)
+#   Al Thumama Stadium, Doha (QAT)
+
+
+▪ First stage
+▪ First stage
+▪▪ Group A
+Sun Nov 20
+  19:00 UTC+3   Qatar  0-2  Ecuador   @ Al Bayt Stadium, Al Khor
+                  (Enner VALENCIA 16'(p), 31')
+Mon Nov 21
+  19:00 UTC+3   Senegal  0-2  Netherlands   @ Al Thumama Stadium, Doha
+                  (Cody GAKPO 84', Davy KLAASSEN 90+9')
+Fri Nov 25
+  16:00 UTC+3   Qatar  1-3  Senegal   @ Al Thumama Stadium, Doha
+                  (MOHAMMED MUNTARI 78';
+                   Boulaye DIA 41', Famara DIEDHIOU 48', Cheikh DIENG 84')
+  19:00 UTC+3   Netherlands  1-1  Ecuador   @ Khalifa International Stadium, Ar-Rayyan
+                  (Cody GAKPO 6'; Enner VALENCIA 49')
+Tue Nov 29
+  18:00 UTC+3   Netherlands  2-0  Qatar   @ Al Bayt Stadium, Al Khor
+                  (Cody GAKPO 26', Frenkie DE JONG 49')
+  18:00 UTC+3   Ecuador  1-2  Senegal   @ Khalifa International Stadium, Ar-Rayyan
+                  (Moises CAICEDO 67';
+                   Ismaila SARR 44'(p), Kalidou KOULIBALY 70')
+
+▪ Play-off for third place
+Sat Dec 17
+  18:00 UTC+3   Croatia  2-1  Morocco   @ Khalifa International Stadium, Ar-Rayyan
+                  (Josko GVARDIOL 7', Mislav ORSIC 42';
+                   Achraf DARI 9')
+
+▪ Final
+Sun Dec 18
+  18:00 UTC+3   Argentina  3-3 a.e.t., 4-2 pen.  France   @ Lusail Stadium, Al Daayen
+                  (Lionel MESSI 23'(p), 108', Angel DI MARIA 36';
+                   Kylian MBAPPE 80'(p), 81', 118'(p))

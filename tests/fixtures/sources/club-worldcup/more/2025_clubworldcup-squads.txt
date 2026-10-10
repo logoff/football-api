@@ -1,0 +1,232 @@
+= Club World Cup 2025     # 32 Teams
+
+== Paris Saint-Germain (FRA)     # 27 Players
+
+       1, Gianluigi DONNARUMMA (ITA),    GK,  b. 1999/02/25
+      39, Matvei SAFONOV (RUS),          GK,  b. 1999/02/25
+      50, Lucas LAVALLEE,                GK,  b. 2003/02/18
+      80, Arnau TENAS (ESP),             GK,  b. 2001/05/30
+
+       2, Achraf HAKIMI (MAR),           DF,  b. 1998/11/04
+       3, Presnel KIMPEMBE,              DF,  b. 1995/08/13
+       4, LUCAS BERALDO (BRA),           DF,  b. 2003/11/24
+       5, MARQUINHOS (BRA),              DF,  b. 1994/05/14
+      21, Lucas HERNANDEZ,               DF,  b. 1996/02/14
+      25, NUNO MENDES (POR),             DF,  b. 2002/06/19
+      42, Yoram ZAGUE,                   DF,  b. 2006/05/15
+      43, Noham KAMARA,                  DF,  b. 2007/01/22
+      45, Naoufel EL HANNACH (MAR),      DF,  b. 2006/12/07
+      51, Willian PACHO (ECU),           DF,  b. 2001/10/16
+
+       8, Fabian RUIZ (ESP),             MF,  b. 1996/04/03
+      17, VITINHA (POR),                 MF,  b. 2000/02/13
+      19, LEE Kangin (KOR),              MF,  b. 2001/02/19
+      20, GABRIEL MOSCARDO (BRA),        MF,  b. 2005/09/28
+      24, Senny MAYULU,                  MF,  b. 2006/05/17
+      33, Warren ZAIRE-EMERY,            MF,  b. 2006/03/08
+      87, JOAO NEVES (POR),              MF,  b. 2004/09/27
+
+       7, Khvicha KVARATSKHELIA (GEO),   FW,  b. 2001/02/12
+       9, GONCALO RAMOS (POR),           FW,  b. 2001/06/20
+      10, Ousmane DEMBELE,               FW,  b. 1997/05/15
+      14, Desire DOUE,                   FW,  b. 2005/06/03
+      29, Bradley BARCOLA,               FW,  b. 2002/09/02
+      49, Ibrahim MBAYE (SEN),           FW,  b. 2008/01/24
+
+       -, Luis Enrique Martínez García (ESP), MG,  b. 1970/05/08
+
+
+== Al Ahly FC (EGY)     # 28 Players
+
+       1, MOHAMED ELSHENAWY,             GK,  b. 1988/12/18
+      26, MOHAMED SEHA,                  GK,  b. 2001/05/01
+      31, MOSTAFA SHOUBIR,               GK,  b. 2000/05/15
+      37, MOSTAFA MAKHLOUF,              GK,  b. 2003/03/11
+
+       2, KHALED ABDELFATTAH,            DF,  b. 1999/01/22
+       3, OMAR KAMAL,                    DF,  b. 1993/09/29
+       4, AHMED RAMADAN,                 DF,  b. 1997/03/23
+       6, YASSER IBRAHIM,                DF,  b. 1993/02/10
+      11, KARIM ELDEBES,                 DF,  b. 2003/06/03
+      15, Achraf DARI (MAR),             DF,  b. 1999/05/06
+      27, MOSTAFA ELAASH,                DF,  b. 2000/10/11
+      30, MOHAMED HANY,                  DF,  b. 1996/02/02
+      54, Yahya ATTIAT-ALLAH (MAR),      DF,  b. 1995/03/02
+
+       5, Mohamed Ali BEN ROMDHANE (TUN), MF,  b. 1999/09/06
+       7, TREZEGUET,                     MF,  b. 1994/10/01
+       8, HAMDY FATHY,                   MF,  b. 1994/09/29
+      13, MARAWAN ATTIA,                 MF,  b. 1998/08/01
+      14, HUSSEIN ELSHAHAT,              MF,  b. 1992/06/21
+      17, Achraf BENCHARKI (MAR),        MF,  b. 1994/09/24
+      19, MOHAMED AFSHA,                 MF,  b. 1996/03/06
+      22, EMAM ASHOUR,                   MF,  b. 1998/02/20
+      23, Aliou DIENG (MLI),             MF,  b. 1997/10/16
+      24, AHMED REDA,                    MF,  b. 2000/02/19
+      25, ZIZO,                          MF,  b. 1996/01/10
+      29, TAHER MOHAMED,                 MF,  b. 1997/03/07
+      36, AHMED KOKA,                    MF,  b. 2001/07/04
+
+       9, WESSAM ABOU ALI (PLE),         FW,  b. 1999/01/04
+      10, Nejc GRADISAR (SVN),           FW,  b. 2002/08/06
+
+       -, Jose RIVEIRO (ESP),            MG,  b. 1977/09/15
+
+
+== FC Porto (POR)     # 34 Players
+
+      14, CLAUDIO RAMOS,                 GK,  b. 1991/11/16
+      51, DIOGO FERNANDES,               GK,  b. 2005/02/17
+      91, GONCALO RIBEIRO,               GK,  b. 2006/01/15
+      99, DIOGO COSTA,                   GK,  b. 1999/09/19
+
+       4, OTAVIO (BRA),                  DF,  b. 2002/04/21
+       5, Ivan MARCANO (ESP),            DF,  b. 1987/06/23
+      12, Zaidu SANUSI (NGA),            DF,  b. 1997/06/13
+      23, JOAO MARIO,                    DF,  b. 2000/01/03
+      24, Nehuen PEREZ (ARG),            DF,  b. 2000/06/24
+      52, MARTIM FERNANDES,              DF,  b. 2006/01/18
+      73, GABRIEL BRAS,                  DF,  b. 2004/03/25
+      74, FRANCISCO MOURA,               DF,  b. 1999/08/16
+      97, ZE PEDRO,                      DF,  b. 1997/06/06
+
+       6, Stephen EUSTAQUIO (CAN),       MF,  b. 1996/12/21
+      10, FABIO VIEIRA,                  MF,  b. 2000/05/30
+      15, VASCO SOUSA,                   MF,  b. 2003/04/03
+      17, Gabri VEIGA (ESP),             MF,  b. 2002/05/27
+      20, ANDRE FRANCO,                  MF,  b. 1998/04/12
+      22, Alan VARELA (ARG),             MF,  b. 2001/07/04
+      25, Tomas PEREZ (ARG),             MF,  b. 2005/08/26
+      68, ANDRE OLIVEIRA,                MF,  b. 2005/10/01
+      88, DOMINGOS ANDRADE (ANG),        MF,  b. 2003/05/07
+      90, GIL MARTINS,                   MF,  b. 2006/05/12
+      92, JOAO TEIXEIRA,                 MF,  b. 2006/04/09
+
+       7, WILLIAM GOMES (BRA),           FW,  b. 2006/03/15
+       9, Samu AGHEHOWA (ESP),           FW,  b. 2004/05/05
+      11, PEPE (BRA),                    FW,  b. 1997/02/24
+      19, Danny NAMASO (CMR),            FW,  b. 2000/08/28
+      27, Deniz GUL (TUR),               FW,  b. 2004/07/02
+      47, Angel ALARCON (ESP),           FW,  b. 2004/05/15
+      70, GONCALO BORGES,                FW,  b. 2001/03/29
+      79, Leonardo VONIC (CRO),          FW,  b. 2003/07/10
+      86, RODRIGO MORA,                  FW,  b. 2007/05/05
+      87, BRAYAN CAICEDO (COL),          FW,  b. 2006/08/14
+
+       -, Martin ANSELMI (ARG),          MG,  b. 1985/07/11
+
+
+== Palmeiras (BRA)     # 29 Players
+
+       1, MATEUS,                        GK,  b. 2002/05/02
+      14, MARCELO LOMBA,                 GK,  b. 1986/12/18
+      21, WEVERTON,                      GK,  b. 1987/12/13
+
+       2, MARCOS ROCHA,                  DF,  b. 1988/12/11
+       3, BRUNO FUCHS,                   DF,  b. 1999/04/01
+       4, Agustin GIAY (ARG),            DF,  b. 2004/01/16
+       6, VANDERLAN,                     DF,  b. 2002/09/07
+      12, MAYKE,                         DF,  b. 1992/11/10
+      13, MICAEL,                        DF,  b. 2000/08/12
+      15, Gustavo GOMEZ (PAR),           DF,  b. 1993/05/06
+      22, Joaquin PIQUEREZ (URU),        DF,  b. 1998/08/24
+      26, MURILO,                        DF,  b. 1997/03/27
+      34, NAVES,                         DF,  b. 2002/05/08
+      43, BENEDETTI,                     DF,  b. 2006/06/07
+
+       5, Anibal MORENO (ARG),           MF,  b. 1999/05/13
+       7, FELIPE ANDERSON,               MF,  b. 1993/04/15
+       8, Richard RIOS (COL),            MF,  b. 2000/06/02
+      23, RAPHAEL VEIGA,                 MF,  b. 1995/06/19
+      30, LUCAS EVANGELISTA,             MF,  b. 1995/02/06
+      32, Emiliano MARTINEZ (URU),       MF,  b. 1999/08/17
+      40, ALLAN,                         MF,  b. 2004/04/19
+
+       9, VITOR ROQUE,                   FW,  b. 2005/02/28
+      10, PAULINHO,                      FW,  b. 2000/07/15
+      17, Facundo TORRES (URU),          FW,  b. 2000/04/13
+      18, MAURICIO,                      FW,  b. 2001/06/22
+      31, LUIGHI,                        FW,  b. 2006/04/30
+      39, THALYS,                        FW,  b. 2005/02/22
+      41, ESTEVAO,                       FW,  b. 2007/04/24
+      42, Jose Manuel LOPEZ (ARG),       FW,  b. 2000/12/06
+
+       -, Abel Fernando Moreira Ferreira (POR), MG,  b. 1978/12/22
+
+
+== Chelsea FC (ENG)     # 29 Players
+
+       1, Robert SANCHEZ (ESP),          GK,  b. 1997/11/18
+      12, Filip JORGENSEN (DEN),         GK,  b. 2002/04/16
+      39, Mike PENDERS (BEL),            GK,  b. 2005/07/31
+      44, Gaga SLONINA (USA),            GK,  b. 2004/05/15
+
+       3, Marc CUCURELLA (ESP),          DF,  b. 1998/07/22
+       4, Tosin ADARABIOYO,              DF,  b. 1997/09/24
+       5, Benoit BADIASHILE (FRA),       DF,  b. 2001/03/26
+       6, Levi COLWILL,                  DF,  b. 2003/02/26
+      19, Mamadou SARR (SEN),            DF,  b. 2005/08/29
+      23, Trevoh CHALOBAH,               DF,  b. 1999/07/05
+      24, Reece JAMES,                   DF,  b. 1999/12/08
+      27, Malo GUSTO (FRA),              DF,  b. 2003/05/19
+      30, Aaron ANSELMINO (ARG),         DF,  b. 2005/04/29
+      34, Josh ACHEAMPONG,               DF,  b. 2006/05/05
+
+       8, Enzo FERNANDEZ (ARG),          MF,  b. 2001/01/17
+      10, Cole PALMER,                   MF,  b. 2002/05/06
+      14, DARIO ESSUGO (POR),            MF,  b. 2005/03/14
+      17, ANDREY SANTOS (BRA),           MF,  b. 2004/05/03
+      22, Kiernan DEWSBURY-HALL,         MF,  b. 1998/09/06
+      25, Moises CAICEDO (ECU),          MF,  b. 2001/11/02
+      45, Romeo LAVIA (BEL),             MF,  b. 2004/01/06
+
+       7, PEDRO NETO (POR),              FW,  b. 2000/03/09
+       9, Liam DELAP,                    FW,  b. 2003/02/08
+      11, Noni MADUEKE,                  FW,  b. 2002/03/10
+      15, Nicolas JACKSON (SEN),         FW,  b. 2001/06/20
+      18, Christopher NKUNKU (FRA),      FW,  b. 1997/11/14
+      20, JOAO PEDRO (BRA),              FW,  b. 2001/09/26
+      32, Tyrique GEORGE,                FW,  b. 2006/02/04
+      38, Marc GUIU (ESP),               FW,  b. 2006/01/04
+
+       -, Enzo MARESCA (ITA),            MG,  b. 1980/02/10
+
+
+== Inter Miami CF (USA)     # 29 Players
+
+       1, Drake CALLENDER,               GK,  b. 1997/10/07
+      19, Oscar USTARI (ARG),            GK,  b. 1986/07/03
+      25, William YARBROUGH,             GK,  b. 1989/03/20
+      34, Rocco RIOS NOVO (ARG),         GK,  b. 2002/06/04
+
+       2, Gonzalo LUJAN (ARG),           DF,  b. 2001/04/27
+       6, Tomas AVILES (ARG),            DF,  b. 2004/02/03
+      14, Hector MARTINEZ (PAR),         DF,  b. 1998/01/21
+      15, Ryan SAILOR,                   DF,  b. 1998/11/27
+      17, Ian FRAY,                      DF,  b. 2002/08/31
+      18, Jordi ALBA (ESP),              DF,  b. 1989/03/21
+      26, Tyler HALL,                    DF,  b. 2006/02/05
+      32, Noah ALLEN (GRE),              DF,  b. 2004/04/28
+      37, Maximiliano FALCON (URU),      DF,  b. 1997/05/01
+      57, Marcelo WEIGANDT (ARG),        DF,  b. 2000/01/11
+      62, Israel BOATWRIGHT (DOM),       DF,  b. 2005/06/02
+
+       5, Sergio BUSQUETS (ESP),         MF,  b. 1988/07/16
+       8, Telasco SEGOVIA (VEN),         MF,  b. 2003/04/02
+      11, Baltasar RODRIGUEZ (ARG),      MF,  b. 2003/07/09
+      30, Benjamin CREMASCHI,            MF,  b. 2005/03/02
+      41, David RUIZ (HON),              MF,  b. 2004/02/08
+      42, Yannick BRIGHT (ITA),          MF,  b. 2001/09/03
+      55, Federico REDONDO (ARG),        MF,  b. 2003/01/18
+      81, Santi MORALES,                 MF,  b. 2007/02/09
+
+       7, Fafa PICAULT (HAI),            FW,  b. 1991/02/23
+       9, Luis SUAREZ (URU),             FW,  b. 1987/01/24
+      10, Lionel MESSI (ARG),            FW,  b. 1987/06/24
+      21, Tadeo ALLENDE (ARG),           FW,  b. 1999/02/20
+      22, LEO AFONSO (BRA),              FW,  b. 2001/07/13
+      29, Allen OBANDO (ECU),            FW,  b. 2006/06/13
+
+       -, Javier MASCHERANO (ARG),       MG,  b. 1984/06/08
+
+

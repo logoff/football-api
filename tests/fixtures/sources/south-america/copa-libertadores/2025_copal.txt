@@ -1,0 +1,57 @@
+= Copa Libertadores 2025
+
+# Date       Tue Feb 4 - Sat Nov 29 2025 (298d)
+# Teams      47
+# Matches    155
+# Stages     Qualifying (30)  Group (96)  Finals (29)
+
+
+▪ Group, Matchday 2
+  Tue Apr 8
+    19:00  Botafogo FR (BRA)       v Carabobo FC (VEN)        2-0 (0-0)
+           Club Libertad Asuncion (PAR) v CA Talleres (ARG)        2-0 (1-0)
+    21:00  CA Peñarol (URU)        v San Antonio Bulo Bulo (BOL)  2-0 (0-0)
+    21:30  Estudiantes de La Plata (ARG) v CF Universidad de Chile (CHI)  1-2 (1-2)
+           CA River Plate (ARG)    v Barcelona SC (ECU)       0-0
+    23:00  CAR Independiente del Valle (ECU) v Club Universitario de Deportes (PER)  1-0 (0-0)
+  Wed Apr 9
+    19:00  Club Nacional de Football (URU) v EC Bahia (BRA)           0-1 (0-0)
+           Olimpia Asuncion (PAR)  v CA Vélez Sarsfield (ARG)  0-4 (0-1)
+    21:30  CR Flamengo (BRA)       v CA Central Córdoba (ARG)  1-2 (0-2)
+           Club Bolívar (BOL)      v CS Cristal (PER)         3-0 (2-0)
+           SE Palmeiras (BRA)      v Club Cerro Porteño (PAR)  1-0 (1-0)
+    23:00  LDU de Quito (ECU)      v Deportivo Táchira FC (VEN)  2-0 (0-0)
+  Thu Apr 10
+    19:00  Racing Club (ARG)       v CA Bucaramanga (COL)     1-2 (0-0)
+           SC Internacional (BRA)  v CDC Atlético Nacional (COL)  3-0 (0-0)
+  Fri Apr 11
+           CSD Colo-Colo (CHI)     v Fortaleza EC (BRA)       [postponed]
+  Thu Apr 10
+    21:30  São Paulo FC (BRA)      v Club Alianza Lima (PER)  2-2 (2-0)
+
+
+▪ Finals, Round of 16
+  Tue Aug 12
+    19:00  Fortaleza EC (BRA)      v CA Vélez Sarsfield (ARG)  0-0
+    21:30  CDC Atlético Nacional (COL) v São Paulo FC (BRA)       0-0
+           CA Peñarol (URU)        v Racing Club (ARG)        1-0 (0-0)
+  Wed Aug 13
+    19:00  Club Cerro Porteño (PAR) v Estudiantes de La Plata (ARG)  0-1 (0-0)
+    21:30  CR Flamengo (BRA)       v SC Internacional (BRA)   1-0 (1-0)
+  Thu Aug 14
+    19:00  Botafogo FR (BRA)       v LDU de Quito (ECU)       1-0 (1-0)
+    21:30  Club Universitario de Deportes (PER) v SE Palmeiras (BRA)       0-4 (0-3)
+           Club Libertad Asuncion (PAR) v CA River Plate (ARG)     0-0
+  Tue Aug 19
+    19:00  CA Vélez Sarsfield (ARG) v Fortaleza EC (BRA)       2-0 (2-0)
+    21:30  São Paulo FC (BRA)      v CDC Atlético Nacional (COL)  4-3 pen. (1-1, 1-0)
+           Racing Club (ARG)       v CA Peñarol (URU)         3-1 (1-1)
+  Wed Aug 20
+    19:00  Estudiantes de La Plata (ARG) v Club Cerro Porteño (PAR)  0-0
+    21:30  SC Internacional (BRA)  v CR Flamengo (BRA)        0-2 (0-1)
+  Thu Aug 21
+    19:00  LDU de Quito (ECU)      v Botafogo FR (BRA)        2-0 (1-0)
+    21:30  SE Palmeiras (BRA)      v Club Universitario de Deportes (PER)  0-0
+           CA River Plate (ARG)    v Club Libertad Asuncion (PAR)  3-1 pen. (1-1, 1-1)
+
+

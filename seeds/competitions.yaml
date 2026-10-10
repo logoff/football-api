@@ -1,0 +1,162 @@
+# In-scope competitions and the source files for their one ingested season.
+#
+# tz: the time zone the file's kickoff times are written in, verified by hand.
+#     `inline` means every match line carries its own `UTC±N` offset (sync fails otherwise).
+# json: optional openfootball/football.json mirror, used only when it is current
+#       (same match count as the text file and every match has a full-time score).
+# squads: `more` = one file, `== Team` sections, capitalised surnames, full dates of birth;
+#         `per-team` = one file per team, `=  Team - Tournament` header, birth years.
+# Verification notes for each tz are in design.md ("Source coverage").
+
+- name: Premier League
+  country: "GB-ENG"
+  team_kind: CLUB
+  scope: DOMESTIC
+  wikidata: Q9448
+  season:
+    label: 2024-25
+    start_year: 2024
+    file: england/2024-25/1-premierleague.txt
+    tz: Europe/London
+    json: football.json/2024-25/en.1.json
+
+- name: La Liga
+  country: "ES"
+  team_kind: CLUB
+  scope: DOMESTIC
+  wikidata: Q324867
+  season:
+    label: 2024-25
+    start_year: 2024
+    file: espana/2024-25/1-liga.txt
+    tz: Europe/Madrid
+    json: football.json/2024-25/es.1.json
+
+- name: Bundesliga
+  country: "DE"
+  team_kind: CLUB
+  scope: DOMESTIC
+  wikidata: Q82595
+  season:
+    label: 2024-25
+    start_year: 2024
+    file: deutschland/2024-25/1-bundesliga.txt
+    tz: Europe/Berlin
+    json: football.json/2024-25/de.1.json
+
+- name: Serie A
+  country: "IT"
+  team_kind: CLUB
+  scope: DOMESTIC
+  wikidata: Q15804
+  season:
+    label: 2024-25
+    start_year: 2024
+    file: italy/2024-25/1-seriea.txt
+    tz: Europe/Rome
+    json: football.json/2024-25/it.1.json
+
+- name: Ligue 1
+  country: "FR"
+  team_kind: CLUB
+  scope: DOMESTIC
+  wikidata: Q13394
+  season:
+    label: 2024-25
+    start_year: 2024
+    file: europe/france/2024-25_fr1.txt
+    tz: Europe/Paris
+    json: football.json/2024-25/fr.1.json
+
+- name: UEFA Champions League
+  team_kind: CLUB
+  scope: CONTINENTAL
+  wikidata: Q18756
+  season:
+    label: 2024-25
+    start_year: 2024
+    file: champions-league/2024-25/cl.txt
+    tz: Europe/Berlin
+    json: football.json/2024-25/uefa.cl.json
+
+- name: UEFA Europa League
+  team_kind: CLUB
+  scope: CONTINENTAL
+  wikidata: Q18760
+  season:
+    label: 2024-25
+    start_year: 2024
+    file: champions-league/2024-25/el.txt
+    tz: Europe/Berlin
+
+- name: UEFA Conference League
+  team_kind: CLUB
+  scope: CONTINENTAL
+  wikidata: Q59365764
+  season:
+    label: 2024-25
+    start_year: 2024
+    file: champions-league/2024-25/conf.txt
+    tz: Europe/Berlin
+
+- name: CONMEBOL Copa Libertadores
+  team_kind: CLUB
+  scope: CONTINENTAL
+  wikidata: Q184795
+  season:
+    label: "2025"
+    start_year: 2025
+    file: south-america/copa-libertadores/2025_copal.txt
+    tz: America/Sao_Paulo
+
+- name: FIFA Club World Cup
+  team_kind: CLUB
+  scope: INTERCONTINENTAL
+  wikidata: Q223366
+  season:
+    label: "2025"
+    start_year: 2025
+    file: club-worldcup/more/2025_clubworldcup-full.txt
+    tz: inline
+    squads:
+      style: more
+      files: [club-worldcup/more/2025_clubworldcup-squads.txt]
+
+- name: FIFA World Cup
+  team_kind: NATIONAL
+  scope: INTERCONTINENTAL
+  wikidata: Q19317
+  season:
+    label: "2022"
+    start_year: 2022
+    file: worldcup/more/2022.txt
+    tz: inline
+    squads:
+      style: more
+      files: [worldcup/more/2022_squads.txt]
+
+- name: UEFA European Championship
+  team_kind: NATIONAL
+  scope: CONTINENTAL
+  wikidata: Q260858
+  season:
+    label: "2024"
+    start_year: 2024
+    file: euro/2024--germany/euro.txt
+    tz: Europe/Berlin
+    squads:
+      style: per-team
+      files: [euro/2024--germany/squads/*.txt]
+
+- name: CONMEBOL Copa América
+  team_kind: NATIONAL
+  scope: CONTINENTAL
+  wikidata: Q178750
+  season:
+    label: "2024"
+    start_year: 2024
+    file: copa-america/2024--usa/copa.txt
+    tz: inline
+    squads:
+      style: per-team
+      files: [copa-america/2024--usa/squads/*.txt]

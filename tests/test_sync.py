@@ -1,0 +1,207 @@
+"""Ingestion against a real database: idempotency and reconciliation scenarios (ingestion spec)."""
+
+from datetime import UTC, datetime
+from pathlib import Path
+
+import pytest
+from sqlalchemy import func, select, text
+
+from football_api.domain.enums import Coverage, DecidedBy, MatchStatus, Stage
+from football_api.infra.db import get_sessionmaker
+from football_api.infra.models import Competition, Goal, Match, Player, Season, Team
+from football_api.ingestion.openfootball.squads import parse_more_squads, parse_per_team_squad
+from football_api.ingestion.seeds import CompetitionSeed, TeamSeed
+from football_api.sync import UnknownTeamError, run_sync
+
+pytestmark = pytest.mark.db
+
+FIXTURE_SOURCES = Path(__file__).parent / "fixtures" / "sources"
+
+MANAGED_TABLES = [
+    "competition", "season", "team", "team_season", "venue", "player",
+    "player_team_season", "match", "goal", "external_ref",
+]
+
+
+async def snapshot() -> dict[str, list[str]]:
+    async with get_sessionmaker()() as session:
+        out: dict[str, list[str]] = {}
+        for table in MANAGED_TABLES:
+            rows = await session.execute(text(f"SELECT t::text FROM {table} t ORDER BY 1"))
+            out[table] = [r[0] for r in rows]
+        return out
+
+
+async def sync(competitions: list[CompetitionSeed], teams: list[TeamSeed]) -> None:
+    await run_sync(competitions=competitions, teams=teams, refresh_sources=False)
+
+
+async def match_by(home: str, away: str, stage: Stage) -> Match:
+    """Find a match by its teams' names, as a client listing teams would."""
+    async with get_sessionmaker()() as session:
+        home_id = select(Team.id).where(Team.name == home).scalar_subquery()
+        away_id = select(Team.id).where(Team.name == away).scalar_subquery()
+        match = await session.scalar(
+            select(Match).where(Match.home_team_id == home_id, Match.away_team_id == away_id, Match.stage == stage)
+        )
+        assert match is not None
+        return match
+
+
+async def goals_of(match: Match) -> list[Goal]:
+    async with get_sessionmaker()() as session:
+        return list(await session.scalars(select(Goal).where(Goal.match_id == match.id).order_by(Goal.ordinal)))
+
+
+def published_squad_size(competitions: list[CompetitionSeed], sources: Path) -> int:
+    total = 0
+    for comp in competitions:
+        squads = comp.season.squads
+        if squads is None:
+            continue
+        for pattern in squads.files:
+            for path in sources.glob(pattern):
+                text = path.read_text(encoding="utf-8")
+                total += len(parse_more_squads(text) if squads.style == "more" else parse_per_team_squad(text))
+    return total
+
+
+async def test_first_sync_populates_everything(synced_db: str, fixture_competitions: list[CompetitionSeed]) -> None:
+    async with get_sessionmaker()() as session:
+        counts = {
+            model.__tablename__: await session.scalar(select(func.count()).select_from(model))
+            for model in (Competition, Season, Match, Goal, Player)
+        }
+    players = published_squad_size(fixture_competitions, FIXTURE_SOURCES)
+    assert counts == {"competition": 7, "season": 7, "match": 80, "goal": 37, "player": players}
+
+
+async def test_reconciled_values(synced_db: str) -> None:
+    final = await match_by("Argentina", "France", Stage.FINAL)
+    assert (final.home_score, final.away_score, final.decided_by, final.home_pens, final.away_pens) == (
+        3, 3, DecidedBy.PENALTIES, 4, 2,
+    )
+    assert final.kickoff_utc == datetime(2022, 12, 18, 15, 0, tzinfo=UTC)  # 18:00 UTC+3
+    goals = await goals_of(final)
+    assert [g.minute for g in goals] == [23, 108, 36, 80, 81, 118]
+    assert all(g.scorer_player_id is not None for g in goals)
+
+    pl = await match_by("Manchester United", "Fulham", Stage.LEAGUE)
+    assert pl.kickoff_utc == datetime(2024, 8, 16, 19, 0, tzinfo=UTC)  # 20:00 Europe/London (BST)
+
+    cwc = await match_by("Al Ahly", "Inter Miami", Stage.GROUP)
+    assert cwc.kickoff_utc == datetime(2025, 6, 15, 0, 0, tzinfo=UTC)  # Sat 20:00 UTC-4
+
+    postponed = await match_by("CSD Colo-Colo", "Fortaleza", Stage.GROUP)
+    assert postponed.status is MatchStatus.POSTPONED and postponed.home_score is None
+
+    async with get_sessionmaker()() as session:
+        messi = await session.scalar(select(Player).where(Player.display_name == "Lionel Messi"))
+        assert messi is not None and (messi.given_name, messi.family_name) == ("Lionel", "Messi")
+        assert await session.scalar(select(func.count()).select_from(Player).where(Player.display_name.contains("MESSI"))) == 0
+        coverage = dict(
+            (await session.execute(select(Competition.name, Season.scorers_coverage).join(Season))).all()
+        )
+    assert coverage["FIFA World Cup"] is Coverage.FULL
+    assert coverage["Premier League"] is Coverage.NONE
+
+
+async def test_repeat_sync_is_byte_for_byte_identical(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    await sync(fixture_competitions, fixture_teams)
+    first = await snapshot()
+    await sync(fixture_competitions, fixture_teams)
+    assert await snapshot() == first
+
+
+async def test_goal_list_shrinks_after_source_correction(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    await sync(fixture_competitions, fixture_teams)
+    final = await match_by("Argentina", "France", Stage.FINAL)
+    before = await goals_of(final)
+    assert len(before) == 6
+
+    path = fresh_db / "worldcup/more/2022.txt"
+    path.write_text(path.read_text(encoding="utf-8").replace(", 118'(p))", ")"), encoding="utf-8")
+    await sync(fixture_competitions, fixture_teams)
+
+    after = await goals_of(final)
+    assert [g.ordinal for g in after] == [1, 2, 3, 4, 5]
+    assert [g.id for g in after] == [g.id for g in before[:5]]
+
+
+async def test_postponed_match_keeps_a_single_row(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    await sync(fixture_competitions, fixture_teams)
+    original = await match_by("Manchester United", "Fulham", Stage.LEAGUE)
+
+    path = fresh_db / "england/2024-25/1-premierleague.txt"
+    path.write_text(path.read_text(encoding="utf-8").replace("    20:00  Manchester United FC", "    21:30  Manchester United FC"), encoding="utf-8")
+    competitions = [c.model_copy(update={"season": c.season.model_copy(update={"json_file": None})}) for c in fixture_competitions]
+    await sync(competitions, fixture_teams)
+
+    moved = await match_by("Manchester United", "Fulham", Stage.LEAGUE)
+    assert moved.id == original.id
+    assert moved.kickoff_utc == datetime(2024, 8, 16, 20, 30, tzinfo=UTC)
+    assert moved.original_kickoff_utc == original.kickoff_utc
+
+    # A second move keeps the first-observed original kickoff.
+    path.write_text(path.read_text(encoding="utf-8").replace("    21:30  Manchester United FC", "    22:00  Manchester United FC"), encoding="utf-8")
+    await sync(competitions, fixture_teams)
+    again = await match_by("Manchester United", "Fulham", Stage.LEAGUE)
+    assert again.original_kickoff_utc == original.kickoff_utc
+
+
+async def test_unknown_team_fails_without_partial_writes(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    path = fresh_db / "deutschland/2024-25/1-bundesliga.txt"
+    path.write_text(path.read_text(encoding="utf-8").replace("1. FC Union Berlin", "Union Berlin XI"), encoding="utf-8")
+    bundesliga = [c for c in fixture_competitions if c.name == "Bundesliga"]
+
+    with pytest.raises(UnknownTeamError, match=r"deutschland/2024-25/1-bundesliga.txt:\d+: unknown team 'Union Berlin XI'"):
+        await sync(bundesliga, fixture_teams)
+
+    async with get_sessionmaker()() as session:
+        assert await session.scalar(select(func.count()).select_from(Season)) == 0
+        assert await session.scalar(select(func.count()).select_from(Match)) == 0
+
+
+async def test_renamed_team_keeps_its_row(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """Teams are matched through their external refs, so editing a name in teams.yaml is safe."""
+    await sync(fixture_competitions, fixture_teams)
+    async with get_sessionmaker()() as session:
+        before = await session.scalar(select(Team).where(Team.name == "Manchester United"))
+    assert before is not None
+
+    renamed = [t.model_copy(update={"name": "Man Utd"}) if t.name == "Manchester United" else t for t in fixture_teams]
+    await sync(fixture_competitions, renamed)
+
+    async with get_sessionmaker()() as session:
+        after = await session.scalar(select(Team).where(Team.name == "Man Utd"))
+        total = await session.scalar(select(func.count()).select_from(Team))
+    assert after is not None and after.id == before.id
+    assert total == len(fixture_teams)
+
+
+async def test_renamed_competition_keeps_its_row(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """Competitions are matched through their Wikidata QID."""
+    await sync(fixture_competitions, fixture_teams)
+    async with get_sessionmaker()() as session:
+        before = await session.scalar(select(Competition.id).where(Competition.name == "FIFA World Cup"))
+
+    renamed = [c.model_copy(update={"name": "World Cup"}) if c.name == "FIFA World Cup" else c for c in fixture_competitions]
+    await sync(renamed, fixture_teams)
+
+    async with get_sessionmaker()() as session:
+        after = await session.scalar(select(Competition.id).where(Competition.name == "World Cup"))
+        total = await session.scalar(select(func.count()).select_from(Competition))
+    assert after == before
+    assert total == len(fixture_competitions)

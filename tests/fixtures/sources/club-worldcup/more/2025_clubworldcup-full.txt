@@ -1,0 +1,65 @@
+= Club World Cup 2025
+
+# Dates    Sat Jun 14 - Sun Jul 13 2025 (29d)
+# Teams    32
+# Matches  63
+# Venues   12 (in 11 cities)
+#   Atlanta Stadium, Atlanta (USA)
+#   Bank of America Stadium, Charlotte (USA)
+#   TQL Stadium, Cincinnati (USA)
+#   Rose Bowl, Los Angeles (Pasadena) (USA)
+#   Miami Stadium, Miami (USA)
+#   GEODIS Park, Nashville (USA)
+#   Giants Stadium, New York/New Jersey (East Rutherford) (USA)
+#   Camping World Stadium, Orlando (USA)
+#   Inter&Co Stadium, Orlando (USA)
+#   Philadelphia Stadium, Philadelphia (USA)
+#   Seattle Stadium, Seattle (USA)
+#   Audi Field, Washington D.C. (USA)
+
+▪ First stage
+▪▪ Group A
+Sat Jun 14 20:00 UTC-4 @ Miami Stadium, Miami, Att: 60927
+  Al Ahly FC (EGY) v Inter Miami CF (USA)  0-0
+
+Al Ahly FC: MOHAMED ELSHENAWY [c] - YASSER IBRAHIM, Achraf DARI, MOHAMED HANY - Mohamed Ali BEN ROMDHANE (65' HUSSEIN ELSHAHAT),
+      TREZEGUET (65' TAHER MOHAMED), HAMDY FATHY, MARAWAN ATTIA [Y 90+2'],
+      EMAM ASHOUR (14' ZIZO (79' MOHAMED AFSHA)), AHMED KOKA - WESSAM ABOU ALI (79' Nejc GRADISAR)
+Inter Miami CF: Oscar USTARI - Tomas AVILES [Y 25'] (46' Marcelo WEIGANDT), Ian FRAY,
+      Noah ALLEN, Maximiliano FALCON - Sergio BUSQUETS [Y 86'], Telasco SEGOVIA (72' Benjamin CREMASCHI),
+      Federico REDONDO [Y 31'] - Luis SUAREZ [Y 90+2'], Lionel MESSI [c], Tadeo ALLENDE (81' Fafa PICAULT)
+
+Refs: Alireza FAGHANI (AUS)
+
+
+Sun Jun 15 18:00 UTC-4 @ Giants Stadium, New York/New Jersey (East Rutherford), Att: 46275
+  Palmeiras (BRA) v FC Porto (POR)  0-0
+
+Palmeiras: WEVERTON - Agustin GIAY, Gustavo GOMEZ [c] [Y 62'], Joaquin PIQUEREZ,
+      MURILO - Anibal MORENO, FELIPE ANDERSON [Y 9'] (64' PAULINHO), Richard RIOS (87' LUCAS EVANGELISTA) -
+      VITOR ROQUE (77' Jose Manuel LOPEZ), MAURICIO (65' RAPHAEL VEIGA), ESTEVAO (65' ALLAN)
+FC Porto: CLAUDIO RAMOS - Ivan MARCANO [c], JOAO MARIO (77' Nehuen PEREZ [Y 90+1']),
+      MARTIM FERNANDES [Y 15'], FRANCISCO MOURA, ZE PEDRO - FABIO VIEIRA (82' ANDRE FRANCO),
+      Gabri VEIGA (67' PEPE), Alan VARELA (81' Tomas PEREZ) - Samu AGHEHOWA,
+      RODRIGO MORA (77' Stephen EUSTAQUIO)
+
+Refs: Said MARTINEZ (HON)
+
+
+▪ Final
+Sun Jul 13 15:00 UTC-4 @ Giants Stadium, New York/New Jersey (East Rutherford), Att: 81118
+  Chelsea FC (ENG) v Paris Saint-Germain (FRA)  3-0
+     (Cole PALMER 22', 30', JOAO PEDRO 43')
+
+Chelsea FC: Robert SANCHEZ - Marc CUCURELLA, Levi COLWILL [Y 81'], Trevoh CHALOBAH,
+      Reece JAMES [c] (77' Kiernan DEWSBURY-HALL), Malo GUSTO [Y 40'] - Enzo FERNANDEZ (61' ANDREY SANTOS),
+      Cole PALMER, Moises CAICEDO [Y 36'] - PEDRO NETO [Y 34'] (77' Christopher NKUNKU),
+      JOAO PEDRO (67' Liam DELAP)
+Paris Saint-Germain: Gianluigi DONNARUMMA - Achraf HAKIMI (73' GONCALO RAMOS), LUCAS BERALDO,
+      MARQUINHOS [c], NUNO MENDES [Y 90+4'] - Fabian RUIZ (73' Warren ZAIRE-EMERY),
+      VITINHA, JOAO NEVES [R 85'] - Khvicha KVARATSKHELIA (58' Bradley BARCOLA),
+      Ousmane DEMBELE [Y 87'], Desire DOUE (73' Senny MAYULU)
+
+Refs: Alireza FAGHANI (AUS)
+
+

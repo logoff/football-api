@@ -1,0 +1,52 @@
+schema: spec-driven
+
+context: |
+  Domain: football (soccer) statistics SaaS API. Solo project.
+
+  Stack: Python 3.12, uv (package manager), FastAPI, Pydantic v2,
+  SQLAlchemy 2.0 (async, Mapped[]), asyncpg, Alembic, pyright strict.
+  Task runner: just (justfile), not make.
+
+  Data sources: openfootball/* GitHub repositories (CC0) as primary
+  data; Wikidata SPARQL for canonical identifiers. Team identity is
+  hand-curated in seeds/teams.yaml (name, Wikidata QID, openfootball
+  aliases). External IDs live only in external_ref; no source is
+  privileged.
+
+  Scope (v0.1): 13 competitions, last completed edition of each.
+  Domestic club leagues (5): Premier League, La Liga, Bundesliga,
+  Serie A, Ligue 1 (2024-25). National-team tournaments (3): FIFA
+  World Cup 2022, UEFA Euro 2024, Copa América 2024. Continental club
+  tournaments (4): UEFA Champions League, Europa League, Conference
+  League (2024-25), Copa Libertadores 2025. Intercontinental club
+  tournaments (1): FIFA Club World Cup 2025. Deferred: AFCON and FIFA
+  Intercontinental Cup 2024 (no source data), Copa Sudamericana
+  (incomplete source data).
+
+  Data depth: entities + schedule + final scores (incl. extra time and
+  penalty shootouts). Goal scorers and squads: full for WC, Euro,
+  Copa América, Club World Cup; none elsewhere. Lineups, substitutions
+  and cards: Club World Cup 2025 only (change add-match-events).
+  Coverage is reported per resource via a `coverage` field.
+
+  Competition schema uses two orthogonal fields: team_kind (CLUB |
+  NATIONAL) and scope (DOMESTIC | CONTINENTAL | INTERCONTINENTAL).
+
+  Identity: uuidv7 PKs everywhere. Child rows (goals, events) keep a
+  UUID plus a unique (match_id, [side,] ordinal) key for idempotent
+  sync. Matches keyed by (season, stage, home, away); kickoff is an attribute.
+  Player names: display_name from source; given/family only when the
+  source marks the surname or from Wikidata; never split by guessing.
+  Name matching is case- and accent-insensitive. Minutes are
+  minute + added_minute.
+
+  Style: REST + OpenAPI under /v1, cursor pagination, ?expand= for
+  nesting. UUIDs are the only identifiers, in paths and filters (*_id
+  params); there are no slugs. Timestamps in UTC (source offset on the line, else per-file
+  configured time zone).
+
+  Auth: terminated at an API gateway in a future change, not in app
+  code. v0.1 app binds to 127.0.0.1 only.
+
+  Deployment: Docker Compose with locally built images (api + postgres).
+  Self-hosted.

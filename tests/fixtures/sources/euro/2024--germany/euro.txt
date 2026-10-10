@@ -1,0 +1,34 @@
+= Euro 2024
+
+# 24 teams in 10 venues (in 10 host cities), June 14th to July 14th
+# all times are local, CEST (UTC+2)
+
+
+# Stadiums:
+#   Berlin,        Olympiastadion (Olympiastadion Berlin),   71_000 
+#   München,       Allianz Arena (Munich Football Arena),   66_000 
+#   Dortmund,      Westfalenstadion (BVB Stadion Dortmund), 62_000  
+#   Stuttgart,     MHPArena (Stuttgart Arena),             51_000
+#   Gelsenkirchen, Arena Auf Schalke,                    50_000
+#   Hamburg,       Volksparkstadion (Volksparkstadion Hamburg), 49_000
+#   Düsseldorf,    Merkur Spiel-Arena (Düsseldorf Arena), 47_000
+#   Frankfurt,     Waldstadion (Frankfurt Arena),         47_000
+#   Köln,          RheinEnergieStadion (Cologne Stadium), 43_000
+#   Leipzig,       Red Bull Arena (Leipzig Stadium),      40_000
+
+
+
+#############################################
+# Group phase
+
+
+Group A  |  Germany   Scotland     Hungary   Switzerland
+Group B  |  Spain     Croatia      Italy     Albania
+Group C  |  Slovenia  Denmark      Serbia    England
+Group D  |  Poland    Netherlands  Austria   France
+Group E  |  Belgium   Slovakia     Romania   Ukraine
+Group F  |  Turkey    Georgia      Portugal  Czech Republic
+▪ Final
+Sun Jul 14 
+   21:00   Spain  2-1 (0-0)  England         @ Berlin     # Winner Match 49 - Winner Match 50
+            (Williams 47' Oyarzabal 86'; Palmer 73')

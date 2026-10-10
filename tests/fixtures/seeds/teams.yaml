@@ -1,0 +1,637 @@
+# Test subset of seeds/teams.yaml: teams appearing in tests/fixtures/sources.
+
+- name: "1. FC Heidenheim 1846"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q162251
+  openfootball:
+    - "1. FC Heidenheim 1846"
+    - "1. FC Heidenheim 1846 (GER)"
+
+- name: "1. FC Union Berlin"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q141971
+  openfootball:
+    - "1. FC Union Berlin"
+
+- name: "1. FSV Mainz 05"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q105254
+  openfootball:
+    - "1. FSV Mainz 05"
+
+- name: "1899 Hoffenheim"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q22707
+  openfootball:
+    - "1899 Hoffenheim (GER)"
+    - "TSG 1899 Hoffenheim"
+
+- name: "AFC Bournemouth"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q19568
+  openfootball:
+    - "AFC Bournemouth"
+
+- name: "Al Ahly"
+  kind: CLUB
+  country: "EG"
+  wikidata: Q223566
+  openfootball:
+    - "Al Ahly FC (EGY)"
+
+- name: "Argentina"
+  kind: NATIONAL
+  country: "AR"
+  wikidata: Q79800
+  openfootball:
+    - "Argentina"
+
+- name: "Arsenal"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q9617
+  openfootball:
+    - "Arsenal FC"
+    - "Arsenal FC (ENG)"
+
+- name: "Aston Villa"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q18711
+  openfootball:
+    - "Aston Villa FC"
+    - "Aston Villa FC (ENG)"
+
+- name: "Atlético Nacional"
+  kind: CLUB
+  country: "CO"
+  wikidata: Q332605
+  openfootball:
+    - "CDC Atlético Nacional (COL)"
+
+- name: "Barcelona SC"
+  kind: CLUB
+  country: "EC"
+  wikidata: Q248782
+  openfootball:
+    - "Barcelona SC (ECU)"
+
+- name: "Bayer 04 Leverkusen"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q104761
+  openfootball:
+    - "Bayer 04 Leverkusen"
+    - "Bayer 04 Leverkusen (GER)"
+
+- name: "Borussia Dortmund"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q41420
+  openfootball:
+    - "Borussia Dortmund"
+    - "Borussia Dortmund (GER)"
+
+- name: "Borussia Mönchengladbach"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q101959
+  openfootball:
+    - "Borussia Mönchengladbach"
+
+- name: "Botafogo"
+  kind: CLUB
+  country: "BR"
+  wikidata: Q80958
+  openfootball:
+    - "Botafogo (BRA)"
+    - "Botafogo FR (BRA)"
+
+- name: "Brentford"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q19571
+  openfootball:
+    - "Brentford FC"
+
+- name: "Brighton & Hove Albion"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q19453
+  openfootball:
+    - "Brighton & Hove Albion FC"
+
+- name: "CA Bucaramanga"
+  kind: CLUB
+  country: "CO"
+  wikidata: Q757418
+  openfootball:
+    - "CA Bucaramanga (COL)"
+
+- name: "CA Peñarol"
+  kind: CLUB
+  country: "UY"
+  wikidata: Q16320
+  openfootball:
+    - "CA Peñarol (URU)"
+
+- name: "CA River Plate"
+  kind: CLUB
+  country: "AR"
+  wikidata: Q15799
+  openfootball:
+    - "CA River Plate (ARG)"
+
+- name: "CA Talleres"
+  kind: CLUB
+  country: "AR"
+  wikidata: Q1022939
+  openfootball:
+    - "CA Talleres (ARG)"
+
+- name: "CA Vélez Sarsfield"
+  kind: CLUB
+  country: "AR"
+  wikidata: Q215163
+  openfootball:
+    - "CA Vélez Sarsfield (ARG)"
+
+- name: "Canada"
+  kind: NATIONAL
+  country: "CA"
+  wikidata: Q208635
+  openfootball:
+    - "Canada"
+
+- name: "Carabobo"
+  kind: CLUB
+  country: "VE"
+  wikidata: Q1035297
+  openfootball:
+    - "Carabobo FC (VEN)"
+
+- name: "Central Córdoba"
+  kind: CLUB
+  country: "AR"
+  wikidata: Q5060684
+  openfootball:
+    - "CA Central Córdoba (ARG)"
+
+- name: "CF Universidad de Chile"
+  kind: CLUB
+  country: "CL"
+  wikidata: Q737753
+  openfootball:
+    - "CF Universidad de Chile (CHI)"
+
+- name: "Chelsea"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q9616
+  openfootball:
+    - "Chelsea FC"
+    - "Chelsea FC (ENG)"
+
+- name: "Chile"
+  kind: NATIONAL
+  country: "CL"
+  wikidata: Q172025
+  openfootball:
+    - "Chile"
+
+- name: "Club Alianza Lima"
+  kind: CLUB
+  country: "PE"
+  wikidata: Q572957
+  openfootball:
+    - "Club Alianza Lima (PER)"
+
+- name: "Club Bolívar"
+  kind: CLUB
+  country: "BO"
+  wikidata: Q128024
+  openfootball:
+    - "Club Bolívar (BOL)"
+
+- name: "Club Cerro Porteño"
+  kind: CLUB
+  country: "PY"
+  wikidata: Q914086
+  openfootball:
+    - "Club Cerro Porteño (PAR)"
+
+- name: "Club Libertad"
+  kind: CLUB
+  country: "PY"
+  wikidata: Q848642
+  openfootball:
+    - "Club Libertad Asuncion (PAR)"
+
+- name: "Club Nacional de Football"
+  kind: CLUB
+  country: "UY"
+  wikidata: Q499616
+  openfootball:
+    - "Club Nacional de Football (URU)"
+
+- name: "Club Olimpia"
+  kind: CLUB
+  country: "PY"
+  wikidata: Q604589
+  openfootball:
+    - "Olimpia Asuncion (PAR)"
+
+- name: "Club Universitario de Deportes"
+  kind: CLUB
+  country: "PE"
+  wikidata: Q19066
+  openfootball:
+    - "Club Universitario de Deportes (PER)"
+
+- name: "Colombia"
+  kind: NATIONAL
+  country: "CO"
+  wikidata: Q212564
+  openfootball:
+    - "Colombia"
+
+- name: "CR Flamengo"
+  kind: CLUB
+  country: "BR"
+  wikidata: Q17479
+  openfootball:
+    - "CR Flamengo (BRA)"
+
+- name: "Croatia"
+  kind: NATIONAL
+  country: "HR"
+  wikidata: Q134479
+  openfootball:
+    - "Croatia"
+
+- name: "Crystal Palace"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q19467
+  openfootball:
+    - "Crystal Palace FC"
+
+- name: "CS Cristal"
+  kind: CLUB
+  country: "PE"
+  wikidata: Q604581
+  openfootball:
+    - "CS Cristal (PER)"
+
+- name: "CSD Colo-Colo"
+  kind: CLUB
+  country: "CL"
+  wikidata: Q207373
+  openfootball:
+    - "CSD Colo-Colo (CHI)"
+
+- name: "Deportivo Táchira"
+  kind: CLUB
+  country: "VE"
+  wikidata: Q178378
+  openfootball:
+    - "Deportivo Táchira FC (VEN)"
+
+- name: "EC Bahia"
+  kind: CLUB
+  country: "BR"
+  wikidata: Q198032
+  openfootball:
+    - "EC Bahia (BRA)"
+
+- name: "Ecuador"
+  kind: NATIONAL
+  country: "EC"
+  wikidata: Q987584
+  openfootball:
+    - "Ecuador"
+
+- name: "Eintracht Frankfurt"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q38245
+  openfootball:
+    - "Eintracht Frankfurt"
+    - "Eintracht Frankfurt (GER)"
+
+- name: "England"
+  kind: NATIONAL
+  country: "GB-ENG"
+  wikidata: Q47762
+  openfootball:
+    - "England"
+
+- name: "Estudiantes de La Plata"
+  kind: CLUB
+  country: "AR"
+  wikidata: Q214940
+  openfootball:
+    - "Estudiantes de La Plata (ARG)"
+
+- name: "Everton"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q5794
+  openfootball:
+    - "Everton FC"
+
+- name: "FC Augsburg"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q15755
+  openfootball:
+    - "FC Augsburg"
+
+- name: "FC Bayern Munich"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q15789
+  openfootball:
+    - "FC Bayern München"
+    - "FC Bayern München (GER)"
+
+- name: "FC Porto"
+  kind: CLUB
+  country: "PT"
+  wikidata: Q128446
+  openfootball:
+    - "FC Porto (POR)"
+
+- name: "FC St. Pauli"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q6463
+  openfootball:
+    - "FC St. Pauli 1910"
+
+- name: "Fortaleza"
+  kind: CLUB
+  country: "BR"
+  wikidata: Q188841
+  openfootball:
+    - "Fortaleza EC (BRA)"
+
+- name: "France"
+  kind: NATIONAL
+  country: "FR"
+  wikidata: Q47774
+  openfootball:
+    - "France"
+
+- name: "Fulham"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q18708
+  openfootball:
+    - "Fulham FC"
+
+- name: "Holstein Kiel"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q157828
+  openfootball:
+    - "Holstein Kiel"
+
+- name: "Independiente del Valle"
+  kind: CLUB
+  country: "EC"
+  wikidata: Q249648
+  openfootball:
+    - "CAR Independiente del Valle (ECU)"
+
+- name: "Inter Miami"
+  kind: CLUB
+  country: "US"
+  wikidata: Q16844931
+  openfootball:
+    - "Inter Miami CF (USA)"
+
+- name: "Ipswich Town"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q9653
+  openfootball:
+    - "Ipswich Town FC"
+
+- name: "LDU de Quito"
+  kind: CLUB
+  country: "EC"
+  wikidata: Q249643
+  openfootball:
+    - "LDU de Quito (ECU)"
+
+- name: "Leicester City"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q19481
+  openfootball:
+    - "Leicester City FC"
+
+- name: "Liverpool"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q1130849
+  openfootball:
+    - "Liverpool FC"
+    - "Liverpool FC (ENG)"
+
+- name: "Manchester City"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q50602
+  openfootball:
+    - "Manchester City (ENG)"
+    - "Manchester City FC"
+    - "Manchester City FC (ENG)"
+
+- name: "Manchester United"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q18656
+  openfootball:
+    - "Manchester United (ENG)"
+    - "Manchester United FC"
+
+- name: "Morocco"
+  kind: NATIONAL
+  country: "MA"
+  wikidata: Q207337
+  openfootball:
+    - "Morocco"
+
+- name: "Netherlands"
+  kind: NATIONAL
+  country: "NL"
+  wikidata: Q47050
+  openfootball:
+    - "Netherlands"
+
+- name: "Newcastle United"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q18716
+  openfootball:
+    - "Newcastle United FC"
+
+- name: "Nottingham Forest"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q19490
+  openfootball:
+    - "Nottingham Forest FC"
+
+- name: "Palmeiras"
+  kind: CLUB
+  country: "BR"
+  wikidata: Q80964
+  openfootball:
+    - "Palmeiras (BRA)"
+    - "SE Palmeiras (BRA)"
+
+- name: "Paris Saint-Germain"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q483020
+  openfootball:
+    - "Paris Saint-Germain (FRA)"
+    - "Paris Saint-Germain FC"
+    - "Paris Saint-Germain FC (FRA)"
+
+- name: "Peru"
+  kind: NATIONAL
+  country: "PE"
+  wikidata: Q212166
+  openfootball:
+    - "Peru"
+
+- name: "Qatar"
+  kind: NATIONAL
+  country: "QA"
+  wikidata: Q232731
+  openfootball:
+    - "Qatar"
+
+- name: "Racing Club"
+  kind: CLUB
+  country: "AR"
+  wikidata: Q276533
+  openfootball:
+    - "Racing Club (ARG)"
+
+- name: "RB Leipzig"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q702455
+  openfootball:
+    - "RB Leipzig"
+    - "RB Leipzig (GER)"
+
+- name: "San Antonio Bulo Bulo"
+  kind: CLUB
+  country: "BO"
+  wikidata: Q123925120
+  openfootball:
+    - "San Antonio Bulo Bulo (BOL)"
+
+- name: "SC Freiburg"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q106394
+  openfootball:
+    - "SC Freiburg"
+
+- name: "SC Internacional"
+  kind: CLUB
+  country: "BR"
+  wikidata: Q80845
+  openfootball:
+    - "SC Internacional (BRA)"
+
+- name: "Senegal"
+  kind: NATIONAL
+  country: "SN"
+  wikidata: Q207441
+  openfootball:
+    - "Senegal"
+
+- name: "Southampton"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q18732
+  openfootball:
+    - "Southampton FC"
+
+- name: "Spain"
+  kind: NATIONAL
+  country: "ES"
+  wikidata: Q42267
+  openfootball:
+    - "Spain"
+
+- name: "SV Werder Bremen"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q51976
+  openfootball:
+    - "SV Werder Bremen"
+
+- name: "São Paulo"
+  kind: CLUB
+  country: "BR"
+  wikidata: Q38568
+  openfootball:
+    - "São Paulo FC (BRA)"
+
+- name: "Tottenham Hotspur"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q18741
+  openfootball:
+    - "Tottenham Hotspur (ENG)"
+    - "Tottenham Hotspur FC"
+
+- name: "VfB Stuttgart"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q4512
+  openfootball:
+    - "VfB Stuttgart"
+    - "VfB Stuttgart (GER)"
+
+- name: "VfL Bochum"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q105861
+  openfootball:
+    - "VfL Bochum 1848"
+
+- name: "VfL Wolfsburg"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q101859
+  openfootball:
+    - "VfL Wolfsburg"
+
+- name: "West Ham United"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q18747
+  openfootball:
+    - "West Ham United FC"
+
+- name: "Wolverhampton Wanderers"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q19500
+  openfootball:
+    - "Wolverhampton Wanderers FC"
