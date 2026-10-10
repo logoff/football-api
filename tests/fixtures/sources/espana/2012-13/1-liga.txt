@@ -1,0 +1,40 @@
+= Primera División de España 2012/13
+
+# Date       Sat Aug 18 2012 - Sat Jun 1 2013 (287d)
+# Teams      20
+# Matches    380
+
+
+
+▪ Matchday 1
+  Sat Aug 18 2012
+    19:00  RC Celta                v Málaga CF                0-1 (0-0)
+    21:00  Sevilla FC              v Getafe CF                2-1 (2-0)
+    23:00  RCD Mallorca            v Espanyol Barcelona       2-1 (1-1)
+  Sun Aug 19
+    19:00  Athletic Club           v Real Betis               3-5 (0-3)
+           Real Madrid             v Valencia CF              1-1 (1-1)
+    21:00  FC Barcelona            v Real Sociedad            5-1 (4-1)
+    23:00  Levante UD              v Atlético Madrid          1-1 (1-1)
+  Mon Aug 20
+    19:00  Deportivo La Coruña     v CA Osasuna               2-0 (0-0)
+    21:00  Rayo Vallecano          v Granada CF               1-0 (0-0)
+    23:00  Real Zaragoza           v Real Valladolid          0-1 (0-1)
+
+
+▪ Matchday 18
+  Fri Jan 4 2013
+    21:30  Real Zaragoza           v Real Betis               1-2 (0-1)
+  Sat Jan 5
+    16:00  Levante UD              v Athletic Club            3-1 (2-1)
+    18:00  Granada CF              v Valencia CF              1-2 (0-0)
+    20:00  Deportivo La Coruña     v Málaga CF                1-0 (0-0)
+    22:00  Sevilla FC              v CA Osasuna               1-0 (0-0)
+  Sun Jan 6
+    12:00  RC Celta                v Real Valladolid          3-1 (2-1)
+    17:00  Real Madrid             v Real Sociedad            4-3 (2-2)
+    19:00  FC Barcelona            v Espanyol Barcelona       4-0 (4-0)
+    21:00  RCD Mallorca            v Atlético Madrid          1-1 (0-0)
+  Mon Jan 7
+    20:00  Rayo Vallecano          v Getafe CF                3-1 (2-0)
+

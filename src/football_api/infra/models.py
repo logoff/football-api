@@ -1,8 +1,10 @@
 """SQLAlchemy models. See design.md, "Domain model" and "ID principles".
 
 Every entity has a server-generated uuidv7 primary key (PostgreSQL 18). External
-identifiers never live on entity tables; they go in ``external_ref``. No row carries
-created/updated timestamps, so an unchanged re-sync leaves rows byte-for-byte equal.
+identifiers never live on entity tables; they go in ``external_ref``. No synced row
+carries created/updated timestamps, so an unchanged re-sync leaves rows byte-for-byte
+equal. ``match_verification`` is the exception by design: it is written by verification
+runs, not by the sync, and records when each check happened.
 """
 
 import uuid
@@ -33,6 +35,8 @@ from football_api.domain.enums import (
     Side,
     Stage,
     TeamKind,
+    VerificationReference,
+    VerificationStatus,
 )
 
 NAMING_CONVENTION = {
@@ -190,3 +194,15 @@ class ExternalRef(Base):
     source: Mapped[str] = mapped_column(String(32))
     source_id: Mapped[str] = mapped_column(String(256))
 
+
+class MatchVerification(Base):
+    """A match's status against one verification reference. Never holds the reference's data."""
+
+    __tablename__ = "match_verification"
+    __table_args__ = (UniqueConstraint("match_id", "reference"),)
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    match_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("match.id", ondelete="CASCADE"))
+    reference: Mapped[VerificationReference] = mapped_column(_enum(VerificationReference, "verification_reference"))
+    status: Mapped[VerificationStatus] = mapped_column(_enum(VerificationStatus, "verification_status"))
+    checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

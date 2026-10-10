@@ -1,0 +1,42 @@
+= Primera División de España 2020/21
+
+# Date       Sat Sep 12 2020 - Sun May 23 2021 (253d)
+# Teams      20
+# Matches    380
+
+
+
+▪ Matchday 1
+Sat Sep 12
+  16:00  SD Eibar                 0-0  RC Celta de Vigo
+  18:30  Granada CF               2-0 (0-0)  Athletic Club
+  21:00  Cádiz CF                 0-2 (0-1)  CA Osasuna
+Sun Sep 13
+  14:00  Deportivo Alavés         0-1 (0-0)  Real Betis Balompié
+  16:00  Real Valladolid CF       1-1 (1-0)  Real Sociedad de Fútbol
+  18:30  Villarreal CF            1-1 (0-1)  SD Huesca
+  21:00  Valencia CF              4-2 (2-2)  Levante UD
+
+
+▪ Matchday 17
+Sat Jan 2
+  14:00  Villarreal CF            2-1 (1-0)  Levante UD
+  16:15  Real Betis Balompié      1-1 (0-0)  Sevilla FC
+  18:30  Getafe CF                0-1 (0-1)  Real Valladolid CF
+  21:00  Real Madrid CF           2-0 (1-0)  RC Celta de Vigo
+Sun Jan 3
+  14:00  Athletic Club            1-0 (1-0)  Elche CF
+  16:15  Deportivo Alavés         1-2 (0-1)  Club Atlético de Madrid
+  18:30  Real Sociedad de Fútbol  1-1 (0-1)  CA Osasuna
+         SD Eibar                 2-0 (0-0)  Granada CF
+  21:00  SD Huesca                0-1 (0-1)  FC Barcelona
+Mon Jan 4
+  21:00  Valencia CF              1-1 (0-0)  Cádiz CF
+
+
+▪ Matchday 2
+Wed Jan 6
+  21:00  Athletic Club            2-3 (1-2)  FC Barcelona
+
+
+▪ Matchday 18

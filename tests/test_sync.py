@@ -1,5 +1,6 @@
 """Ingestion against a real database: idempotency and reconciliation scenarios (ingestion spec)."""
 
+import re
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -33,7 +34,8 @@ async def snapshot() -> dict[str, list[str]]:
 
 
 async def sync(competitions: list[CompetitionSeed], teams: list[TeamSeed]) -> None:
-    await run_sync(competitions=competitions, teams=teams, refresh_sources=False)
+    report = await run_sync(competitions=competitions, teams=teams, refresh_sources=False)
+    assert not report.failed, report.failed
 
 
 async def match_by(home: str, away: str, stage: Stage) -> Match:
@@ -56,13 +58,14 @@ async def goals_of(match: Match) -> list[Goal]:
 def published_squad_size(competitions: list[CompetitionSeed], sources: Path) -> int:
     total = 0
     for comp in competitions:
-        squads = comp.season.squads
-        if squads is None:
-            continue
-        for pattern in squads.files:
-            for path in sources.glob(pattern):
-                text = path.read_text(encoding="utf-8")
-                total += len(parse_more_squads(text) if squads.style == "more" else parse_per_team_squad(text))
+        for season in comp.seasons:
+            squads = season.squads
+            if squads is None:
+                continue
+            for pattern in squads.files:
+                for path in sources.glob(pattern):
+                    text = path.read_text(encoding="utf-8")
+                    total += len(parse_more_squads(text) if squads.style == "more" else parse_per_team_squad(text))
     return total
 
 
@@ -140,7 +143,10 @@ async def test_postponed_match_keeps_a_single_row(
 
     path = fresh_db / "england/2024-25/1-premierleague.txt"
     path.write_text(path.read_text(encoding="utf-8").replace("    20:00  Manchester United FC", "    21:30  Manchester United FC"), encoding="utf-8")
-    competitions = [c.model_copy(update={"season": c.season.model_copy(update={"json_file": None})}) for c in fixture_competitions]
+    competitions = [
+        c.model_copy(update={"seasons": [s.model_copy(update={"json_file": None}) for s in c.seasons]})
+        for c in fixture_competitions
+    ]
     await sync(competitions, fixture_teams)
 
     moved = await match_by("Manchester United", "Fulham", Stage.LEAGUE)
@@ -162,9 +168,11 @@ async def test_unknown_team_fails_without_partial_writes(
     path.write_text(path.read_text(encoding="utf-8").replace("1. FC Union Berlin", "Union Berlin XI"), encoding="utf-8")
     bundesliga = [c for c in fixture_competitions if c.name == "Bundesliga"]
 
-    with pytest.raises(UnknownTeamError, match=r"deutschland/2024-25/1-bundesliga.txt:\d+: unknown team 'Union Berlin XI'"):
-        await sync(bundesliga, fixture_teams)
+    report = await run_sync(competitions=bundesliga, teams=fixture_teams, refresh_sources=False)
 
+    [(_, season, exc)] = report.failed
+    assert season.label == "2024-25" and isinstance(exc, UnknownTeamError)
+    assert re.search(r"deutschland/2024-25/1-bundesliga.txt:\d+: unknown team 'Union Berlin XI'", str(exc))
     async with get_sessionmaker()() as session:
         assert await session.scalar(select(func.count()).select_from(Season)) == 0
         assert await session.scalar(select(func.count()).select_from(Match)) == 0
@@ -205,3 +213,28 @@ async def test_renamed_competition_keeps_its_row(
         total = await session.scalar(select(func.count()).select_from(Competition))
     assert after == before
     assert total == len(fixture_competitions)
+
+
+async def test_competition_with_two_seasons(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """Each season in a seed becomes its own season row with its own matches (catalog spec)."""
+    (fresh_db / "england/2023-24").mkdir()
+    (fresh_db / "england/2023-24/1-premierleague.txt").write_text(
+        (fresh_db / "england/2024-25/1-premierleague.txt").read_text(encoding="utf-8").replace("2024", "2023"),
+        encoding="utf-8",
+    )
+    pl = next(c for c in fixture_competitions if c.name == "Premier League")
+    current = pl.seasons[0]
+    earlier = current.model_copy(
+        update={"label": "2023-24", "start_year": 2023, "file": "england/2023-24/1-premierleague.txt", "json_file": None}
+    )
+    await sync([pl.model_copy(update={"seasons": [earlier, current]})], fixture_teams)
+
+    async with get_sessionmaker()() as session:
+        rows = (
+            await session.execute(
+                select(Season.label, func.count(Match.id)).join(Match).group_by(Season.label).order_by(Season.label)
+            )
+        ).all()
+    assert [tuple(r) for r in rows] == [("2023-24", 20), ("2024-25", 20)]

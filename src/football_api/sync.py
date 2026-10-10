@@ -1,26 +1,38 @@
 """`just sync`: reconcile seeds, Wikidata and openfootball into the database.
 
-Order: competitions and teams from `seeds/` → Wikidata check of seeded QIDs → one
-transaction per competition-season for the openfootball data. Every write is an upsert
-on a natural key (ingestion spec, "Idempotency"), so an unchanged re-run rewrites
-identical values and creates nothing.
+Order: schema and run-lock checks → competitions and teams from `seeds/` → Wikidata
+check of seeded QIDs → one transaction per competition-season for the openfootball
+data. Every write is an upsert on a natural key (ingestion spec, "Idempotency"), so an
+unchanged re-run rewrites identical values and creates nothing.
+
+    python -m football_api.sync [--competition QID ...] [--verify] [--no-refresh]
+
+Exit codes: 0 every requested season synced (verification findings never fail a run),
+1 a season or the seed step failed, 2 usage error (e.g. unknown QID), 3 database schema
+not migrated to head, 4 another sync holds the run lock.
 """
 
+import argparse
 import asyncio
 import logging
 import sys
 import uuid
 from collections import defaultdict
-from dataclasses import dataclass
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import delete, select
+from alembic.config import Config
+from alembic.script import ScriptDirectory
+from sqlalchemy import delete, select, text
+from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from football_api.domain.enums import Coverage, EntityType, MatchStatus, SeasonStatus, TeamKind
-from football_api.infra.db import get_sessionmaker
+from football_api.infra.db import get_engine, get_sessionmaker
 from football_api.infra.models import (
     Competition,
     ExternalRef,
@@ -38,9 +50,11 @@ from football_api.ingestion.openfootball.json_reader import is_current, read_jso
 from football_api.ingestion.openfootball.names import fold, short_name_matches, split_capitalised
 from football_api.ingestion.openfootball.squads import SquadPlayer, parse_more_squads, parse_per_team_squad
 from football_api.ingestion.openfootball.text_parser import ParsedMatch, normalize_stage, parse_file
-from football_api.ingestion.seeds import CompetitionSeed, TeamSeed, load_competitions, load_teams
+from football_api.ingestion.seeds import CompetitionSeed, SeasonSource, TeamSeed, load_competitions, load_teams
 from football_api.ingestion.sources import ensure_sources
 from football_api.ingestion.wikidata import WikidataUnavailable, verify_qids
+from football_api.ingestion.wikipedia import WikipediaClient
+from football_api.verification import ResultsReference, verify_seasons
 
 log = logging.getLogger("football_api.sync")
 
@@ -48,7 +62,24 @@ OPENFOOTBALL = "openfootball"
 WIKIDATA = "wikidata"
 
 
+# Arbitrary, fixed key for pg_try_advisory_lock: one sync at a time per database.
+RUN_LOCK_KEY = 0x666F6F74  # "foot"
+
+
 class SyncError(Exception):
+    pass
+
+
+class UnknownCompetitionError(SyncError):
+    def __init__(self, qids: list[str]) -> None:
+        super().__init__(f"no competition in seeds/competitions.yaml has Wikidata QID {', '.join(qids)}")
+
+
+class SchemaNotMigratedError(SyncError):
+    pass
+
+
+class SyncInProgressError(SyncError):
     pass
 
 
@@ -148,6 +179,7 @@ async def verify_wikidata(competitions: list[CompetitionSeed], teams: list[TeamS
 @dataclass
 class SeasonContext:
     seed: CompetitionSeed
+    src: SeasonSource
     season: Season
     sources: Path
     scorer_names_capitalised: bool
@@ -186,7 +218,7 @@ async def upsert_venue(session: AsyncSession, name: str | None, city: str | None
 
 
 async def sync_squads(session: AsyncSession, ctx: SeasonContext) -> None:
-    squad_src = ctx.seed.season.squads
+    squad_src = ctx.src.squads
     if squad_src is None:
         return
     players: list[SquadPlayer] = []
@@ -222,7 +254,7 @@ async def sync_squads(session: AsyncSession, ctx: SeasonContext) -> None:
         if pts is not None:
             pts.shirt_number = sp.shirt_number
         await ensure_ref(
-            session, EntityType.PLAYER, player.id, OPENFOOTBALL, f"{ctx.seed.season.file}#{sp.team}#{sp.name.display}"
+            session, EntityType.PLAYER, player.id, OPENFOOTBALL, f"{ctx.src.file}#{sp.team}#{sp.name.display}"
         )
         ctx.squads.setdefault(team_id, []).append((player, sp.name.display))
     await session.flush()
@@ -260,7 +292,7 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
     home_id = await resolve_team(session, path, m.line_no, m.home)
     away_id = await resolve_team(session, path, m.line_no, m.away)
     stage, matchday = normalize_stage(m.round_label)
-    kickoff = kickoff_utc(m, ctx.seed.season.tz, path)
+    kickoff = kickoff_utc(m, ctx.src.tz, path)
     match = await session.scalar(
         select(Match).where(
             Match.season_id == ctx.season.id,
@@ -289,26 +321,25 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
         await sync_goals(session, ctx, match, m)
 
 
-def read_matches(seed: CompetitionSeed, sources: Path) -> tuple[list[ParsedMatch], str]:
-    s = seed.season
+def read_matches(seed: CompetitionSeed, s: SeasonSource, sources: Path) -> tuple[list[ParsedMatch], str]:
     text_matches = parse_file(sources / s.file, start_year=s.start_year, display_path=s.file)
     if s.json_file:
         if not (sources / s.json_file).exists():
-            log.info("%s: JSON mirror %s missing; using text file", seed.name, s.json_file)
+            log.info("%s %s: JSON mirror %s missing; using text file", seed.name, s.label, s.json_file)
             return text_matches, s.file
         json_matches = read_json(sources / s.json_file)
         if is_current(json_matches, text_matches):
             return json_matches, s.json_file
-        log.info("%s: JSON mirror not current; using text file", seed.name)
+        log.info("%s %s: JSON mirror not current; using text file", seed.name, s.label)
     return text_matches, s.file
 
 
-async def sync_season(session: AsyncSession, seed: CompetitionSeed, sources: Path) -> int:
+async def sync_season(session: AsyncSession, seed: CompetitionSeed, src: SeasonSource, sources: Path) -> int:
     comp = await upsert_competition(session, seed)
-    matches, path = read_matches(seed, sources)
-    season = await session.scalar(select(Season).where(Season.competition_id == comp.id, Season.label == seed.season.label))
+    matches, path = read_matches(seed, src, sources)
+    season = await session.scalar(select(Season).where(Season.competition_id == comp.id, Season.label == src.label))
     if season is None:
-        season = Season(competition_id=comp.id, label=seed.season.label)
+        season = Season(competition_id=comp.id, label=src.label)
         session.add(season)
     days: list[date] = [m.day for m in matches]
     season.starts_on, season.ends_on = min(days), max(days)
@@ -318,9 +349,9 @@ async def sync_season(session: AsyncSession, seed: CompetitionSeed, sources: Pat
         else SeasonStatus.IN_PROGRESS
     )
     season.scorers_coverage = Coverage.FULL if any(m.goals_listed for m in matches) else Coverage.NONE
-    season.players_coverage = Coverage.FULL if seed.season.squads else Coverage.NONE
+    season.players_coverage = Coverage.FULL if src.squads else Coverage.NONE
     await session.flush()
-    await ensure_ref(session, EntityType.SEASON, season.id, OPENFOOTBALL, seed.season.file)
+    await ensure_ref(session, EntityType.SEASON, season.id, OPENFOOTBALL, src.file)
 
     team_ids: set[uuid.UUID] = set()
     for m in matches:
@@ -330,12 +361,62 @@ async def sync_season(session: AsyncSession, seed: CompetitionSeed, sources: Pat
         if await session.get(TeamSeason, (team_id, season.id)) is None:
             session.add(TeamSeason(team_id=team_id, season_id=season.id))
 
-    squads_style = seed.season.squads.style if seed.season.squads else None
-    ctx = SeasonContext(seed, season, sources, scorer_names_capitalised=squads_style == "more", squads=defaultdict(list))
+    squads_style = src.squads.style if src.squads else None
+    ctx = SeasonContext(seed, src, season, sources, scorer_names_capitalised=squads_style == "more", squads=defaultdict(list))
     await sync_squads(session, ctx)
     for m in matches:
         await sync_match(session, ctx, m, path)
     return len(matches)
+
+
+# --- run ---------------------------------------------------------------------------
+
+
+@dataclass
+class SyncReport:
+    synced: list[tuple[CompetitionSeed, SeasonSource]] = field(
+        default_factory=lambda: list[tuple[CompetitionSeed, SeasonSource]]()
+    )
+    failed: list[tuple[CompetitionSeed, SeasonSource, Exception]] = field(
+        default_factory=lambda: list[tuple[CompetitionSeed, SeasonSource, Exception]]()
+    )
+
+
+def select_competitions(competitions: list[CompetitionSeed], qids: list[str]) -> list[CompetitionSeed]:
+    """The seeds for `--competition` QIDs, in seed order; all of them when none is given."""
+    if not qids:
+        return competitions
+    unknown = sorted(set(qids) - {c.wikidata for c in competitions})
+    if unknown:
+        raise UnknownCompetitionError(unknown)
+    return [c for c in competitions if c.wikidata in qids]
+
+
+async def check_schema() -> None:
+    """Migrations belong to the API container; a sync never runs them (design D5)."""
+    head = ScriptDirectory.from_config(Config(str(get_settings().alembic_ini))).get_current_head()
+    async with get_engine().connect() as conn:
+        try:
+            current = await conn.scalar(text("SELECT version_num FROM alembic_version"))
+        except ProgrammingError:
+            current = None
+    if current != head:
+        raise SchemaNotMigratedError(
+            f"database schema is at {current or 'no revision'}, code expects {head}; run migrations first"
+        )
+
+
+@asynccontextmanager
+async def run_lock() -> AsyncGenerator[None]:
+    """Hold a session-level advisory lock for the whole run; a dead process releases it."""
+    async with get_engine().connect() as conn:
+        if not await conn.scalar(text("SELECT pg_try_advisory_lock(:key)"), {"key": RUN_LOCK_KEY}):
+            raise SyncInProgressError("another sync is in progress on this database")
+        try:
+            yield
+        finally:
+            await conn.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": RUN_LOCK_KEY})
+            await conn.commit()
 
 
 async def run_sync(
@@ -343,36 +424,92 @@ async def run_sync(
     competitions: list[CompetitionSeed] | None = None,
     teams: list[TeamSeed] | None = None,
     refresh_sources: bool = True,
-) -> None:
+    verify: bool = False,
+    reference: ResultsReference | None = None,
+) -> SyncReport:
+    """Sync every season of `competitions`; a failing season is logged and reported, not raised.
+
+    With `verify`, the seasons that synced and name a reference are then verified against it
+    (`reference` defaults to English Wikipedia). Verification never fails the run.
+    """
     settings = get_settings()
     competitions = competitions if competitions is not None else load_competitions()
     teams = teams if teams is not None else load_teams()
     sources = settings.sources_dir
-    if refresh_sources:
-        ensure_sources(sources, competitions)
+    await check_schema()
+    report = SyncReport()
+    async with run_lock():
+        if refresh_sources:
+            ensure_sources(sources, competitions)
 
-    maker = get_sessionmaker()
-    async with maker() as session, session.begin():
-        for comp_seed in competitions:
-            await upsert_competition(session, comp_seed)
-        await sync_teams(session, teams)
-    if settings.wikidata_enabled:
-        await verify_wikidata(competitions, teams)
-    for comp_seed in competitions:
-        # One transaction per competition-season: a bad file leaves no partial writes.
+        maker = get_sessionmaker()
         async with maker() as session, session.begin():
-            count = await sync_season(session, comp_seed, sources)
-        log.info("%s %s: %d matches", comp_seed.name, comp_seed.season.label, count)
+            for comp_seed in competitions:
+                await upsert_competition(session, comp_seed)
+            await sync_teams(session, teams)
+        if settings.wikidata_enabled:
+            await verify_wikidata(competitions, teams)
+        for comp_seed in competitions:
+            for src in comp_seed.seasons:
+                # One transaction per competition-season: a bad file leaves no partial writes.
+                try:
+                    async with maker() as session, session.begin():
+                        count = await sync_season(session, comp_seed, src, sources)
+                except Exception as exc:  # noqa: BLE001 — one bad season must not block the rest
+                    log.error("%s %s: FAILED: %s", comp_seed.name, src.label, exc)
+                    report.failed.append((comp_seed, src, exc))
+                    continue
+                log.info("%s %s: %d matches", comp_seed.name, src.label, count)
+                report.synced.append((comp_seed, src))
+        if verify and settings.wikipedia_enabled:
+            if reference is not None:
+                await verify_seasons(report.synced, reference)
+            else:
+                async with WikipediaClient(rest=settings.wikipedia_rest, api=settings.wikipedia_api) as wiki:
+                    await verify_seasons(report.synced, wiki)
+    return report
 
 
-def main() -> None:
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
-    logging.getLogger("httpx").setLevel(logging.WARNING)
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(prog="python -m football_api.sync", description="Reconcile sources into the database.")
+    parser.add_argument(
+        "--competition", action="append", default=[], metavar="QID",
+        help="sync only this competition (Wikidata QID); repeatable. Default: all",
+    )
+    parser.add_argument("--verify", action="store_true", help="verify synced seasons that have a reference")
+    parser.add_argument("--no-refresh", action="store_true", help="use the existing source checkouts as they are")
+    return parser.parse_args(argv)
+
+
+async def _main(args: argparse.Namespace) -> int:
     try:
-        asyncio.run(run_sync())
+        competitions = select_competitions(load_competitions(), args.competition)
+    except UnknownCompetitionError as exc:
+        log.error("%s", exc)
+        return 2
+    try:
+        report = await run_sync(competitions=competitions, refresh_sources=not args.no_refresh, verify=args.verify)
+    except SchemaNotMigratedError as exc:
+        log.error("%s", exc)
+        return 3
+    except SyncInProgressError as exc:
+        log.error("%s", exc)
+        return 4
     except SyncError as exc:
         log.error("sync failed: %s", exc)
-        sys.exit(1)
+        return 1
+    finally:
+        await get_engine().dispose()
+    if report.failed:
+        log.error("%d season(s) failed: %s", len(report.failed), ", ".join(f"{c.name} {s.label}" for c, s, _ in report.failed))
+        return 1
+    return 0
+
+
+def main(argv: list[str] | None = None) -> None:
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    sys.exit(asyncio.run(_main(parse_args(argv))))
 
 
 if __name__ == "__main__":

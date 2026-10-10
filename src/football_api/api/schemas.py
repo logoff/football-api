@@ -15,6 +15,8 @@ from football_api.domain.enums import (
     Side,
     Stage,
     TeamKind,
+    VerificationReference,
+    VerificationStatus,
 )
 
 UtcDatetime = Annotated[
@@ -103,6 +105,15 @@ class MatchCoverage(BaseModel):
     scorers: Coverage
 
 
+class MatchVerificationOut(BaseModel):
+    status: VerificationStatus = Field(
+        description="`VERIFIED` both sources agree; `MISMATCH` they differ; "
+        "`UNCONFIRMED` the reference has no result yet; `SOURCE_BEHIND` only the reference has one"
+    )
+    reference: VerificationReference = Field(description="The independent source compared against")
+    checked_at: UtcDatetime
+
+
 class MatchOut(BaseModel):
     id: uuid.UUID
     competition_id: uuid.UUID
@@ -122,6 +133,10 @@ class MatchOut(BaseModel):
     home_pens: int | None
     away_pens: int | None
     coverage: MatchCoverage
+    verification: MatchVerificationOut | None = Field(
+        description="Score check against an independent open reference; null when the match isn't verified. "
+        "Only the outcome is shown, never the reference's own values"
+    )
     home_team: TeamOut | None = Field(default=None, description="Present with `expand=teams`")
     away_team: TeamOut | None = Field(default=None, description="Present with `expand=teams`")
     venue: VenueOut | None = Field(default=None, description="Present with `expand=venue`")

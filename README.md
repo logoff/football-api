@@ -26,7 +26,16 @@ docker pull ghcr.io/logoff/football-api:latest
 
 A version tag also creates a GitHub release whose notes list the image tags and the multi-arch digest.
 
-The image runs migrations and then the API on port 8000. It needs `DATABASE_URL`, and the database is populated with `just sync` from a checkout (see the Security posture section before exposing it).
+By default the image runs migrations and then the API on port 8000. It needs `DATABASE_URL` (see the Security posture section before exposing it).
+
+The same image can populate the database, e.g. from a scheduled job. Point `SOURCES_DIR` at a writable directory for the source checkouts:
+
+```sh
+docker run --rm -e DATABASE_URL=... -e SOURCES_DIR=/tmp/sources ghcr.io/logoff/football-api:latest \
+  python -m football_api.sync --competition Q324867 --verify
+```
+
+The sync refuses to run until the API container has applied the migrations (exit code 3).
 
 ## Requirements
 
@@ -44,25 +53,40 @@ The image runs migrations and then the API on port 8000. It needs `DATABASE_URL`
 
 ## Data coverage
 
-13 competitions, last completed edition each:
+13 competitions. La Liga has every season openfootball publishes, up to the one in progress; the others have their last completed edition:
 
-| Competition                | Season  | Results | Goal scorers | Squads |
-| -------------------------- | ------- | ------- | ------------ | ------ |
-| Premier League             | 2024-25 | ✅      | none         | none   |
-| La Liga                    | 2024-25 | ✅      | none         | none   |
-| Bundesliga                 | 2024-25 | ✅      | none         | none   |
-| Serie A                    | 2024-25 | ✅      | none         | none   |
-| Ligue 1                    | 2024-25 | ✅      | none         | none   |
-| UEFA Champions League      | 2024-25 | ✅      | none         | none   |
-| UEFA Europa League         | 2024-25 | ✅      | none         | none   |
-| UEFA Conference League     | 2024-25 | ✅      | none         | none   |
-| CONMEBOL Copa Libertadores | 2025    | ✅      | none         | none   |
-| FIFA Club World Cup        | 2025    | ✅      | ✅           | ✅     |
-| FIFA World Cup             | 2022    | ✅      | ✅           | ✅     |
-| UEFA European Championship | 2024    | ✅      | ✅           | ✅     |
-| CONMEBOL Copa América      | 2024    | ✅      | ✅           | ✅     |
+| Competition                | Seasons                 | Results | Goal scorers | Squads |
+| -------------------------- | ----------------------- | ------- | ------------ | ------ |
+| Premier League             | 2024-25                 | ✅      | none         | none   |
+| La Liga                    | 2012-13 to 2026-27 (15) | ✅      | none         | none   |
+| Bundesliga                 | 2024-25                 | ✅      | none         | none   |
+| Serie A                    | 2024-25                 | ✅      | none         | none   |
+| Ligue 1                    | 2024-25                 | ✅      | none         | none   |
+| UEFA Champions League      | 2024-25                 | ✅      | none         | none   |
+| UEFA Europa League         | 2024-25                 | ✅      | none         | none   |
+| UEFA Conference League     | 2024-25                 | ✅      | none         | none   |
+| CONMEBOL Copa Libertadores | 2025                    | ✅      | none         | none   |
+| FIFA Club World Cup        | 2025                    | ✅      | ✅           | ✅     |
+| FIFA World Cup             | 2022                    | ✅      | ✅           | ✅     |
+| UEFA European Championship | 2024                    | ✅      | ✅           | ✅     |
+| CONMEBOL Copa América      | 2024                    | ✅      | ✅           | ✅     |
 
 The API reports this in a `coverage` field on seasons, matches, and player listings, so "no scorers" is never mistaken for "no goals".
+
+### Verification
+
+openfootball is the only data source. La Liga scores are additionally checked against the results grid of the English Wikipedia season article, so a wrong score in either source shows up instead of passing silently. Wikipedia is read only to compare: none of its values are stored or served.
+
+Each La Liga match gets a `verification` object in the API (`null` elsewhere), and `/v1/matches?verification=MISMATCH` lists the disagreements:
+
+| Status          | Meaning                                                   |
+| --------------- | --------------------------------------------------------- |
+| `VERIFIED`      | both sources have the same score                          |
+| `MISMATCH`      | the scores differ; the stored score is kept as it is      |
+| `UNCONFIRMED`   | openfootball has a result that Wikipedia doesn't have yet |
+| `SOURCE_BEHIND` | Wikipedia has a result that openfootball doesn't have yet |
+
+Statuses are recomputed on every `--verify` run, and each disagreement is logged with both scores.
 
 Known gaps:
 
@@ -74,9 +98,32 @@ Known gaps:
 ## How it works
 
 - `seeds/competitions.yaml`: the competitions, their source files, and each file's hand-verified time zone.
-- `seeds/teams.yaml`: canonical teams, each with its Wikidata QID and every openfootball spelling. Sync fails on a team name not listed here. `tools/propose_teams.py` drafts entries for new sources; review them before committing.
+- `seeds/teams.yaml`: canonical teams, each with its Wikidata QID and every openfootball spelling. A season whose file uses a team name not listed here fails to sync. `tools/propose_teams.py` drafts entries for new sources; review them before committing.
 - `just sync` is idempotent: running it again with unchanged sources leaves the database byte-for-byte identical, UUIDs included.
 - Design and specs: `openspec/changes/init-football-api-v0.1/`.
+
+### Sync command
+
+`just sync` runs `python -m football_api.sync` over every competition. It can also be scoped and run unattended, e.g. from a scheduler:
+
+```sh
+python -m football_api.sync --competition Q324867 --verify   # La Liga only, then verify it
+just sync-competition Q324867 --verify                       # the same, after local migrations
+```
+
+- `--competition QID`: only this competition (its Wikidata QID, as in `seeds/competitions.yaml`). Repeatable. Default: all of them.
+- `--verify`: after syncing, check the scores of every season that names a reference (see [Verification](#verification)).
+- `--no-refresh`: use the existing source checkouts without fetching.
+
+Each season is synced in its own transaction, so a broken file costs only that season, and the log has one line per season. The sync never runs migrations: the API container applies them on start.
+
+| Exit code | Meaning                                                                     |
+| --------- | --------------------------------------------------------------------------- |
+| 0         | every requested season synced; verification findings never fail a run       |
+| 1         | a season, or the seed step, failed (the other seasons are still committed)  |
+| 2         | usage error, e.g. an unknown QID; nothing was written                       |
+| 3         | the database schema isn't at the code's migration head; nothing was written |
+| 4         | another sync is running against the same database; nothing was written      |
 
 ## Development
 

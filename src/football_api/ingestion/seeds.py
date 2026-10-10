@@ -4,11 +4,10 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, TypeAdapter
+from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
 from football_api.domain.enums import CompetitionScope, TeamKind
-
-SEEDS_DIR = Path(__file__).resolve().parents[3] / "seeds"
+from football_api.infra.settings import get_settings
 
 
 class _Seed(BaseModel):
@@ -27,6 +26,9 @@ class SeasonSource(_Seed):
     tz: str = Field(description="IANA zone of the file's kickoff times, or `inline`")
     json_file: str | None = Field(default=None, alias="json")
     squads: SquadSource | None = None
+    wikipedia: str | None = Field(
+        default=None, description="English Wikipedia article whose results grid verifies this season"
+    )
 
 
 class CompetitionSeed(_Seed):
@@ -35,7 +37,14 @@ class CompetitionSeed(_Seed):
     team_kind: TeamKind
     scope: CompetitionScope
     wikidata: str = Field(description="Wikidata QID; the competition's identity across syncs")
-    season: SeasonSource
+    seasons: list[SeasonSource] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _unique_labels(self) -> "CompetitionSeed":
+        labels = [s.label for s in self.seasons]
+        if len(labels) != len(set(labels)):
+            raise ValueError(f"{self.name}: duplicate season label")
+        return self
 
 
 class TeamSeed(_Seed):
@@ -52,7 +61,7 @@ def _load(path: Path) -> object:
 
 
 def load_competitions(path: Path | None = None) -> list[CompetitionSeed]:
-    data = _load(path or SEEDS_DIR / "competitions.yaml")
+    data = _load(path or get_settings().seeds_dir / "competitions.yaml")
     competitions = TypeAdapter(list[CompetitionSeed]).validate_python(data)
     qids = [c.wikidata for c in competitions]
     if len(qids) != len(set(qids)):
@@ -61,7 +70,7 @@ def load_competitions(path: Path | None = None) -> list[CompetitionSeed]:
 
 
 def load_teams(path: Path | None = None) -> list[TeamSeed]:
-    data = _load(path or SEEDS_DIR / "teams.yaml")
+    data = _load(path or get_settings().seeds_dir / "teams.yaml")
     teams = TypeAdapter(list[TeamSeed]).validate_python(data)
     seen_qids: dict[str, str] = {}
     seen_aliases: dict[str, str] = {}

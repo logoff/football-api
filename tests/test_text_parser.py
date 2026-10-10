@@ -186,3 +186,28 @@ def test_own_goal_flag() -> None:
         ("Páez", False, True, 4),
         ("Antonio", False, False, None),
     ]
+
+
+def test_la_liga_2012_layout_with_dated_headings() -> None:
+    """2012-13 to 2016-17: `HH:MM  Home  v Away  score (ht)` under `Sat Aug 18 2012` headings."""
+    matches = parse("espana/2012-13/1-liga.txt", 2012)
+    assert len(matches) == 20
+    first = matches[0]
+    assert (first.home, first.away, first.day, first.kickoff) == ("RC Celta", "Málaga CF", date(2012, 8, 18), time(19, 0))
+    assert first.score == ParsedScore(0, 1, DecidedBy.REGULAR)
+    last = matches[-1]
+    assert (last.round_label, last.home, last.away, last.day) == ("Matchday 18", "Rayo Vallecano", "Getafe CF", date(2013, 1, 7))
+    assert last.score == ParsedScore(3, 1, DecidedBy.REGULAR)
+
+
+def test_la_liga_2020_layout_with_score_between_teams() -> None:
+    """2020-21: `HH:MM  Home  score (ht)  Away`, year-less unindented dates, re-listed rescheduled matchdays."""
+    matches = parse("espana/2020-21/1-liga.txt", 2020)
+    assert len(matches) == 18
+    eibar = find(matches, "SD Eibar", "RC Celta de Vigo")
+    assert (eibar.day, eibar.kickoff, eibar.score) == (date(2020, 9, 12), time(16, 0), ParsedScore(0, 0, DecidedBy.REGULAR))
+    no_time = find(matches, "SD Eibar", "Granada CF")  # time carried from the line above
+    assert (no_time.day, no_time.kickoff, no_time.score) == (date(2021, 1, 3), time(18, 30), ParsedScore(2, 0, DecidedBy.REGULAR))
+    rescheduled = find(matches, "Athletic Club", "FC Barcelona")
+    assert (rescheduled.round_label, rescheduled.day) == ("Matchday 2", date(2021, 1, 6))
+    assert rescheduled.score == ParsedScore(2, 3, DecidedBy.REGULAR)

@@ -203,6 +203,8 @@
   country: "ES"
   wikidata: Q8701
   openfootball:
+    - "Atlético Madrid"
+    - "Atlético de Madrid"
     - "Atlético de Madrid (ESP)"
     - "Club Atlético de Madrid"
     - "Club Atlético de Madrid (ESP)"
@@ -660,6 +662,20 @@
   openfootball:
     - "Czech Republic"
 
+- name: "Cádiz CF"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q460448
+  openfootball:
+    - "Cádiz CF"
+
+- name: "Córdoba CF"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q10499
+  openfootball:
+    - "Córdoba CF"
+
 - name: "Defensor"
   kind: CLUB
   country: "UY"
@@ -679,7 +695,16 @@
   country: "ES"
   wikidata: Q223620
   openfootball:
+    - "CD Alavés"
     - "Deportivo Alavés"
+
+- name: "Deportivo La Coruña"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q8760
+  openfootball:
+    - "Deportivo La Coruña"
+    - "RC Deportivo La Coruña"
 
 - name: "Deportivo Táchira"
   kind: CLUB
@@ -730,6 +755,13 @@
   openfootball:
     - "Eintracht Frankfurt"
     - "Eintracht Frankfurt (GER)"
+
+- name: "Elche CF"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q10512
+  openfootball:
+    - "Elche CF"
 
 - name: "Empoli"
   kind: CLUB
@@ -792,6 +824,7 @@
   country: "ES"
   wikidata: Q7156
   openfootball:
+    - "Barcelona"
     - "FC Barcelona"
     - "FC Barcelona (ESP)"
 
@@ -1029,6 +1062,13 @@
   openfootball:
     - "GNK Dinamo Zagreb (CRO)"
 
+- name: "Granada CF"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q8812
+  openfootball:
+    - "Granada CF"
+
 - name: "Heart of Midlothian"
   kind: CLUB
   country: "GB-SCT"
@@ -1213,6 +1253,13 @@
   openfootball:
     - "Leicester City FC"
 
+- name: "Levante UD"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q8823
+  openfootball:
+    - "Levante UD"
+
 - name: "Lille OSC"
   kind: CLUB
   country: "FR"
@@ -1301,6 +1348,13 @@
   wikidata: Q207337
   openfootball:
     - "Morocco"
+
+- name: "Málaga CF"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q8857
+  openfootball:
+    - "Málaga CF"
 
 - name: "Netherlands"
   kind: NATIONAL
@@ -1482,6 +1536,13 @@
   openfootball:
     - "Racing Club (ARG)"
 
+- name: "Racing Santander"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q12236
+  openfootball:
+    - "Real Racing Club de Santander"
+
 - name: "Rangers"
   kind: CLUB
   country: "GB-SCT"
@@ -1501,6 +1562,7 @@
   country: "ES"
   wikidata: Q10300
   openfootball:
+    - "Rayo Vallecano"
     - "Rayo Vallecano de Madrid"
 
 - name: "RB Leipzig"
@@ -1516,6 +1578,7 @@
   country: "ES"
   wikidata: Q8749
   openfootball:
+    - "RC Celta"
     - "RC Celta de Vigo"
 
 - name: "RC Lens"
@@ -1537,6 +1600,8 @@
   country: "ES"
   wikidata: Q8780
   openfootball:
+    - "Espanyol Barcelona"
+    - "RCD Espanyol"
     - "RCD Espanyol de Barcelona"
 
 - name: "RCD Mallorca"
@@ -1551,6 +1616,7 @@
   country: "ES"
   wikidata: Q8723
   openfootball:
+    - "Real Betis"
     - "Real Betis (ESP)"
     - "Real Betis Balompié"
 
@@ -1559,15 +1625,25 @@
   country: "ES"
   wikidata: Q8682
   openfootball:
+    - "Real Madrid"
+    - "Real Madrid C.F."
     - "Real Madrid C.F. (ESP)"
     - "Real Madrid CF"
     - "Real Madrid CF (ESP)"
+
+- name: "Real Oviedo"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q271574
+  openfootball:
+    - "Real Oviedo"
 
 - name: "Real Sociedad"
   kind: CLUB
   country: "ES"
   wikidata: Q10315
   openfootball:
+    - "Real Sociedad"
     - "Real Sociedad (ESP)"
     - "Real Sociedad de Fútbol"
 
@@ -1576,7 +1652,15 @@
   country: "ES"
   wikidata: Q10319
   openfootball:
+    - "Real Valladolid"
     - "Real Valladolid CF"
+
+- name: "Real Zaragoza"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q10308
+  openfootball:
+    - "Real Zaragoza"
 
 - name: "Romania"
   kind: NATIONAL
@@ -1641,6 +1725,20 @@
   openfootball:
     - "Scotland"
 
+- name: "SD Eibar"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q770740
+  openfootball:
+    - "SD Eibar"
+
+- name: "SD Huesca"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q11971
+  openfootball:
+    - "SD Huesca"
+
 - name: "Seattle Sounders"
   kind: CLUB
   country: "US"
@@ -1667,6 +1765,7 @@
   country: "ES"
   wikidata: Q10329
   openfootball:
+    - "Sevilla"
     - "Sevilla FC"
 
 - name: "Shamrock Rovers"
@@ -1739,6 +1838,13 @@
   wikidata: Q75729
   openfootball:
     - "Sporting Clube de Portugal (POR)"
+
+- name: "Sporting Gijón"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q12278
+  openfootball:
+    - "Sporting Gijón"
 
 - name: "SS Lazio"
   kind: CLUB
@@ -1847,6 +1953,13 @@
   wikidata: Q483856
   openfootball:
     - "Turkey"
+
+- name: "UD Almería"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q10407
+  openfootball:
+    - "UD Almería"
 
 - name: "UD Las Palmas"
   kind: CLUB
@@ -1974,6 +2087,7 @@
   country: "ES"
   wikidata: Q12297
   openfootball:
+    - "Villarreal"
     - "Villarreal CF"
 
 - name: "Vitória"
