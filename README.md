@@ -24,6 +24,8 @@ CI publishes the API image to GitHub Container Registry once type checks and tes
 docker pull ghcr.io/logoff/football-api:latest
 ```
 
+A version tag also creates a GitHub release whose notes list the image tags and the multi-arch digest.
+
 The image runs migrations and then the API on port 8000. It needs `DATABASE_URL`, and the database is populated with `just sync` from a checkout (see the Security posture section before exposing it).
 
 ## Requirements
