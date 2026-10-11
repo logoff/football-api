@@ -13,12 +13,13 @@ context: |
   aliases). External IDs live only in external_ref; no source is
   privileged.
 
-  Scope: 13 competitions. La Liga: every season openfootball/espana
-  has, 2012-13 to 2026-27 (in progress), each score verified against
-  the English Wikipedia season grid (change verify-and-schedule-la-liga).
-  The others: last completed edition only.
-  Domestic club leagues (5): Premier League, La Liga, Bundesliga,
-  Serie A, Ligue 1 (2024-25). National-team tournaments (3): FIFA
+  Scope: 13 competitions. Domestic club leagues (5): every season
+  openfootball has, up to 2026-27 (in progress), each score verified
+  against the English Wikipedia season grid: Premier League from
+  2000-01, Bundesliga 2010-11, La Liga 2012-13, Serie A 2013-14 (2018-19
+  unverified: its grid links no clubs), Ligue 1 2014-15 (changes
+  verify-and-schedule-la-liga, extend-and-verify-top-leagues).
+  The others: last completed edition only. National-team tournaments (3): FIFA
   World Cup 2022, UEFA Euro 2024, Copa América 2024. Continental club
   tournaments (4): UEFA Champions League, Europa League, Conference
   League (2024-25), Copa Libertadores 2025. Intercontinental club

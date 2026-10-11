@@ -5,11 +5,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from sqlalchemy import inspect, select, update
+from sqlalchemy import func, inspect, select, update
 
-from football_api.domain.enums import VerificationStatus
+from football_api.domain.enums import MatchStatus, SeasonStatus, VerificationStatus
 from football_api.infra.db import get_engine, get_sessionmaker
-from football_api.infra.models import Match, MatchVerification, Team
+from football_api.infra.models import Match, MatchVerification, Season, Team
 from football_api.ingestion.seeds import CompetitionSeed, TeamSeed
 from football_api.ingestion.wikipedia import GridCell, ResultsGrid, WikipediaUnavailable
 from football_api.sync import run_sync
@@ -182,11 +182,85 @@ async def test_reference_problems_keep_existing_statuses(
 async def test_only_seasons_with_a_reference_are_verified(
     fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
 ) -> None:
-    bundesliga = [c for c in fixture_competitions if c.name == "Bundesliga"]
+    libertadores = [c for c in fixture_competitions if c.name == "CONMEBOL Copa Libertadores"]
     ref = FakeReference()
-    await verify(bundesliga, fixture_teams, ref)
+    await verify(libertadores, fixture_teams, ref)
     assert ref.requests == []
     assert await statuses() == {}
+
+
+async def test_season_without_an_article_is_skipped_quietly(
+    fresh_db: Path,
+    fixture_competitions: list[CompetitionSeed],
+    fixture_teams: list[TeamSeed],
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """A season seeded without `wikipedia` is not verified; its siblings are (match-verification spec)."""
+    (fresh_db / "england/2023-24").mkdir()
+    (fresh_db / "england/2023-24/1-premierleague.txt").write_text(
+        (fresh_db / "england/2024-25/1-premierleague.txt").read_text(encoding="utf-8").replace("2024", "2023"),
+        encoding="utf-8",
+    )
+    pl = next(c for c in fixture_competitions if c.name == "Premier League")
+    current = pl.seasons[0].model_copy(update={"wikipedia": ARTICLE})
+    earlier = current.model_copy(
+        update={"label": "2023-24", "start_year": 2023, "file": "england/2023-24/1-premierleague.txt", "json_file": None, "wikipedia": None}
+    )
+    pl = pl.model_copy(update={"seasons": [earlier, current]})
+    ref = FakeReference()
+    ref.qid_of = {t.name: t.wikidata for t in fixture_teams if t.wikidata}
+    with caplog.at_level(logging.WARNING, logger="football_api.verification"):
+        report = await run_sync(competitions=[pl], teams=fixture_teams, refresh_sources=False)
+        assert not report.failed
+        matches = await stored_matches()  # both seasons have the same pairings and scores
+        teams = sorted({n for h, a, _ in matches for n in (h, a)})
+        ref.grid = ResultsGrid(teams=teams, cells=[GridCell(h, a, s) for h, a, s in matches])
+        await verify_seasons([(pl, s) for s in pl.seasons], ref)
+
+    assert ref.requests == [ARTICLE]
+    assert caplog.text == ""
+    async with get_sessionmaker()() as session:
+        rows = await session.execute(
+            select(Season.label, func.count(MatchVerification.id))
+            .join(Match, Match.season_id == Season.id)
+            .outerjoin(MatchVerification, MatchVerification.match_id == Match.id)
+            .group_by(Season.label)
+            .order_by(Season.label)
+        )
+        assert [tuple(r) for r in rows] == [("2023-24", 0), ("2024-25", 20)]
+
+
+async def test_cancelled_fixtures_get_no_status(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """Fixtures the source marks cancelled have no score, close the season, and get no status (catalog spec)."""
+    path = fresh_db / "england/2024-25/1-premierleague.txt"
+    text = path.read_text(encoding="utf-8")
+    for line in ("v AFC Bournemouth          1-1 (1-0)", "v Tottenham Hotspur FC     1-1 (0-1)"):
+        assert line in text
+        text = text.replace(line, line.split("  ")[0] + "  [cancelled]")
+    path.write_text(text, encoding="utf-8")
+    pl = next(c for c in fixture_competitions if c.name == "Premier League")
+    pl = pl.model_copy(update={"seasons": [pl.seasons[0].model_copy(update={"json_file": None, "wikipedia": ARTICLE})]})
+    report = await run_sync(competitions=[pl], teams=fixture_teams, refresh_sources=False)
+    assert not report.failed
+    matches = await stored_matches()
+    ref = FakeReference()
+    ref.qid_of = {t.name: t.wikidata for t in fixture_teams if t.wikidata}
+    ref.grid = ResultsGrid(
+        teams=sorted({n for h, a, _ in matches for n in (h, a)}), cells=[GridCell(h, a, s) for h, a, s in matches]
+    )
+    await verify(competitions=[pl], teams=fixture_teams, ref=ref)
+
+    async with get_sessionmaker()() as session:
+        cancelled = (await session.scalars(select(Match).where(Match.status == MatchStatus.CANCELLED))).all()
+        season = await session.scalar(select(Season))
+    assert len(cancelled) == 2
+    assert all(m.home_score is None and m.away_score is None for m in cancelled)
+    assert season is not None and season.status is SeasonStatus.COMPLETED
+    got = await statuses()
+    assert len(got) == len(matches) - 2
+    assert all(s is VerificationStatus.VERIFIED for s, _ in got.values())
 
 
 async def test_no_reference_values_are_stored(

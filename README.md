@@ -53,31 +53,33 @@ The sync refuses to run until the API container has applied the migrations (exit
 
 ## Data coverage
 
-13 competitions. La Liga has every season openfootball publishes, up to the one in progress; the others have their last completed edition:
+13 competitions. The five domestic leagues have every season openfootball publishes, up to the one in progress, each checked against Wikipedia (see [Verification](#verification)); the others have their last completed edition:
 
-| Competition                | Seasons                 | Results | Goal scorers | Squads |
-| -------------------------- | ----------------------- | ------- | ------------ | ------ |
-| Premier League             | 2024-25                 | ✅      | none         | none   |
-| La Liga                    | 2012-13 to 2026-27 (15) | ✅      | none         | none   |
-| Bundesliga                 | 2024-25                 | ✅      | none         | none   |
-| Serie A                    | 2024-25                 | ✅      | none         | none   |
-| Ligue 1                    | 2024-25                 | ✅      | none         | none   |
-| UEFA Champions League      | 2024-25                 | ✅      | none         | none   |
-| UEFA Europa League         | 2024-25                 | ✅      | none         | none   |
-| UEFA Conference League     | 2024-25                 | ✅      | none         | none   |
-| CONMEBOL Copa Libertadores | 2025                    | ✅      | none         | none   |
-| FIFA Club World Cup        | 2025                    | ✅      | ✅           | ✅     |
-| FIFA World Cup             | 2022                    | ✅      | ✅           | ✅     |
-| UEFA European Championship | 2024                    | ✅      | ✅           | ✅     |
-| CONMEBOL Copa América      | 2024                    | ✅      | ✅           | ✅     |
+| Competition                | Seasons                 | Results | Verified        | Goal scorers | Squads |
+| -------------------------- | ----------------------- | ------- | --------------- | ------------ | ------ |
+| Premier League             | 2000-01 to 2026-27 (27) | ✅      | ✅              | none         | none   |
+| La Liga                    | 2012-13 to 2026-27 (15) | ✅      | ✅              | none         | none   |
+| Bundesliga                 | 2010-11 to 2026-27 (17) | ✅      | ✅              | none         | none   |
+| Serie A                    | 2013-14 to 2026-27 (14) | ✅      | all but 2018-19 | none         | none   |
+| Ligue 1                    | 2014-15 to 2026-27 (13) | ✅      | ✅              | none         | none   |
+| UEFA Champions League      | 2024-25                 | ✅      | none            | none         | none   |
+| UEFA Europa League         | 2024-25                 | ✅      | none            | none         | none   |
+| UEFA Conference League     | 2024-25                 | ✅      | none            | none         | none   |
+| CONMEBOL Copa Libertadores | 2025                    | ✅      | none            | none         | none   |
+| FIFA Club World Cup        | 2025                    | ✅      | none            | ✅           | ✅     |
+| FIFA World Cup             | 2022                    | ✅      | none            | ✅           | ✅     |
+| UEFA European Championship | 2024                    | ✅      | none            | ✅           | ✅     |
+| CONMEBOL Copa América      | 2024                    | ✅      | none            | ✅           | ✅     |
+
+Ligue 1 2019-20 was stopped after 279 matches; its 101 unplayed fixtures are listed as `CANCELLED`.
 
 The API reports this in a `coverage` field on seasons, matches, and player listings, so "no scorers" is never mistaken for "no goals".
 
 ### Verification
 
-openfootball is the only data source. La Liga scores are additionally checked against the results grid of the English Wikipedia season article, so a wrong score in either source shows up instead of passing silently. Wikipedia is read only to compare: none of its values are stored or served.
+openfootball is the only data source. Domestic league scores are additionally checked against the results grid of the English Wikipedia season article, so a wrong score in either source shows up instead of passing silently. Wikipedia is read only to compare: none of its values are stored or served.
 
-Each La Liga match gets a `verification` object in the API (`null` elsewhere), and `/v1/matches?verification=MISMATCH` lists the disagreements:
+Each verified match gets a `verification` object in the API (`null` elsewhere), and `/v1/matches?verification=MISMATCH` lists the disagreements:
 
 | Status          | Meaning                                                   |
 | --------------- | --------------------------------------------------------- |
@@ -86,7 +88,7 @@ Each La Liga match gets a `verification` object in the API (`null` elsewhere), a
 | `UNCONFIRMED`   | openfootball has a result that Wikipedia doesn't have yet |
 | `SOURCE_BEHIND` | Wikipedia has a result that openfootball doesn't have yet |
 
-Statuses are recomputed on every `--verify` run, and each disagreement is logged with both scores.
+Statuses are recomputed on every `--verify` run, and each disagreement is logged with both scores. Serie A 2018-19 isn't verified: its article's results table doesn't link the clubs, so they can't be identified by Wikidata QID.
 
 Known gaps:
 
