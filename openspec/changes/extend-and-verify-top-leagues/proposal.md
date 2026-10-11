@@ -17,7 +17,7 @@ La Liga now has every season openfootball offers, each score checked against Wik
 
   openfootball (CC0) stays the only data source.
 
-- **Verification for every season with a usable grid.** Each season names its English Wikipedia article, and the existing verifier compares every score. That covers 70 of the 71 seasons. Serie A 2018-19 is the exception: its article's results table has no links in its rows or columns, so its teams can't be identified through Wikidata. That season is ingested but not verified.
+- **Verification for every season with a usable grid.** Each season names its English Wikipedia article, and the existing verifier compares every score. That covers all 71 seasons. Serie A 2018-19's article had no links in its results table, so its teams couldn't be identified through Wikidata; the clubs have since been linked in the article (design D2).
 
 - **Teams.** Every club that played these leagues in those seasons and isn't seeded yet is added to `seeds/teams.yaml` with its Wikidata QID. The rest of the roughly 150 missing openfootball spellings become aliases of clubs already seeded.
 

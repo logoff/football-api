@@ -55,21 +55,21 @@ The sync refuses to run until the API container has applied the migrations (exit
 
 13 competitions. The five domestic leagues have every season openfootball publishes, up to the one in progress, each checked against Wikipedia (see [Verification](#verification)); the others have their last completed edition:
 
-| Competition                | Seasons                 | Results | Verified        | Goal scorers | Squads |
-| -------------------------- | ----------------------- | ------- | --------------- | ------------ | ------ |
-| Premier League             | 2000-01 to 2026-27 (27) | ✅      | ✅              | none         | none   |
-| La Liga                    | 2012-13 to 2026-27 (15) | ✅      | ✅              | none         | none   |
-| Bundesliga                 | 2010-11 to 2026-27 (17) | ✅      | ✅              | none         | none   |
-| Serie A                    | 2013-14 to 2026-27 (14) | ✅      | all but 2018-19 | none         | none   |
-| Ligue 1                    | 2014-15 to 2026-27 (13) | ✅      | ✅              | none         | none   |
-| UEFA Champions League      | 2024-25                 | ✅      | none            | none         | none   |
-| UEFA Europa League         | 2024-25                 | ✅      | none            | none         | none   |
-| UEFA Conference League     | 2024-25                 | ✅      | none            | none         | none   |
-| CONMEBOL Copa Libertadores | 2025                    | ✅      | none            | none         | none   |
-| FIFA Club World Cup        | 2025                    | ✅      | none            | ✅           | ✅     |
-| FIFA World Cup             | 2022                    | ✅      | none            | ✅           | ✅     |
-| UEFA European Championship | 2024                    | ✅      | none            | ✅           | ✅     |
-| CONMEBOL Copa América      | 2024                    | ✅      | none            | ✅           | ✅     |
+| Competition                | Seasons                 | Results | Verified | Goal scorers | Squads |
+| -------------------------- | ----------------------- | ------- | -------- | ------------ | ------ |
+| Premier League             | 2000-01 to 2026-27 (27) | ✅      | ✅       | none         | none   |
+| La Liga                    | 2012-13 to 2026-27 (15) | ✅      | ✅       | none         | none   |
+| Bundesliga                 | 2010-11 to 2026-27 (17) | ✅      | ✅       | none         | none   |
+| Serie A                    | 2013-14 to 2026-27 (14) | ✅      | ✅       | none         | none   |
+| Ligue 1                    | 2014-15 to 2026-27 (13) | ✅      | ✅       | none         | none   |
+| UEFA Champions League      | 2024-25                 | ✅      | none     | none         | none   |
+| UEFA Europa League         | 2024-25                 | ✅      | none     | none         | none   |
+| UEFA Conference League     | 2024-25                 | ✅      | none     | none         | none   |
+| CONMEBOL Copa Libertadores | 2025                    | ✅      | none     | none         | none   |
+| FIFA Club World Cup        | 2025                    | ✅      | none     | ✅           | ✅     |
+| FIFA World Cup             | 2022                    | ✅      | none     | ✅           | ✅     |
+| UEFA European Championship | 2024                    | ✅      | none     | ✅           | ✅     |
+| CONMEBOL Copa América      | 2024                    | ✅      | none     | ✅           | ✅     |
 
 Ligue 1 2019-20 was stopped after 279 matches; its 101 unplayed fixtures are listed as `CANCELLED`.
 
@@ -88,7 +88,7 @@ Each verified match gets a `verification` object in the API (`null` elsewhere), 
 | `UNCONFIRMED`   | openfootball has a result that Wikipedia doesn't have yet |
 | `SOURCE_BEHIND` | Wikipedia has a result that openfootball doesn't have yet |
 
-Statuses are recomputed on every `--verify` run, and each disagreement is logged with both scores. Serie A 2018-19 isn't verified: its article's results table doesn't link the clubs, so they can't be identified by Wikidata QID.
+Statuses are recomputed on every `--verify` run, and each disagreement is logged with both scores.
 
 Known gaps:
 

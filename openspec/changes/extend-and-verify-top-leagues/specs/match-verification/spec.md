@@ -26,7 +26,7 @@ The system SHALL use the results grid of the English Wikipedia article named by 
 
 #### Scenario: Season without an article
 
-- **GIVEN** Serie A 2018-19 names no article
+- **GIVEN** a Serie A season that names no article, while the other Serie A seasons do
 - **WHEN** verification runs for Serie A
 - **THEN** that season is skipped without a warning and its matches have no status
 - **AND** the other Serie A seasons are verified

@@ -4,7 +4,7 @@
 
 - [x] 1.1 List the Premier League's 27 seasons (2000-01 to 2026-27) in `seeds/competitions.yaml`. Set `file` and `tz`, set `json` from 2010-11, and set `wikipedia` to the actual article title (`FA Premier League` up to 2006-07). Verify with a script, run in the PR, that each file parses to its `# Matches` header count.
 
-- [x] 1.2 Do the same for the Bundesliga (17 seasons, 2010-11 to 2026-27), Serie A (14 seasons, 2013-14 to 2026-27; no `wikipedia` for 2018-19, with a comment saying why) and Ligue 1 (13 seasons, 2014-15 to 2026-27, `_fr1.txt` files). Verify with the same script.
+- [x] 1.2 Do the same for the Bundesliga (17 seasons, 2010-11 to 2026-27), Serie A (14 seasons, 2013-14 to 2026-27) and Ligue 1 (13 seasons, 2014-15 to 2026-27, `_fr1.txt` files). Verify with the same script.
 
 - [x] 1.3 Check each league's `tz` on its oldest and newest season against a few kickoffs whose local time is known. Record the checks in design.md under "Source coverage". Verify that the stored UTC kickoffs match.
 
@@ -23,7 +23,7 @@
 
 ## 4. Docs
 
-- [x] 4.1 Update the README coverage table (season ranges per league, and which are verified, noting Serie A 2018-19) and the `openspec/config.yaml` scope context. Verify that mdformat leaves no changes.
+- [x] 4.1 Update the README coverage table (season ranges per league,, and which are verified) and the `openspec/config.yaml` scope context. Verify that mdformat leaves no changes.
 
 ## 5. Integration
 

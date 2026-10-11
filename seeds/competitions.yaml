@@ -420,8 +420,7 @@
       file: italy/2018-19/1-seriea.txt
       tz: Europe/Rome
       json: football.json/2018-19/it.1.json
-      # No `wikipedia`: the article's results table links no clubs, so its teams
-      # can't be identified by Wikidata QID. Add the title if the article gains links.
+      wikipedia: "2018–19 Serie A"
     - label: 2019-20
       start_year: 2019
       file: italy/2019-20/1-seriea.txt
