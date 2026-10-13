@@ -275,3 +275,44 @@ async def test_postponed_pairing_listed_twice_is_one_game(
     assert game.kickoff_utc == datetime(2023, 12, 12, 19, 45, tzinfo=UTC)
     assert game.original_kickoff_utc == datetime(2023, 11, 4, 15, 0, tzinfo=UTC)
 
+
+
+async def test_date_only_kickoff_keeps_its_date(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """A fixture with a date but no time is stored at midnight UTC on that date, even in summer time,
+    and its time appearing later on the same day is not a move."""
+    path = fresh_db / "england/2024-25/1-premierleague.txt"
+    timed = path.read_text(encoding="utf-8")
+    path.write_text(timed.replace("    20:00  Manchester United FC", "           Manchester United FC"), encoding="utf-8")
+    competitions = [
+        c.model_copy(update={"seasons": [s.model_copy(update={"json_file": None}) for s in c.seasons]})
+        for c in fixture_competitions
+        if c.name == "Premier League"
+    ]
+    await sync(competitions, fixture_teams)
+    match = await match_by("Manchester United", "Fulham", Stage.LEAGUE)
+    assert match.kickoff_utc == datetime(2024, 8, 16, 0, 0, tzinfo=UTC)
+
+    path.write_text(timed, encoding="utf-8")
+    await sync(competitions, fixture_teams)
+    match = await match_by("Manchester United", "Fulham", Stage.LEAGUE)
+    assert match.kickoff_utc == datetime(2024, 8, 16, 19, 0, tzinfo=UTC)
+    assert match.original_kickoff_utc is None
+
+
+async def test_earlier_local_midnight_placeholder_is_not_a_move(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """Rows written by earlier syncs (date-only kickoff at local midnight, and that value recorded as
+    the original kickoff once the time appeared) are corrected on the next sync."""
+    competitions = [c for c in fixture_competitions if c.name == "Premier League"]
+    await sync(competitions, fixture_teams)
+    legacy = datetime(2024, 8, 15, 23, 0, tzinfo=UTC)  # midnight in London on 16 August
+    async with get_sessionmaker()() as session, session.begin():
+        match = await session.get(Match, (await match_by("Manchester United", "Fulham", Stage.LEAGUE)).id)
+        assert match is not None
+        match.original_kickoff_utc = legacy
+    await sync(competitions, fixture_teams)
+    match = await match_by("Manchester United", "Fulham", Stage.LEAGUE)
+    assert (match.kickoff_utc, match.original_kickoff_utc) == (datetime(2024, 8, 16, 19, 0, tzinfo=UTC), None)
