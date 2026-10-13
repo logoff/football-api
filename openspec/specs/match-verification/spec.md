@@ -6,9 +6,9 @@ Checks stored match results against an independent, openly licensed reference so
 
 ## Requirements
 
-### Requirement: Reference results for La Liga
+### Requirement: Reference results for domestic leagues
 
-The system SHALL use the results grid of the English Wikipedia article for each configured La Liga season as the verification reference. Reference teams SHALL be matched to stored teams only through their Wikidata QID.
+The system SHALL use the results grid of the English Wikipedia article named by each configured domestic league season as the verification reference. A season that names no article is not verified. Reference teams SHALL be matched to stored teams only through their Wikidata QID.
 
 #### Scenario: Grid resolved for a configured season
 
@@ -16,6 +16,19 @@ The system SHALL use the results grid of the English Wikipedia article for each 
 - **WHEN** verification runs for La Liga
 - **THEN** the reference results are read from the 2025–26 La Liga article's results grid
 - **AND** each grid team is identified by the Wikidata QID of the article it links to
+
+#### Scenario: Article reached through a redirect
+
+- **GIVEN** a season names an article title that redirects, such as `2000–01 Premier League` (redirects to `2000–01 FA Premier League`)
+- **WHEN** verification runs for that season
+- **THEN** the grid of the redirect target is used and its scores are compared
+
+#### Scenario: Season without an article
+
+- **GIVEN** a Serie A season that names no article, while the other Serie A seasons do
+- **WHEN** verification runs for Serie A
+- **THEN** that season is skipped without a warning and its matches have no status
+- **AND** the other Serie A seasons are verified
 
 #### Scenario: Reference team without a known QID
 
@@ -114,7 +127,7 @@ Match responses SHALL include `verification`: `null` when the match has no statu
 
 #### Scenario: Competition without verification
 
-- **WHEN** a client GETs a Premier League match
+- **WHEN** a client GETs a UEFA Champions League match
 - **THEN** `verification` is `null`
 
 #### Scenario: Listing mismatches
