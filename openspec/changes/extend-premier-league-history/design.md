@@ -31,7 +31,7 @@ The old Wimbledon F.C. (Q19482) is not AFC Wimbledon (Q48851, founded 2002) and 
 
 ### D3. Date-only kickoffs
 
-A kickoff without a time is stored at midnight UTC on the match date. That relies on the separate fix "Keep the date of date-only kickoffs"; before it, files with a named zone stored local midnight, which during British Summer Time falls on the previous UTC day. Seven of the eight seasons have no times in the source, so their `kickoff_utc` values are dates. This is the source's precision, not a parser loss.
+A kickoff without a time is stored at midnight UTC on the match date. That comes from the fix "Keep the date of date-only kickoffs" (#8); before it, files with a named zone stored local midnight, which during British Summer Time falls on the previous UTC day. Seven of the eight seasons have no times in the source, so their `kickoff_utc` values are dates. This is the source's precision, not a parser loss.
 
 ## Source coverage
 
