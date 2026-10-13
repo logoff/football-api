@@ -195,15 +195,30 @@ async def resolve_team(session: AsyncSession, path: str, line_no: int, name: str
 
 
 def kickoff_utc(m: ParsedMatch, tz: str, path: str) -> datetime:
-    """Line offset first, then the file's configured zone (design.md, "Kickoff time zones")."""
-    local = datetime.combine(m.day, m.kickoff or time(0, 0))
+    """Line offset first, then the file's configured zone (design.md, "Kickoff time zones").
+
+    A match with a date but no time keeps its date: midnight UTC on that day, whatever the zone.
+    """
+    if m.kickoff is None:
+        return date_only_kickoff(m.day)
+    local = datetime.combine(m.day, m.kickoff)
     if m.utc_offset is not None:
         return (local - m.utc_offset).replace(tzinfo=UTC)
     if tz == "inline":
-        if m.kickoff is None:  # a postponed fixture with no time: keep the date, midnight UTC
-            return local.replace(tzinfo=UTC)
         raise SyncError(f"{path}:{m.line_no}: no UTC offset on the line and the file's tz is `inline`")
     return local.replace(tzinfo=ZoneInfo(tz)).astimezone(UTC)
+
+
+def date_only_kickoff(day: date) -> datetime:
+    return datetime.combine(day, time(0, 0), tzinfo=UTC)
+
+
+def is_date_only(kickoff: datetime, day: date, tz: str) -> bool:
+    """Whether a stored kickoff is the date-only placeholder for `day`, including the local-midnight
+    value earlier syncs wrote for files with a named zone."""
+    if kickoff == date_only_kickoff(day):
+        return True
+    return tz != "inline" and kickoff == datetime.combine(day, time(0, 0), tzinfo=ZoneInfo(tz)).astimezone(UTC)
 
 
 async def upsert_venue(session: AsyncSession, name: str | None, city: str | None) -> uuid.UUID | None:
@@ -328,8 +343,13 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
             kickoff_utc=kickoff,
         )
         session.add(match)
-    elif match.kickoff_utc != kickoff and match.original_kickoff_utc is None:
-        match.original_kickoff_utc = match.kickoff_utc
+    else:
+        # A time appearing for a date-only fixture on the same day is not a move.
+        moved = match.kickoff_utc != kickoff and not is_date_only(match.kickoff_utc, m.day, ctx.src.tz)
+        if moved and match.original_kickoff_utc is None:
+            match.original_kickoff_utc = match.kickoff_utc
+        elif match.original_kickoff_utc is not None and is_date_only(match.original_kickoff_utc, m.day, ctx.src.tz):
+            match.original_kickoff_utc = None  # recorded by earlier syncs for such a time appearing
     match.kickoff_utc = kickoff
     match.matchday, match.round_label, match.status = matchday, m.round_label, m.status
     match.venue_id = await upsert_venue(session, m.venue_name, m.venue_city)
