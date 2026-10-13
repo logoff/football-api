@@ -57,7 +57,7 @@ The sync refuses to run until the API container has applied the migrations (exit
 
 | Competition                | Format     | Seasons                 | Results | Verified | Goal scorers | Squads |
 | -------------------------- | ---------- | ----------------------- | ------- | -------- | ------------ | ------ |
-| Premier League             | LEAGUE     | 2000-01 to 2026-27 (27) | ✅      | ✅       | none         | none   |
+| Premier League             | LEAGUE     | 1992-93 to 2026-27 (35) | ✅      | ✅       | none         | none   |
 | La Liga                    | LEAGUE     | 2012-13 to 2026-27 (15) | ✅      | ✅       | none         | none   |
 | Bundesliga                 | LEAGUE     | 2010-11 to 2026-27 (17) | ✅      | ✅       | none         | none   |
 | Serie A                    | LEAGUE     | 2013-14 to 2026-27 (14) | ✅      | ✅       | none         | none   |
@@ -78,6 +78,8 @@ The sync refuses to run until the API container has applied the migrations (exit
 | CONMEBOL Copa América      | TOURNAMENT | 2024                    | ✅      | none     | ✅           | ✅     |
 
 Cups start where the source does: the FA Cup at Round 1 (the first round proper), the Coupe de France at round 7. Numbered cup rounds have stage `ROUND` with the round's number in `matchday`, and a preliminary round that is part of the competition proper has stage `PRELIMINARY`; clients that switch over `stage` should expect both. A pairing played again with the same home team in the same round (FA Cup 2023-24: Scarborough Athletic v Forest Green Rovers, drawn and then replayed at Scarborough after a voided replay) is two matches with `occurrence` 1 and 2.
+
+The Premier League's 1992-93 to 1997-98 and 1999-00 seasons have dates but no kickoff times in the source; their `kickoff_utc` is midnight UTC on the match date.
 
 Ligue 1 2019-20 was stopped after 279 matches; its 101 unplayed fixtures are listed as `CANCELLED`.
 
