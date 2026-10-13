@@ -902,6 +902,7 @@
   wikidata: Q19446
   openfootball:
     - "Blackburn Rovers"
+    - "Blackburn Rovers FC"
 
 - name: "Blackpool"
   kind: CLUB
@@ -947,6 +948,7 @@
   wikidata: Q19451
   openfootball:
     - "Bolton Wanderers"
+    - "Bolton Wanderers FC"
 
 - name: "Borac Banja Luka"
   kind: CLUB
@@ -1027,6 +1029,7 @@
   country: "GB-ENG"
   wikidata: Q48879
   openfootball:
+    - "Bradford"
     - "Bradford City"
 
 - name: "Braintree Town"
@@ -2111,6 +2114,7 @@
   wikidata: Q19462
   openfootball:
     - "Charlton Athletic"
+    - "Charlton Athletic FC"
 
 - name: "Chaumont"
   kind: CLUB
@@ -2131,6 +2135,7 @@
   country: "GB-ENG"
   wikidata: Q9616
   openfootball:
+    - "Chelsea"
     - "Chelsea FC"
     - "Chelsea FC (ENG)"
 
@@ -2426,6 +2431,7 @@
   country: "GB-ENG"
   wikidata: Q19580
   openfootball:
+    - "Coventry"
     - "Coventry City"
     - "Coventry City FC"
 
@@ -2660,7 +2666,9 @@
   country: "GB-ENG"
   wikidata: Q19470
   openfootball:
+    - "Derby"
     - "Derby County"
+    - "Derby County FC"
 
 - name: "Diables noirs de Combani"
   kind: CLUB
@@ -4294,6 +4302,7 @@
   country: "GB-ENG"
   wikidata: Q1128631
   openfootball:
+    - "Leeds"
     - "Leeds United"
     - "Leeds United FC"
 
@@ -4309,8 +4318,9 @@
   country: "GB-ENG"
   wikidata: Q19481
   openfootball:
-    - "Leicester City FC"
+    - "Leicester"
     - "Leicester City"
+    - "Leicester City FC"
 
 - name: "Les Herbiers VF"
   kind: CLUB
@@ -4528,6 +4538,7 @@
   country: "GB-ENG"
   wikidata: Q18661
   openfootball:
+    - "Middlesbrough"
     - "Middlesbrough FC"
 
 - name: "Miengo"
@@ -4680,8 +4691,9 @@
   country: "GB-ENG"
   wikidata: Q18716
   openfootball:
-    - "Newcastle United FC"
     - "Newcastle United"
+    - "Newcastle United FC"
+    - "Newcastle Utd"
 
 - name: "Newport County"
   kind: CLUB
@@ -4768,6 +4780,7 @@
   wikidata: Q19601
   openfootball:
     - "Oldham Athletic"
+    - "Oldham Athletic AFC"
 
 - name: "Olimpija Ljubljana"
   kind: CLUB
@@ -5197,6 +5210,7 @@
   wikidata: Q18723
   openfootball:
     - "Queens Park Rangers"
+    - "Queens Park Rangers FC"
 
 - name: "Quintanar del Rey"
   kind: CLUB
@@ -5908,7 +5922,9 @@
   country: "GB-ENG"
   wikidata: Q19498
   openfootball:
+    - "Sheffield Wed"
     - "Sheffield Wednesday"
+    - "Sheffield Wednesday FC"
 
 - name: "Sheppey United"
   kind: CLUB
@@ -6027,6 +6043,7 @@
   country: "GB-ENG"
   wikidata: Q18732
   openfootball:
+    - "Southampton"
     - "Southampton FC"
 
 - name: "Southend United"
@@ -6444,6 +6461,7 @@
   wikidata: Q19634
   openfootball:
     - "Swindon Town"
+    - "Swindon Town FC"
 
 - name: "Switzerland"
   kind: NATIONAL
@@ -6542,9 +6560,10 @@
   country: "GB-ENG"
   wikidata: Q18741
   openfootball:
+    - "Tottenham"
+    - "Tottenham Hotspur"
     - "Tottenham Hotspur (ENG)"
     - "Tottenham Hotspur FC"
-    - "Tottenham Hotspur"
 
 - name: "Toulouse"
   kind: CLUB
@@ -7478,6 +7497,7 @@
   country: "GB-ENG"
   wikidata: Q2714
   openfootball:
+    - "Watford"
     - "Watford FC"
 
 - name: "Wealdstone"
@@ -7506,8 +7526,9 @@
   country: "GB-ENG"
   wikidata: Q18747
   openfootball:
-    - "West Ham United FC"
+    - "West Ham"
     - "West Ham United"
+    - "West Ham United FC"
 
 - name: "Weston-super-Mare"
   kind: CLUB
@@ -7536,6 +7557,13 @@
   wikidata: Q18750
   openfootball:
     - "Wigan Athletic"
+
+- name: "Wimbledon"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q19482
+  openfootball:
+    - "Wimbledon FC"
 
 - name: "Woking"
   kind: CLUB

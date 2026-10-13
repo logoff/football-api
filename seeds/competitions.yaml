@@ -19,8 +19,49 @@
   scope: DOMESTIC
   format: LEAGUE
   wikidata: Q9448
-  # Every season openfootball/england has (2000-01 onwards).
+  # Every Premier League season openfootball/england has: 1992-93 to 1999-00 from archive/1990s/
+  # (dates only, apart from 1998-99), then the per-season folders from 2000-01.
   seasons:
+    - label: 1992-93
+      start_year: 1992
+      file: england/archive/1990s/1992-93/1-premierleague.txt
+      tz: Europe/London
+      wikipedia: "1992–93 FA Premier League"
+    - label: 1993-94
+      start_year: 1993
+      file: england/archive/1990s/1993-94/1-premierleague.txt
+      tz: Europe/London
+      wikipedia: "1993–94 FA Premier League"
+    - label: 1994-95
+      start_year: 1994
+      file: england/archive/1990s/1994-95/1-premierleague.txt
+      tz: Europe/London
+      wikipedia: "1994–95 FA Premier League"
+    - label: 1995-96
+      start_year: 1995
+      file: england/archive/1990s/1995-96/1-premierleague.txt
+      tz: Europe/London
+      wikipedia: "1995–96 FA Premier League"
+    - label: 1996-97
+      start_year: 1996
+      file: england/archive/1990s/1996-97/1-premierleague.txt
+      tz: Europe/London
+      wikipedia: "1996–97 FA Premier League"
+    - label: 1997-98
+      start_year: 1997
+      file: england/archive/1990s/1997-98/1-premierleague.txt
+      tz: Europe/London
+      wikipedia: "1997–98 FA Premier League"
+    - label: 1998-99
+      start_year: 1998
+      file: england/archive/1990s/1998-99/1-premierleague.txt
+      tz: Europe/London
+      wikipedia: "1998–99 FA Premier League"
+    - label: 1999-00
+      start_year: 1999
+      file: england/archive/1990s/1999-00/1-premierleague.txt
+      tz: Europe/London
+      wikipedia: "1999–2000 FA Premier League"
     - label: 2000-01
       start_year: 2000
       file: england/2000-01/1-premierleague.txt
