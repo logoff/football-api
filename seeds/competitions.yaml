@@ -1,5 +1,8 @@
 # In-scope competitions and the source files for each ingested season (`seasons:`).
 #
+# format: LEAGUE (round-robin), CUP (knockout open to the national pyramid), LEAGUE_CUP (knockout
+#         for league clubs only), SUPER_CUP (champions' play-off), TOURNAMENT (group or league phase,
+#         then knockouts).
 # tz: the time zone the file's kickoff times are written in, verified by hand.
 #     `inline` means every match line carries its own `UTC±N` offset (sync fails otherwise).
 # json: optional openfootball/football.json mirror, used only when it is current
@@ -14,6 +17,7 @@
   country: "GB-ENG"
   team_kind: CLUB
   scope: DOMESTIC
+  format: LEAGUE
   wikidata: Q9448
   # Every season openfootball/england has (2000-01 onwards).
   seasons:
@@ -174,6 +178,7 @@
   country: "ES"
   team_kind: CLUB
   scope: DOMESTIC
+  format: LEAGUE
   wikidata: Q324867
   # Every season openfootball/espana has (2012-13 onwards).
   seasons:
@@ -272,6 +277,7 @@
   country: "DE"
   team_kind: CLUB
   scope: DOMESTIC
+  format: LEAGUE
   wikidata: Q82595
   # Every season openfootball/deutschland has (2010-11 onwards).
   seasons:
@@ -382,6 +388,7 @@
   country: "IT"
   team_kind: CLUB
   scope: DOMESTIC
+  format: LEAGUE
   wikidata: Q15804
   # Every season openfootball/italy has (2013-14 onwards).
   seasons:
@@ -474,6 +481,7 @@
   country: "FR"
   team_kind: CLUB
   scope: DOMESTIC
+  format: LEAGUE
   wikidata: Q13394
   # Every season openfootball/europe/france has (2014-15 onwards).
   seasons:
@@ -556,9 +564,193 @@
       json: football.json/2026-27/fr.1.json
       wikipedia: "2026–27 Ligue 1"
 
+- name: FA Cup
+  country: "GB-ENG"
+  team_kind: CLUB
+  scope: DOMESTIC
+  format: CUP
+  wikidata: Q11151
+  # Every season openfootball/england has (2018-19 onwards), from Round 1 (the first round proper).
+  seasons:
+    - label: 2018-19
+      start_year: 2018
+      file: england/2018-19/facup.txt
+      tz: Europe/London
+    - label: 2019-20
+      start_year: 2019
+      file: england/2019-20/facup.txt
+      tz: Europe/London
+    - label: 2020-21
+      start_year: 2020
+      file: england/2020-21/facup.txt
+      tz: Europe/London
+    - label: 2021-22
+      start_year: 2021
+      file: england/2021-22/facup.txt
+      tz: Europe/London
+    - label: 2022-23
+      start_year: 2022
+      file: england/2022-23/facup.txt
+      tz: Europe/London
+    - label: 2023-24
+      start_year: 2023
+      file: england/2023-24/facup.txt
+      tz: Europe/London
+    - label: 2024-25
+      start_year: 2024
+      file: england/2024-25/facup.txt
+      tz: Europe/London
+
+- name: EFL Cup
+  country: "GB-ENG"
+  team_kind: CLUB
+  scope: DOMESTIC
+  format: LEAGUE_CUP
+  wikidata: Q11152
+  # Every season openfootball/england has (2018-19 onwards).
+  seasons:
+    - label: 2018-19
+      start_year: 2018
+      file: england/2018-19/eflcup.txt
+      tz: Europe/London
+    - label: 2019-20
+      start_year: 2019
+      file: england/2019-20/eflcup.txt
+      tz: Europe/London
+    - label: 2020-21
+      start_year: 2020
+      file: england/2020-21/eflcup.txt
+      tz: Europe/London
+    - label: 2021-22
+      start_year: 2021
+      file: england/2021-22/eflcup.txt
+      tz: Europe/London
+    - label: 2022-23
+      start_year: 2022
+      file: england/2022-23/eflcup.txt
+      tz: Europe/London
+    - label: 2023-24
+      start_year: 2023
+      file: england/2023-24/eflcup.txt
+      tz: Europe/London
+    - label: 2024-25
+      start_year: 2024
+      file: england/2024-25/eflcup.txt
+      tz: Europe/London
+
+- name: Copa del Rey
+  country: "ES"
+  team_kind: CLUB
+  scope: DOMESTIC
+  format: CUP
+  wikidata: Q483794
+  # Every season openfootball/espana has (2020-21 onwards), from the preliminary round.
+  seasons:
+    - label: 2020-21
+      start_year: 2020
+      file: espana/2020-21/cup.txt
+      tz: Europe/Madrid
+    - label: 2021-22
+      start_year: 2021
+      file: espana/2021-22/cup.txt
+      tz: Europe/Madrid
+    - label: 2022-23
+      start_year: 2022
+      file: espana/2022-23/cup.txt
+      tz: Europe/Madrid
+    - label: 2023-24
+      start_year: 2023
+      file: espana/2023-24/cup.txt
+      tz: Europe/Madrid
+    - label: 2024-25
+      start_year: 2024
+      file: espana/2024-25/cup.txt
+      tz: Europe/Madrid
+
+- name: DFB-Pokal
+  country: "DE"
+  team_kind: CLUB
+  scope: DOMESTIC
+  format: CUP
+  wikidata: Q150880
+  # Every complete season openfootball/deutschland has (2018-19 onwards). 2025-26 stops after
+  # round 2 (later rounds are N.N. placeholders); openliga/*_de.cup.txt miss matches in every season.
+  seasons:
+    - label: 2018-19
+      start_year: 2018
+      file: deutschland/2018-19/cup.txt
+      tz: Europe/Berlin
+    - label: 2019-20
+      start_year: 2019
+      file: deutschland/2019-20/cup.txt
+      tz: Europe/Berlin
+    - label: 2020-21
+      start_year: 2020
+      file: deutschland/2020-21/cup.txt
+      tz: Europe/Berlin
+    - label: 2021-22
+      start_year: 2021
+      file: deutschland/2021-22/cup.txt
+      tz: Europe/Berlin
+    - label: 2022-23
+      start_year: 2022
+      file: deutschland/2022-23/cup.txt
+      tz: Europe/Berlin
+    - label: 2023-24
+      start_year: 2023
+      file: deutschland/2023-24/cup.txt
+      tz: Europe/Berlin
+    - label: 2024-25
+      start_year: 2024
+      file: deutschland/2024-25/cup.txt
+      tz: Europe/Berlin
+
+- name: Coppa Italia
+  country: "IT"
+  team_kind: CLUB
+  scope: DOMESTIC
+  format: CUP
+  wikidata: Q169918
+  # Every season openfootball/italy has (2020-21 onwards).
+  seasons:
+    - label: 2020-21
+      start_year: 2020
+      file: italy/2020-21/cup.txt
+      tz: Europe/Rome
+    - label: 2021-22
+      start_year: 2021
+      file: italy/2021-22/cup.txt
+      tz: Europe/Rome
+    - label: 2022-23
+      start_year: 2022
+      file: italy/2022-23/cup.txt
+      tz: Europe/Rome
+    - label: 2023-24
+      start_year: 2023
+      file: italy/2023-24/cup.txt
+      tz: Europe/Rome
+    - label: 2024-25
+      start_year: 2024
+      file: italy/2024-25/cup.txt
+      tz: Europe/Rome
+
+- name: Coupe de France
+  country: "FR"
+  team_kind: CLUB
+  scope: DOMESTIC
+  format: CUP
+  wikidata: Q212412
+  # The only season openfootball/europe has, from round 7 (the first with Ligue 2 clubs).
+  seasons:
+    - label: 2024-25
+      start_year: 2024
+      file: europe/france/2024-25_frcup.txt
+      tz: Europe/Paris
+
 - name: UEFA Champions League
   team_kind: CLUB
   scope: CONTINENTAL
+  format: TOURNAMENT
   wikidata: Q18756
   seasons:
     - label: 2024-25
@@ -570,6 +762,7 @@
 - name: UEFA Europa League
   team_kind: CLUB
   scope: CONTINENTAL
+  format: TOURNAMENT
   wikidata: Q18760
   seasons:
     - label: 2024-25
@@ -580,6 +773,7 @@
 - name: UEFA Conference League
   team_kind: CLUB
   scope: CONTINENTAL
+  format: TOURNAMENT
   wikidata: Q59365764
   seasons:
     - label: 2024-25
@@ -590,6 +784,7 @@
 - name: CONMEBOL Copa Libertadores
   team_kind: CLUB
   scope: CONTINENTAL
+  format: TOURNAMENT
   wikidata: Q184795
   seasons:
     - label: "2025"
@@ -600,6 +795,7 @@
 - name: FIFA Club World Cup
   team_kind: CLUB
   scope: INTERCONTINENTAL
+  format: TOURNAMENT
   wikidata: Q223366
   seasons:
     - label: "2025"
@@ -613,6 +809,7 @@
 - name: FIFA World Cup
   team_kind: NATIONAL
   scope: INTERCONTINENTAL
+  format: TOURNAMENT
   wikidata: Q19317
   seasons:
     - label: "2022"
@@ -626,6 +823,7 @@
 - name: UEFA European Championship
   team_kind: NATIONAL
   scope: CONTINENTAL
+  format: TOURNAMENT
   wikidata: Q260858
   seasons:
     - label: "2024"
@@ -639,6 +837,7 @@
 - name: CONMEBOL Copa América
   team_kind: NATIONAL
   scope: CONTINENTAL
+  format: TOURNAMENT
   wikidata: Q178750
   seasons:
     - label: "2024"

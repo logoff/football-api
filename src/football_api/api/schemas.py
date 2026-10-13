@@ -7,6 +7,7 @@ from typing import Annotated
 from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
 
 from football_api.domain.enums import (
+    CompetitionFormat,
     CompetitionScope,
     Coverage,
     DecidedBy,
@@ -35,6 +36,10 @@ class CompetitionOut(_Out):
     country: str | None = Field(description="ISO 3166-1 alpha-2, or a UK subdivision (GB-ENG); null for international", examples=["GB-ENG"])
     team_kind: TeamKind
     scope: CompetitionScope
+    format: CompetitionFormat = Field(
+        description="LEAGUE (round-robin), CUP (knockout open to the national pyramid), LEAGUE_CUP (knockout for league "
+        "clubs only), SUPER_CUP (champions' play-off), TOURNAMENT (group or league phase, then knockouts)"
+    )
 
 
 class SeasonCoverage(BaseModel):
@@ -119,7 +124,11 @@ class MatchOut(BaseModel):
     competition_id: uuid.UUID
     season_id: uuid.UUID
     stage: Stage
-    matchday: int | None
+    matchday: int | None = Field(description="Matchday, or the round's number when `stage` is ROUND")
+    occurrence: int = Field(
+        description="1, or 2+ for a pairing played again with the same home team in the same stage (a cup re-replay)",
+        examples=[1],
+    )
     round_label: str = Field(description="Round as written in the source", examples=["First stage / Group A"])
     kickoff_utc: UtcDatetime
     original_kickoff_utc: UtcDatetime | None = Field(description="Set when a later sync observed the kickoff move")

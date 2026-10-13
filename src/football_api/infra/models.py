@@ -26,6 +26,7 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from football_api.domain.enums import (
+    CompetitionFormat,
     CompetitionScope,
     Coverage,
     DecidedBy,
@@ -71,6 +72,7 @@ class Competition(Base):
     country: Mapped[str | None] = mapped_column(String(6))
     team_kind: Mapped[TeamKind] = mapped_column(_enum(TeamKind, "team_kind"))
     scope: Mapped[CompetitionScope] = mapped_column(_enum(CompetitionScope, "competition_scope"))
+    format: Mapped[CompetitionFormat] = mapped_column(_enum(CompetitionFormat, "competition_format"))
 
 
 class Season(Base):
@@ -144,7 +146,7 @@ class PlayerTeamSeason(Base):
 class Match(Base):
     __tablename__ = "match"
     __table_args__ = (
-        UniqueConstraint("season_id", "stage", "home_team_id", "away_team_id"),
+        UniqueConstraint("season_id", "stage", "home_team_id", "away_team_id", "occurrence"),
         CheckConstraint("home_team_id <> away_team_id", name="distinct_teams"),
     )
 
@@ -164,6 +166,8 @@ class Match(Base):
     stage: Mapped[Stage] = mapped_column(_enum(Stage, "stage"))
     matchday: Mapped[int | None] = mapped_column(SmallInteger)
     round_label: Mapped[str] = mapped_column(String(128))
+    # 1, or 2+ for a pairing played again with the same home team in the same stage (a cup re-replay).
+    occurrence: Mapped[int] = mapped_column(SmallInteger, server_default=text("1"))
 
 
 class Goal(Base):

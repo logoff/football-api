@@ -1,0 +1,22 @@
+= English FA Cup 2023/24
+
+# Excerpt of openfootball/england 2023-24/facup.txt (CC0). Round 1's Scarborough Athletic v
+# Forest Green Rovers is listed twice with the same home team: the 1-1 draw, then the replay
+# of the voided replay.
+
+
+▪ Round 1
+  Sat Nov 4 2023
+    15:00  Scarborough Athletic FC v Forest Green Rovers      1-1 (1-0)
+  Tue Dec 12
+    19:45  Scarborough Athletic FC v Forest Green Rovers      2-4 (1-1)
+
+
+▪ Semifinals
+  Sun Apr 21 2024
+    15:30  Coventry City           v Manchester United        2-4 pen. 3-3 a.e.t. (3-3, 0-2)
+
+
+▪ Final
+  Sat May 25
+    15:00  Manchester City         v Manchester United        1-2 (0-2)

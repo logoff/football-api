@@ -6,7 +6,7 @@ from typing import Literal
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, TypeAdapter, model_validator
 
-from football_api.domain.enums import CompetitionScope, TeamKind
+from football_api.domain.enums import CompetitionFormat, CompetitionScope, TeamKind
 from football_api.infra.settings import get_settings
 
 
@@ -36,6 +36,7 @@ class CompetitionSeed(_Seed):
     country: str | None = None
     team_kind: TeamKind
     scope: CompetitionScope
+    format: CompetitionFormat
     wikidata: str = Field(description="Wikidata QID; the competition's identity across syncs")
     seasons: list[SeasonSource] = Field(min_length=1)
 
