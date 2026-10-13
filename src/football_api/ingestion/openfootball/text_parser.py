@@ -355,6 +355,9 @@ _STAGE_RULES: list[tuple[re.Pattern[str], Stage]] = [
     (re.compile(r"play-?offs?", re.I), Stage.PLAYOFF),
     (re.compile(r"group", re.I), Stage.GROUP),
     (re.compile(r"league|matchday|regular season", re.I), Stage.LEAGUE),
+    (re.compile(r"prelim", re.I), Stage.PRELIMINARY),
+    # Numbered cup rounds, after the named ones so `Round of 16` stays R16: `Round 3`, `2. Round`, `10. Runde`.
+    (re.compile(r"^(?:(?:round|runde)\s*\d+|\d+\.\s*(?:round|runde))$", re.I), Stage.ROUND),
 ]
 
 
@@ -364,8 +367,8 @@ def normalize_stage(round_label: str) -> tuple[Stage, int | None]:
     Rules are tried in priority order against the whole label, so the most specific
     one wins (`Finals, Semifinals` → `SF`, `Playoffs, Matchday 1` → `PLAYOFF`).
     """
-    number = re.search(r"(?:matchday|round|regular season\s*-)\s*(\d+)\s*$", round_label, re.I)
+    number = re.search(r"(?:matchday|round|runde|regular season\s*-)\s*(\d+)\s*$|^(\d+)\.\s*(?:round|runde)$", round_label, re.I)
     for pattern, code in _STAGE_RULES:
         if pattern.search(round_label):
-            return code, int(number.group(1)) if number else None
+            return code, int(number.group(1) or number.group(2)) if number else None
     raise ValueError(f"unrecognised round label: {round_label!r}")

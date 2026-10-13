@@ -53,23 +53,31 @@ The sync refuses to run until the API container has applied the migrations (exit
 
 ## Data coverage
 
-13 competitions. The five domestic leagues have every season openfootball publishes, up to the one in progress, each checked against Wikipedia (see [Verification](#verification)); the others have their last completed edition:
+19 competitions. The five domestic leagues have every season openfootball publishes, up to the one in progress, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes. The others have their last completed edition. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
 
-| Competition                | Seasons                 | Results | Verified | Goal scorers | Squads |
-| -------------------------- | ----------------------- | ------- | -------- | ------------ | ------ |
-| Premier League             | 2000-01 to 2026-27 (27) | ✅      | ✅       | none         | none   |
-| La Liga                    | 2012-13 to 2026-27 (15) | ✅      | ✅       | none         | none   |
-| Bundesliga                 | 2010-11 to 2026-27 (17) | ✅      | ✅       | none         | none   |
-| Serie A                    | 2013-14 to 2026-27 (14) | ✅      | ✅       | none         | none   |
-| Ligue 1                    | 2014-15 to 2026-27 (13) | ✅      | ✅       | none         | none   |
-| UEFA Champions League      | 2024-25                 | ✅      | none     | none         | none   |
-| UEFA Europa League         | 2024-25                 | ✅      | none     | none         | none   |
-| UEFA Conference League     | 2024-25                 | ✅      | none     | none         | none   |
-| CONMEBOL Copa Libertadores | 2025                    | ✅      | none     | none         | none   |
-| FIFA Club World Cup        | 2025                    | ✅      | none     | ✅           | ✅     |
-| FIFA World Cup             | 2022                    | ✅      | none     | ✅           | ✅     |
-| UEFA European Championship | 2024                    | ✅      | none     | ✅           | ✅     |
-| CONMEBOL Copa América      | 2024                    | ✅      | none     | ✅           | ✅     |
+| Competition                | Format     | Seasons                 | Results | Verified | Goal scorers | Squads |
+| -------------------------- | ---------- | ----------------------- | ------- | -------- | ------------ | ------ |
+| Premier League             | LEAGUE     | 2000-01 to 2026-27 (27) | ✅      | ✅       | none         | none   |
+| La Liga                    | LEAGUE     | 2012-13 to 2026-27 (15) | ✅      | ✅       | none         | none   |
+| Bundesliga                 | LEAGUE     | 2010-11 to 2026-27 (17) | ✅      | ✅       | none         | none   |
+| Serie A                    | LEAGUE     | 2013-14 to 2026-27 (14) | ✅      | ✅       | none         | none   |
+| Ligue 1                    | LEAGUE     | 2014-15 to 2026-27 (13) | ✅      | ✅       | none         | none   |
+| FA Cup                     | CUP        | 2018-19 to 2024-25 (7)  | ✅      | none     | none         | none   |
+| EFL Cup                    | LEAGUE_CUP | 2018-19 to 2024-25 (7)  | ✅      | none     | none         | none   |
+| Copa del Rey               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | none     | none         | none   |
+| DFB-Pokal                  | CUP        | 2018-19 to 2024-25 (7)  | ✅      | none     | none         | none   |
+| Coppa Italia               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | none     | none         | none   |
+| Coupe de France            | CUP        | 2024-25                 | ✅      | none     | none         | none   |
+| UEFA Champions League      | TOURNAMENT | 2024-25                 | ✅      | none     | none         | none   |
+| UEFA Europa League         | TOURNAMENT | 2024-25                 | ✅      | none     | none         | none   |
+| UEFA Conference League     | TOURNAMENT | 2024-25                 | ✅      | none     | none         | none   |
+| CONMEBOL Copa Libertadores | TOURNAMENT | 2025                    | ✅      | none     | none         | none   |
+| FIFA Club World Cup        | TOURNAMENT | 2025                    | ✅      | none     | ✅           | ✅     |
+| FIFA World Cup             | TOURNAMENT | 2022                    | ✅      | none     | ✅           | ✅     |
+| UEFA European Championship | TOURNAMENT | 2024                    | ✅      | none     | ✅           | ✅     |
+| CONMEBOL Copa América      | TOURNAMENT | 2024                    | ✅      | none     | ✅           | ✅     |
+
+Cups start where the source does: the FA Cup at Round 1 (the first round proper), the Coupe de France at round 7. Numbered cup rounds have stage `ROUND` with the round's number in `matchday`, and a preliminary round that is part of the competition proper has stage `PRELIMINARY`; clients that switch over `stage` should expect both. A pairing played again with the same home team in the same round (FA Cup 2023-24: Scarborough Athletic v Forest Green Rovers, drawn and then replayed at Scarborough after a voided replay) is two matches with `occurrence` 1 and 2.
 
 Ligue 1 2019-20 was stopped after 279 matches; its 101 unplayed fixtures are listed as `CANCELLED`.
 
@@ -93,6 +101,9 @@ Statuses are recomputed on every `--verify` run, and each disagreement is logged
 Known gaps:
 
 - **Not included:** Africa Cup of Nations 2025 and FIFA Intercontinental Cup 2024 (no openfootball data), Copa Sudamericana 2025 (openfootball data is incomplete).
+- **Super cups and other league cups:** openfootball has no super cups (Supercopa, Community Shield, DFL-Supercup, Supercoppa, Trophée des Champions) and no league cup besides the EFL Cup.
+- **DFB-Pokal 2025-26:** openfootball's file stops after round 2, so the season isn't included yet.
+- **EFL Cup 2020-21:** Leyton Orient v Tottenham Hotspur (called off and awarded to Tottenham) has no result in the source, so the season shows as in progress.
 - **Unresolved scorers:** where a scorer's name matches no single squad member (e.g. two players called Rodríguez), the goal keeps the source name with no player link. About 1.6% of goals.
 - **Accents:** World Cup and Club World Cup sources strip accents (`Angel Di Maria`).
 - **Players are per team-season:** the same person at Euro 2024 and the Club World Cup is two player records for now.

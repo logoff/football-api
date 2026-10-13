@@ -3,6 +3,7 @@
   country: GB-ENG
   team_kind: CLUB
   scope: DOMESTIC
+  format: LEAGUE
   wikidata: Q9448
   seasons:
     - label: 2024-25
@@ -14,6 +15,7 @@
   country: DE
   team_kind: CLUB
   scope: DOMESTIC
+  format: LEAGUE
   wikidata: Q82595
   seasons:
     - label: 2024-25
@@ -21,9 +23,21 @@
       file: deutschland/2024-25/1-bundesliga.txt
       tz: Europe/Berlin
       json: football.json/2024-25/de.1.json
+- name: FA Cup
+  country: GB-ENG
+  team_kind: CLUB
+  scope: DOMESTIC
+  format: CUP
+  wikidata: Q11151
+  seasons:
+    - label: 2023-24
+      start_year: 2023
+      file: england/2023-24/facup.txt
+      tz: Europe/London
 - name: CONMEBOL Copa Libertadores
   team_kind: CLUB
   scope: CONTINENTAL
+  format: TOURNAMENT
   wikidata: Q184795
   seasons:
     - label: '2025'
@@ -33,6 +47,7 @@
 - name: FIFA Club World Cup
   team_kind: CLUB
   scope: INTERCONTINENTAL
+  format: TOURNAMENT
   wikidata: Q223366
   seasons:
     - label: '2025'
@@ -46,6 +61,7 @@
 - name: FIFA World Cup
   team_kind: NATIONAL
   scope: INTERCONTINENTAL
+  format: TOURNAMENT
   wikidata: Q19317
   seasons:
     - label: '2022'
@@ -59,6 +75,7 @@
 - name: UEFA European Championship
   team_kind: NATIONAL
   scope: CONTINENTAL
+  format: TOURNAMENT
   wikidata: Q260858
   seasons:
     - label: '2024'
@@ -72,6 +89,7 @@
 - name: CONMEBOL Copa América
   team_kind: NATIONAL
   scope: CONTINENTAL
+  format: TOURNAMENT
   wikidata: Q178750
   seasons:
     - label: '2024'

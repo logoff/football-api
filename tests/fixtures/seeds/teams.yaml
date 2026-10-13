@@ -450,6 +450,7 @@
   country: "GB-ENG"
   wikidata: Q50602
   openfootball:
+    - "Manchester City"
     - "Manchester City (ENG)"
     - "Manchester City FC"
     - "Manchester City FC (ENG)"
@@ -459,6 +460,7 @@
   country: "GB-ENG"
   wikidata: Q18656
   openfootball:
+    - "Manchester United"
     - "Manchester United (ENG)"
     - "Manchester United FC"
 
@@ -635,3 +637,22 @@
   wikidata: Q19500
   openfootball:
     - "Wolverhampton Wanderers FC"
+
+- name: "Coventry City"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q19580
+  openfootball:
+    - "Coventry City"
+
+- name: "Forest Green Rovers"
+  kind: CLUB
+  country: "GB-ENG"
+  openfootball:
+    - "Forest Green Rovers"
+
+- name: "Scarborough Athletic"
+  kind: CLUB
+  country: "GB-ENG"
+  openfootball:
+    - "Scarborough Athletic FC"

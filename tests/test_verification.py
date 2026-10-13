@@ -196,7 +196,7 @@ async def test_season_without_an_article_is_skipped_quietly(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     """A season seeded without `wikipedia` is not verified; its siblings are (match-verification spec)."""
-    (fresh_db / "england/2023-24").mkdir()
+    (fresh_db / "england/2023-24").mkdir(exist_ok=True)
     (fresh_db / "england/2023-24/1-premierleague.txt").write_text(
         (fresh_db / "england/2024-25/1-premierleague.txt").read_text(encoding="utf-8").replace("2024", "2023"),
         encoding="utf-8",

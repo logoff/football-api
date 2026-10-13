@@ -31,7 +31,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from football_api.domain.enums import Coverage, EntityType, MatchStatus, SeasonStatus, TeamKind
+from football_api.domain.enums import Coverage, EntityType, MatchStatus, SeasonStatus, Stage, TeamKind
 from football_api.infra.db import get_engine, get_sessionmaker
 from football_api.infra.models import (
     Competition,
@@ -123,6 +123,7 @@ async def upsert_competition(session: AsyncSession, seed: CompetitionSeed) -> Co
         comp = Competition()
         session.add(comp)
     comp.name, comp.country, comp.team_kind, comp.scope = seed.name, seed.country, seed.team_kind, seed.scope
+    comp.format = seed.format
     await session.flush()
     await ensure_ref(session, EntityType.COMPETITION, comp.id, WIKIDATA, seed.wikidata)
     return comp
@@ -288,7 +289,22 @@ async def sync_goals(session: AsyncSession, ctx: SeasonContext, match: Match, pa
     await session.execute(delete(Goal).where(Goal.match_id == match.id, Goal.ordinal > len(parsed.goals)))
 
 
-async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, path: str) -> None:
+def occurrences(matches: list[ParsedMatch], team_of: dict[str, uuid.UUID]) -> list[int]:
+    """Number each listing within its (stage, home, away): a pairing listed again after a game with
+    a score is a further game (a cup re-replay); listed again after one without, it is the same
+    game rescheduled (matches spec, Match record)."""
+    last: dict[tuple[Stage, uuid.UUID, uuid.UUID], tuple[int, bool]] = {}
+    out: list[int] = []
+    for m in matches:
+        key = (normalize_stage(m.round_label)[0], team_of[m.home], team_of[m.away])
+        previous, played = last.get(key, (0, True))
+        occurrence = previous + 1 if played else previous
+        last[key] = (occurrence, m.score is not None)
+        out.append(occurrence)
+    return out
+
+
+async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, path: str, occurrence: int) -> None:
     home_id = await resolve_team(session, path, m.line_no, m.home)
     away_id = await resolve_team(session, path, m.line_no, m.away)
     stage, matchday = normalize_stage(m.round_label)
@@ -299,10 +315,18 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
             Match.stage == stage,
             Match.home_team_id == home_id,
             Match.away_team_id == away_id,
+            Match.occurrence == occurrence,
         )
     )
     if match is None:
-        match = Match(season_id=ctx.season.id, stage=stage, home_team_id=home_id, away_team_id=away_id, kickoff_utc=kickoff)
+        match = Match(
+            season_id=ctx.season.id,
+            stage=stage,
+            home_team_id=home_id,
+            away_team_id=away_id,
+            occurrence=occurrence,
+            kickoff_utc=kickoff,
+        )
         session.add(match)
     elif match.kickoff_utc != kickoff and match.original_kickoff_utc is None:
         match.original_kickoff_utc = match.kickoff_utc
@@ -316,7 +340,8 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
     match.home_pens = score.home_pens if score else None
     match.away_pens = score.away_pens if score else None
     await session.flush()
-    await ensure_ref(session, EntityType.MATCH, match.id, OPENFOOTBALL, f"{path}#{stage.value}#{m.home}#{m.away}")
+    key = f"{path}#{stage.value}#{m.home}#{m.away}" + (f"#{occurrence}" if occurrence > 1 else "")
+    await ensure_ref(session, EntityType.MATCH, match.id, OPENFOOTBALL, key)
     if m.goals_listed:
         await sync_goals(session, ctx, match, m)
 
@@ -353,19 +378,19 @@ async def sync_season(session: AsyncSession, seed: CompetitionSeed, src: SeasonS
     await session.flush()
     await ensure_ref(session, EntityType.SEASON, season.id, OPENFOOTBALL, src.file)
 
-    team_ids: set[uuid.UUID] = set()
+    team_of: dict[str, uuid.UUID] = {}
     for m in matches:
-        team_ids.add(await resolve_team(session, path, m.line_no, m.home))
-        team_ids.add(await resolve_team(session, path, m.line_no, m.away))
-    for team_id in team_ids:
+        team_of[m.home] = await resolve_team(session, path, m.line_no, m.home)
+        team_of[m.away] = await resolve_team(session, path, m.line_no, m.away)
+    for team_id in set(team_of.values()):
         if await session.get(TeamSeason, (team_id, season.id)) is None:
             session.add(TeamSeason(team_id=team_id, season_id=season.id))
 
     squads_style = src.squads.style if src.squads else None
     ctx = SeasonContext(seed, src, season, sources, scorer_names_capitalised=squads_style == "more", squads=defaultdict(list))
     await sync_squads(session, ctx)
-    for m in matches:
-        await sync_match(session, ctx, m, path)
+    for m, occurrence in zip(matches, occurrences(matches, team_of), strict=True):
+        await sync_match(session, ctx, m, path, occurrence)
     return len(matches)
 
 

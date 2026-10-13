@@ -76,7 +76,7 @@ async def test_first_sync_populates_everything(synced_db: str, fixture_competiti
             for model in (Competition, Season, Match, Goal, Player)
         }
     players = published_squad_size(fixture_competitions, FIXTURE_SOURCES)
-    assert counts == {"competition": 7, "season": 7, "match": 80, "goal": 37, "player": players}
+    assert counts == {"competition": 8, "season": 8, "match": 84, "goal": 37, "player": players}
 
 
 async def test_reconciled_values(synced_db: str) -> None:
@@ -219,7 +219,7 @@ async def test_competition_with_two_seasons(
     fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
 ) -> None:
     """Each season in a seed becomes its own season row with its own matches (catalog spec)."""
-    (fresh_db / "england/2023-24").mkdir()
+    (fresh_db / "england/2023-24").mkdir(exist_ok=True)
     (fresh_db / "england/2023-24/1-premierleague.txt").write_text(
         (fresh_db / "england/2024-25/1-premierleague.txt").read_text(encoding="utf-8").replace("2024", "2023"),
         encoding="utf-8",
@@ -238,3 +238,40 @@ async def test_competition_with_two_seasons(
             )
         ).all()
     assert [tuple(r) for r in rows] == [("2023-24", 20), ("2024-25", 20)]
+
+
+async def scarborough_games() -> list[Match]:
+    async with get_sessionmaker()() as session:
+        home_id = select(Team.id).where(Team.name == "Scarborough Athletic").scalar_subquery()
+        return list(
+            await session.scalars(select(Match).where(Match.home_team_id == home_id).order_by(Match.occurrence))
+        )
+
+
+async def test_repeated_pairing_keeps_both_games(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """A pairing listed again after a scored game is a further game, stable across syncs (matches spec)."""
+    fa_cup = [c for c in fixture_competitions if c.name == "FA Cup"]
+    await sync(fa_cup, fixture_teams)
+    first = await scarborough_games()
+    assert [(m.occurrence, m.stage, m.matchday, m.home_score, m.away_score) for m in first] == [
+        (1, Stage.ROUND, 1, 1, 1),
+        (2, Stage.ROUND, 1, 2, 4),
+    ]
+    await sync(fa_cup, fixture_teams)
+    assert [m.id for m in await scarborough_games()] == [m.id for m in first]
+
+
+async def test_postponed_pairing_listed_twice_is_one_game(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """A pairing listed again after an unscored listing is the same game rescheduled (matches spec)."""
+    path = fresh_db / "england/2023-24/facup.txt"
+    path.write_text(path.read_text(encoding="utf-8").replace("1-1 (1-0)", "[postponed]"), encoding="utf-8")
+    await sync([c for c in fixture_competitions if c.name == "FA Cup"], fixture_teams)
+    [game] = await scarborough_games()
+    assert (game.occurrence, game.status, game.home_score, game.away_score) == (1, MatchStatus.COMPLETED, 2, 4)
+    assert game.kickoff_utc == datetime(2023, 12, 12, 19, 45, tzinfo=UTC)
+    assert game.original_kickoff_utc == datetime(2023, 11, 4, 15, 0, tzinfo=UTC)
+

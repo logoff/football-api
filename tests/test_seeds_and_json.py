@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from football_api.domain.enums import DecidedBy
+from football_api.domain.enums import DecidedBy, TeamKind
 from football_api.ingestion.openfootball.json_reader import is_current, read_json
 from football_api.ingestion.openfootball.text_parser import ParsedScore, parse_file
 from football_api.ingestion.seeds import CompetitionSeed, load_competitions, load_teams
@@ -15,9 +15,11 @@ SOURCES = Path(__file__).parent / "fixtures" / "sources"
 def test_real_seed_files_are_valid() -> None:
     competitions = load_competitions()
     teams = load_teams()  # also rejects duplicate aliases and QIDs
-    assert len(competitions) == 13
-    assert len({c.wikidata for c in competitions}) == 13
-    assert all(t.wikidata for t in teams)
+    assert len(competitions) == 19
+    assert len({c.wikidata for c in competitions}) == 19
+    # Only amateur cup clubs with no unambiguous Wikidata item go without a QID (add-domestic-cups D4).
+    without_qid = [t for t in teams if not t.wikidata]
+    assert all(t.kind is TeamKind.CLUB for t in without_qid) and len(without_qid) <= 64
     assert all(s.tz for c in competitions for s in c.seasons)
     assert len(teams) > 250
 
@@ -47,7 +49,7 @@ def test_json_mirror_with_level_shootout_is_not_current() -> None:
 
 
 def _competition(seasons: list[dict[str, object]]) -> dict[str, object]:
-    return {"name": "X", "team_kind": "CLUB", "scope": "DOMESTIC", "wikidata": "Q1", "seasons": seasons}
+    return {"name": "X", "team_kind": "CLUB", "scope": "DOMESTIC", "format": "LEAGUE", "wikidata": "Q1", "seasons": seasons}
 
 
 def _season(label: str) -> dict[str, object]:
@@ -82,3 +84,15 @@ def test_json_mirror_bare_full_time_pair(tmp_path: Path) -> None:
     )
     [match] = read_json(mirror)
     assert match.score == ParsedScore(0, 0, DecidedBy.REGULAR)
+
+
+@pytest.mark.parametrize("fmt", [None, "FRIENDLY"])
+def test_competition_format_is_required_and_known(fmt: str | None) -> None:
+    raw = _competition([_season("2024-25")])
+    if fmt is None:
+        del raw["format"]
+    else:
+        raw["format"] = fmt
+    with pytest.raises(ValidationError, match="format"):
+        CompetitionSeed.model_validate(raw)
+

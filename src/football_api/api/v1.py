@@ -28,7 +28,7 @@ from football_api.api.schemas import (
     TeamSeasonOut,
     VenueOut,
 )
-from football_api.domain.enums import Coverage, Stage, TeamKind, VerificationReference, VerificationStatus
+from football_api.domain.enums import CompetitionFormat, Coverage, Stage, TeamKind, VerificationReference, VerificationStatus
 from football_api.infra.db import session_dependency
 from football_api.infra.models import (
     Competition,
@@ -75,9 +75,17 @@ def page_cursor[R](rows: Sequence[R], limit: int, key: Callable[[R], Sequence[ob
 
 
 @router.get("/competitions", tags=["catalog"], summary="List competitions")
-async def list_competitions(session: Session, limit: Limit = DEFAULT_LIMIT, cursor: Cursor = None) -> Page[CompetitionOut]:
+async def list_competitions(
+    session: Session,
+    format: Annotated[CompetitionFormat | None, Query(description="Only competitions of this format")] = None,
+    limit: Limit = DEFAULT_LIMIT,
+    cursor: Cursor = None,
+) -> Page[CompetitionOut]:
     keys = [Competition.name, Competition.id]
-    rows = (await session.scalars(apply_keyset(select(Competition), keys, limit, cursor))).all()
+    stmt = select(Competition)
+    if format:
+        stmt = stmt.where(Competition.format == format)
+    rows = (await session.scalars(apply_keyset(stmt, keys, limit, cursor))).all()
     return Page(
         data=[CompetitionOut.model_validate(c) for c in rows[:limit]],
         next_cursor=page_cursor(rows, limit, lambda c: (c.name, c.id)),
@@ -309,6 +317,7 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
             season_id=m.season_id,
             stage=m.stage,
             matchday=m.matchday,
+            occurrence=m.occurrence,
             round_label=m.round_label,
             kickoff_utc=m.kickoff_utc,
             original_kickoff_utc=m.original_kickoff_utc,

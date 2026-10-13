@@ -66,7 +66,7 @@ async def test_competitions_list_paginates(client: httpx.AsyncClient) -> None:
     assert len(first["data"]) == 4 and first["next_cursor"]
     second = await get(client, f"/v1/competitions?limit=4&cursor={first['next_cursor']}")
     seen = [c["id"] for c in first["data"] + second["data"]]
-    assert len(seen) == 7 and len(set(seen)) == 7
+    assert len(seen) == 8 and len(set(seen)) == 8
     assert second["next_cursor"] is None
     assert all("slug" not in c for c in first["data"])
 
@@ -83,6 +83,30 @@ async def test_competition_by_id_and_errors(client: httpx.AsyncClient) -> None:
     assert_error(await get(client, "/v1/competitions?limit=500", 422), "invalid_request")
 
 
+async def test_competition_format_and_filter(client: httpx.AsyncClient) -> None:
+    """catalog spec: `format` on competitions and the `?format=` filter."""
+    cups = (await get(client, "/v1/competitions?format=CUP"))["data"]
+    assert [c["name"] for c in cups] == ["FA Cup"]
+    leagues = (await get(client, "/v1/competitions?format=LEAGUE"))["data"]
+    assert sorted(c["name"] for c in leagues) == ["Bundesliga", "Premier League"]
+    wc = await find(client, "/v1/competitions", "FIFA World Cup")
+    assert wc["format"] == "TOURNAMENT"
+    assert_error(await get(client, "/v1/competitions?format=FRIENDLY", 422), "invalid_request")
+
+
+async def test_cup_rounds_and_repeated_pairing(client: httpx.AsyncClient) -> None:
+    """matches spec: numbered cup rounds and a pairing played twice with the same home team."""
+    fa_cup = await season_id(client, "FA Cup")
+    round_1 = (await get(client, f"/v1/matches?season_id={fa_cup}&stage=ROUND"))["data"]
+    assert [(m["matchday"], m["occurrence"], m["home_score"], m["away_score"]) for m in round_1] == [
+        (1, 1, 1, 1),
+        (1, 2, 2, 4),
+    ]
+    assert len({m["id"] for m in round_1}) == 2
+    [semi] = (await get(client, f"/v1/matches?season_id={fa_cup}&stage=SF"))["data"]
+    assert (semi["occurrence"], semi["decided_by"], semi["home_pens"], semi["away_pens"]) == (1, "PENALTIES", 2, 4)
+
+
 async def test_seasons(client: httpx.AsyncClient) -> None:
     pl = await competition_id(client, "Premier League")
     [season] = (await get(client, f"/v1/seasons?competition_id={pl}"))["data"]
@@ -97,8 +121,8 @@ async def test_seasons(client: httpx.AsyncClient) -> None:
 async def test_teams(client: httpx.AsyncClient) -> None:
     united = await find(client, "/v1/teams?expand=seasons", "Manchester United")
     assert (united["country"], united["kind"]) == ("GB-ENG", "CLUB")
-    pl_season = await season_id(client, "Premier League")
-    assert [s["season_id"] for s in united["seasons"]] == [pl_season]
+    pl_season, fa_cup = await season_id(client, "Premier League"), await season_id(client, "FA Cup")
+    assert sorted(s["season_id"] for s in united["seasons"]) == sorted([pl_season, fa_cup])
 
     by_id = await get(client, f"/v1/teams/{united['id']}")
     assert by_id["seasons"] is None
@@ -139,14 +163,14 @@ async def test_matches_filters(client: httpx.AsyncClient) -> None:
 
     united = await team_id(client, "Manchester United")
     theirs = await get(client, f"/v1/matches?team_id={united}")
-    assert len(theirs["data"]) == 2
+    assert len(theirs["data"]) == 4  # two Premier League, the FA Cup semi-final and final
     assert all(united in (m["home_team_id"], m["away_team_id"]) for m in theirs["data"])
 
     window = await get(client, "/v1/matches?from=2024-08-16&to=2024-08-16")
     assert [m["kickoff_utc"][:10] for m in window["data"]] == ["2024-08-16"]
 
     finals = await get(client, "/v1/matches?stage=FINAL&limit=200")
-    assert len(finals["data"]) == 4
+    assert len(finals["data"]) == 5
 
 
 async def test_match_expand_and_penalties(client: httpx.AsyncClient) -> None:

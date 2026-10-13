@@ -12,6 +12,14 @@ class CompetitionScope(StrEnum):
     INTERCONTINENTAL = "INTERCONTINENTAL"
 
 
+class CompetitionFormat(StrEnum):
+    LEAGUE = "LEAGUE"  # round-robin
+    CUP = "CUP"  # knockout open to the national pyramid
+    LEAGUE_CUP = "LEAGUE_CUP"  # knockout restricted to league clubs
+    SUPER_CUP = "SUPER_CUP"  # champions' play-off
+    TOURNAMENT = "TOURNAMENT"  # group or league phase, then knockouts
+
+
 class SeasonStatus(StrEnum):
     SCHEDULED = "SCHEDULED"
     IN_PROGRESS = "IN_PROGRESS"
@@ -52,6 +60,8 @@ class Coverage(StrEnum):
 
 class Stage(StrEnum):
     QUALIFYING = "QUALIFYING"
+    PRELIMINARY = "PRELIMINARY"
+    ROUND = "ROUND"  # a numbered knockout round; the number is the match's `matchday`
     LEAGUE = "LEAGUE"
     GROUP = "GROUP"
     PLAYOFF = "PLAYOFF"
