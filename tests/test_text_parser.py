@@ -48,6 +48,7 @@ def test_score_notations(text: str, expected: ParsedScore) -> None:
         ("Matchday 7", Stage.LEAGUE, 7),
         ("League, Matchday 3", Stage.LEAGUE, 3),
         ("League phase", Stage.LEAGUE, None),
+        ("Regular Season - 12", Stage.LEAGUE, 12),
         ("Playoffs, Matchday 1", Stage.PLAYOFF, 1),
         ("Group, Matchday 2", Stage.GROUP, 2),
         ("First stage / Group A", Stage.GROUP, None),

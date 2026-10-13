@@ -354,7 +354,7 @@ _STAGE_RULES: list[tuple[re.Pattern[str], Stage]] = [
     (re.compile(r"\bfinal\b", re.I), Stage.FINAL),
     (re.compile(r"play-?offs?", re.I), Stage.PLAYOFF),
     (re.compile(r"group", re.I), Stage.GROUP),
-    (re.compile(r"league|matchday", re.I), Stage.LEAGUE),
+    (re.compile(r"league|matchday|regular season", re.I), Stage.LEAGUE),
 ]
 
 
@@ -364,7 +364,7 @@ def normalize_stage(round_label: str) -> tuple[Stage, int | None]:
     Rules are tried in priority order against the whole label, so the most specific
     one wins (`Finals, Semifinals` → `SF`, `Playoffs, Matchday 1` → `PLAYOFF`).
     """
-    number = re.search(r"(?:matchday|round)\s+(\d+)\s*$", round_label, re.I)
+    number = re.search(r"(?:matchday|round|regular season\s*-)\s*(\d+)\s*$", round_label, re.I)
     for pattern, code in _STAGE_RULES:
         if pattern.search(round_label):
             return code, int(number.group(1)) if number else None
