@@ -23,7 +23,7 @@
 
 ## 4. Docs
 
-- [x] 4.1 Update the README coverage table (season ranges per league,, and which are verified) and the `openspec/config.yaml` scope context. Verify that mdformat leaves no changes.
+- [x] 4.1 Update the README coverage table (season ranges per league, and which are verified) and the `openspec/config.yaml` scope context. Verify that mdformat leaves no changes.
 
 ## 5. Integration
 
