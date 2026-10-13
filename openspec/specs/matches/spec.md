@@ -19,7 +19,8 @@ The system SHALL store each match with:
 - home and away scores at the end of play, including extra time (nullable until `COMPLETED`)
 - `decided_by`: `REGULAR`, `EXTRA_TIME`, or `PENALTIES` (nullable until `COMPLETED`)
 - home and away penalty-shootout scores (null unless `decided_by` is `PENALTIES`)
-- a stage: `QUALIFYING`, `LEAGUE`, `GROUP`, `PLAYOFF`, `R32`, `R16`, `QF`, `SF`, `THIRD_PLACE`, or `FINAL`; an optional matchday number; and the source's round label
+- a stage: `QUALIFYING`, `PRELIMINARY`, `ROUND`, `LEAGUE`, `GROUP`, `PLAYOFF`, `R32`, `R16`, `QF`, `SF`, `THIRD_PLACE`, or `FINAL`; an optional matchday number, which for `ROUND` is the round's number; and the source's round label
+- an `occurrence`: 1 for a pairing's first game in a stage, 2 for a further game with the same home team in that stage, and so on in source order. A further listing counts as a new game only when the previous one has a score; otherwise it is the same game rescheduled
 
 #### Scenario: Filtering matches by competition and season
 
@@ -48,13 +49,38 @@ The system SHALL store each match with:
 - **GIVEN** a match previously synced with kickoff `2025-01-11T15:00:00Z`
 - **WHEN** the source moves it to `2025-02-05T19:30:00Z` and sync runs
 - **THEN** the same match UUID now has `kickoff_utc` `2025-02-05T19:30:00Z` and `original_kickoff_utc` `2025-01-11T15:00:00Z`
-- **AND** no second row exists for that `(season, stage, home, away)`
+- **AND** no second row exists for that `(season, stage, home, away, occurrence)`
 
 #### Scenario: Same pairing in two stages of one season
 
 - **GIVEN** Arsenal v Paris Saint-Germain in both the UCL 2024-25 league phase and semi-final
 - **WHEN** sync runs
 - **THEN** two distinct matches exist, one with stage `LEAGUE` and one with stage `SF`
+
+#### Scenario: Numbered cup round
+
+- **GIVEN** a DFB-Pokal file with the round header `1. Round`
+- **WHEN** it is synced
+- **THEN** its matches have stage `ROUND`, matchday 1 and round label `1. Round`
+
+#### Scenario: Same pairing twice with the same home team
+
+- **GIVEN** FA Cup 2023-24 Round 1 lists Scarborough Athletic v Forest Green Rovers on 4 November (1–1) and again on 12 December (2–4)
+- **WHEN** it is synced
+- **THEN** two matches exist, with `occurrence` 1 and 2 and their own scores
+- **AND** a later sync keeps both UUIDs
+
+#### Scenario: Two-legged tie
+
+- **GIVEN** a two-legged semi-final, each leg with the other club at home
+- **WHEN** it is synced
+- **THEN** two matches exist with stage `SF`, each with `occurrence` 1
+
+#### Scenario: Postponed game listed twice
+
+- **GIVEN** a source that lists a pairing as `[postponed]` and later lists the same pairing in the same stage at a new date
+- **WHEN** it is synced
+- **THEN** one match exists, with `occurrence` 1, the new kickoff and the first kickoff as `original_kickoff_utc`
 
 ### Requirement: Goal scorers
 
