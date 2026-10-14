@@ -1,5 +1,6 @@
 """Wikipedia results-grid reader (match-verification spec): parsing, polite access, title → QID."""
 
+from datetime import date
 from pathlib import Path
 
 import httpx
@@ -9,6 +10,7 @@ from football_api.ingestion.wikipedia import (
     GridCell,
     WikipediaClient,
     WikipediaUnavailable,
+    parse_match_boxes,
     parse_results_grid,
 )
 
@@ -141,3 +143,45 @@ async def test_live_la_liga_2024_25_grid() -> None:
         qids = await wiki.qids(grid.teams)
     assert qids["Real Madrid CF"] == "Q8682" or "Q8682" in qids.values()
     assert len(qids) == 20
+
+
+@pytest.mark.network
+async def test_live_dfb_pokal_2024_25_boxes() -> None:
+    async with WikipediaClient(rest="https://en.wikipedia.org/api/rest_v1", api="https://en.wikipedia.org/w/api.php") as wiki:
+        boxes = await wiki.match_boxes("2024–25 DFB-Pokal")
+    assert len(boxes) == 63 and all(b.score for b in boxes)
+    assert all(b.day for b in boxes)
+
+
+CUP = Path(__file__).parent / "fixtures" / "wikipedia" / "cup.html"
+
+
+def test_match_boxes_every_score_form() -> None:
+    boxes = parse_match_boxes(CUP.read_text(encoding="utf-8"))
+    got = [(b.home, b.away, b.score, b.shootout, b.awarded) for b in boxes]
+    assert got == [
+        ("Alpha Town F.C.", "Beta United F.C.", (2, 1), None, False),
+        ("Gamma Rovers F.C.", "Delta City F.C.", (1, 1), None, False),  # a.e.t., footnote removed
+        ("Epsilon F.C.", "Zeta Athletic F.C.", (2, 2), (4, 3), False),
+        ("Alpha Town F.C.", "Gamma Rovers F.C.", (0, 1), None, False),  # aggregate ignored
+        ("Eta F.C.", "Theta F.C.", (3, 0), None, True),
+        ("Iota F.C.", "Kappa F.C.", (0, 3), None, True),
+        ("Lambda F.C.", "Mu F.C.", None, None, False),  # w/o (0–3): no result
+        ("Nu F.C.", "Xi F.C.", None, None, False),
+        ("Omicron F.C.", "Pi F.C.", None, None, False),
+        ("Rho F.C.", "Sigma F.C.", None, None, False),
+        ("Tau F.C.", "Upsilon F.C.", None, None, False),
+        # the box with an unlinked club is dropped: it can't be identified
+        ("Alpha Town F.C.", "Gamma Rovers F.C.", (0, 0), (3, 4), False),  # Football box with a shootout row
+    ]
+
+
+def test_match_box_dates() -> None:
+    boxes = parse_match_boxes(CUP.read_text(encoding="utf-8"))
+    assert boxes[0].day == date(2030, 11, 5)  # hidden ISO date
+    assert boxes[3].day == date(2030, 11, 8)  # plain-text date only
+    assert boxes[-1].day == date(2031, 5, 20)  # Football box
+
+
+def test_page_without_match_boxes() -> None:
+    assert parse_match_boxes(FIXTURE.read_text(encoding="utf-8")) == []

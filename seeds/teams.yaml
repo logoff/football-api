@@ -1370,13 +1370,6 @@
   openfootball:
     - "Cazaux Olympique"
 
-- name: "CD Albacete"
-  kind: CLUB
-  country: "ES"
-  wikidata: Q2310972
-  openfootball:
-    - "CD Guijuelo"
-
 - name: "CD Alcoyano"
   kind: CLUB
   country: "ES"
@@ -1628,6 +1621,13 @@
   wikidata: Q13048783
   openfootball:
     - "CD Fuentes"
+
+- name: "CD Guijuelo"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q2310972
+  openfootball:
+    - "CD Guijuelo"
 
 - name: "CD Gévora"
   kind: CLUB

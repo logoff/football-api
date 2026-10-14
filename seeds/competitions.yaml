@@ -617,30 +617,37 @@
       start_year: 2018
       file: england/2018-19/facup.txt
       tz: Europe/London
+      wikipedia: "2018–19 FA Cup"
     - label: 2019-20
       start_year: 2019
       file: england/2019-20/facup.txt
       tz: Europe/London
+      wikipedia: "2019–20 FA Cup"
     - label: 2020-21
       start_year: 2020
       file: england/2020-21/facup.txt
       tz: Europe/London
+      wikipedia: "2020–21 FA Cup"
     - label: 2021-22
       start_year: 2021
       file: england/2021-22/facup.txt
       tz: Europe/London
+      wikipedia: "2021–22 FA Cup"
     - label: 2022-23
       start_year: 2022
       file: england/2022-23/facup.txt
       tz: Europe/London
+      wikipedia: "2022–23 FA Cup"
     - label: 2023-24
       start_year: 2023
       file: england/2023-24/facup.txt
       tz: Europe/London
+      wikipedia: "2023–24 FA Cup"
     - label: 2024-25
       start_year: 2024
       file: england/2024-25/facup.txt
       tz: Europe/London
+      wikipedia: "2024–25 FA Cup"
 
 - name: EFL Cup
   country: "GB-ENG"
@@ -654,30 +661,37 @@
       start_year: 2018
       file: england/2018-19/eflcup.txt
       tz: Europe/London
+      wikipedia: "2018–19 EFL Cup"
     - label: 2019-20
       start_year: 2019
       file: england/2019-20/eflcup.txt
       tz: Europe/London
+      wikipedia: "2019–20 EFL Cup"
     - label: 2020-21
       start_year: 2020
       file: england/2020-21/eflcup.txt
       tz: Europe/London
+      wikipedia: "2020–21 EFL Cup"
     - label: 2021-22
       start_year: 2021
       file: england/2021-22/eflcup.txt
       tz: Europe/London
+      wikipedia: "2021–22 EFL Cup"
     - label: 2022-23
       start_year: 2022
       file: england/2022-23/eflcup.txt
       tz: Europe/London
+      wikipedia: "2022–23 EFL Cup"
     - label: 2023-24
       start_year: 2023
       file: england/2023-24/eflcup.txt
       tz: Europe/London
+      wikipedia: "2023–24 EFL Cup"
     - label: 2024-25
       start_year: 2024
       file: england/2024-25/eflcup.txt
       tz: Europe/London
+      wikipedia: "2024–25 EFL Cup"
 
 - name: Copa del Rey
   country: "ES"
@@ -691,22 +705,27 @@
       start_year: 2020
       file: espana/2020-21/cup.txt
       tz: Europe/Madrid
+      wikipedia: "2020–21 Copa del Rey"
     - label: 2021-22
       start_year: 2021
       file: espana/2021-22/cup.txt
       tz: Europe/Madrid
+      wikipedia: "2021–22 Copa del Rey"
     - label: 2022-23
       start_year: 2022
       file: espana/2022-23/cup.txt
       tz: Europe/Madrid
+      wikipedia: "2022–23 Copa del Rey"
     - label: 2023-24
       start_year: 2023
       file: espana/2023-24/cup.txt
       tz: Europe/Madrid
+      wikipedia: "2023–24 Copa del Rey"
     - label: 2024-25
       start_year: 2024
       file: espana/2024-25/cup.txt
       tz: Europe/Madrid
+      wikipedia: "2024–25 Copa del Rey"
 
 - name: DFB-Pokal
   country: "DE"
@@ -721,30 +740,37 @@
       start_year: 2018
       file: deutschland/2018-19/cup.txt
       tz: Europe/Berlin
+      wikipedia: "2018–19 DFB-Pokal"
     - label: 2019-20
       start_year: 2019
       file: deutschland/2019-20/cup.txt
       tz: Europe/Berlin
+      wikipedia: "2019–20 DFB-Pokal"
     - label: 2020-21
       start_year: 2020
       file: deutschland/2020-21/cup.txt
       tz: Europe/Berlin
+      wikipedia: "2020–21 DFB-Pokal"
     - label: 2021-22
       start_year: 2021
       file: deutschland/2021-22/cup.txt
       tz: Europe/Berlin
+      wikipedia: "2021–22 DFB-Pokal"
     - label: 2022-23
       start_year: 2022
       file: deutschland/2022-23/cup.txt
       tz: Europe/Berlin
+      wikipedia: "2022–23 DFB-Pokal"
     - label: 2023-24
       start_year: 2023
       file: deutschland/2023-24/cup.txt
       tz: Europe/Berlin
+      wikipedia: "2023–24 DFB-Pokal"
     - label: 2024-25
       start_year: 2024
       file: deutschland/2024-25/cup.txt
       tz: Europe/Berlin
+      wikipedia: "2024–25 DFB-Pokal"
 
 - name: Coppa Italia
   country: "IT"
@@ -758,22 +784,27 @@
       start_year: 2020
       file: italy/2020-21/cup.txt
       tz: Europe/Rome
+      wikipedia: "2020–21 Coppa Italia"
     - label: 2021-22
       start_year: 2021
       file: italy/2021-22/cup.txt
       tz: Europe/Rome
+      wikipedia: "2021–22 Coppa Italia"
     - label: 2022-23
       start_year: 2022
       file: italy/2022-23/cup.txt
       tz: Europe/Rome
+      wikipedia: "2022–23 Coppa Italia"
     - label: 2023-24
       start_year: 2023
       file: italy/2023-24/cup.txt
       tz: Europe/Rome
+      wikipedia: "2023–24 Coppa Italia"
     - label: 2024-25
       start_year: 2024
       file: italy/2024-25/cup.txt
       tz: Europe/Rome
+      wikipedia: "2024–25 Coppa Italia"
 
 - name: Coupe de France
   country: "FR"
@@ -787,6 +818,7 @@
       start_year: 2024
       file: europe/france/2024-25_frcup.txt
       tz: Europe/Paris
+      wikipedia: "2024–25 Coupe de France"
 
 - name: UEFA Champions League
   team_kind: CLUB

@@ -9,6 +9,7 @@ import asyncio
 import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
+from datetime import date
 from importlib.metadata import version
 from typing import Any, cast
 from urllib.parse import quote, unquote
@@ -21,6 +22,9 @@ TIMEOUT = 20.0
 MAX_RETRY_AFTER = 30.0
 TITLES_PER_QUERY = 50
 _SCORE = re.compile(r"^(\d+)\s*[–-]\s*(\d+)$")
+_BOX_SCORE = re.compile(r"^(\d+)\s*[–-]\s*(\d+)\b")
+_BOX_PENS = re.compile(r"\(\s*(\d+)\s*[–-]\s*(\d+)\s*p\s*\)")
+_BOX_AWARDED = re.compile(r"\bawd\.|\bawarded\b", re.I)
 
 
 class WikipediaUnavailable(Exception):
@@ -87,6 +91,91 @@ def _grid(table: Tag) -> ResultsGrid | None:
     return ResultsGrid(teams=away_titles, cells=grid)
 
 
+@dataclass(frozen=True)
+class MatchBox:
+    """One match of a cup article: a "Football box collapsible" or a "Football box"."""
+
+    day: date | None
+    home: str  # article title of the home club
+    away: str
+    score: tuple[int, int] | None  # full time including extra time; None for w/o, void, bye, unplayed
+    shootout: tuple[int, int] | None = None
+    awarded: bool = False
+
+
+_MONTHS = {m: i for i, m in enumerate(
+    ("january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"), 1
+)}
+_TEXT_DATE = re.compile(r"\b(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})\b")
+
+
+def _box_day(node: Tag | None) -> date | None:
+    """The box's date: the hidden ISO `dtstart` when the article uses {{Start date}}, else `14 November 2023`."""
+    if node is None:
+        return None
+    stamp = node.select_one(".dtstart")
+    try:
+        if stamp:
+            return date.fromisoformat(stamp.get_text(strip=True)[:10])
+        m = _TEXT_DATE.search(node.get_text(" ", strip=True))
+        if m and m[2].lower() in _MONTHS:
+            return date(int(m[3]), _MONTHS[m[2].lower()], int(m[1]))
+    except ValueError:
+        pass
+    return None
+
+
+def _box_result(cell_text: str, shootout_text: str | None = None) -> tuple[tuple[int, int] | None, tuple[int, int] | None, bool]:
+    m = _BOX_SCORE.match(cell_text)
+    if m is None:
+        return None, None, False
+    pens = _BOX_PENS.search(cell_text) or (_BOX_SCORE.match(shootout_text) if shootout_text else None)
+    return (int(m[1]), int(m[2])), (int(pens[1]), int(pens[2])) if pens else None, bool(_BOX_AWARDED.search(cell_text))
+
+
+def _collapsible_box(table: Tag) -> MatchBox | None:
+    row = table.find("tr")
+    cells: list[Tag] = list(row.find_all("td", recursive=False)) if isinstance(row, Tag) else []
+    if len(cells) < 4:
+        return None
+    home, away = _link_title(cells[1]), _link_title(cells[3])
+    if home is None or away is None:
+        return None
+    score, shootout, awarded = _box_result(cells[2].get_text(" ", strip=True))
+    return MatchBox(_box_day(cells[0]), home, away, score, shootout, awarded)
+
+
+def _football_box(box: Tag) -> MatchBox | None:
+    table = box.select_one("table.fevent")
+    home_cell, score_cell, away_cell = (box.select_one(c) for c in (".fhome", ".fscore", ".faway"))
+    if table is None or home_cell is None or score_cell is None or away_cell is None:
+        return None
+    home, away = _link_title(home_cell), _link_title(away_cell)
+    if home is None or away is None:
+        return None
+    shootout_text = None
+    rows = table.find_all("tr")
+    for i, tr in enumerate(rows[:-1]):
+        if tr.get_text(strip=True).lower().startswith("penalties"):
+            middle = _cells(rows[i + 1])
+            shootout_text = middle[1].get_text(" ", strip=True) if len(middle) == 3 else None
+    score, shootout, awarded = _box_result(score_cell.get_text(" ", strip=True), shootout_text)
+    return MatchBox(_box_day(box), home, away, score, shootout, awarded)
+
+
+def parse_match_boxes(html: str) -> list[MatchBox]:
+    """Every match box in a cup article, in page order."""
+    soup = BeautifulSoup(html, "html.parser")
+    for note in soup.find_all("sup"):
+        note.decompose()
+    boxes: list[MatchBox] = []
+    for node in soup.select("table.tmpl-football-box-collapsible, div.footballbox"):
+        box = _collapsible_box(node) if node.name == "table" else _football_box(node)
+        if box is not None:
+            boxes.append(box)
+    return boxes
+
+
 def parse_results_grid(html: str) -> ResultsGrid | None:
     """The first square team-by-team results table in the page, or None if there is none."""
     soup = BeautifulSoup(html, "html.parser")
@@ -136,12 +225,19 @@ class WikipediaClient:
             return resp
         raise AssertionError("unreachable")
 
-    async def results_grid(self, title: str) -> ResultsGrid | None:
-        """The article's results grid; None when the article has none. Missing article → unavailable."""
+    async def _page_html(self, title: str) -> str:
         resp = await self._get(f"{self._rest}/page/html/{quote(title.replace(' ', '_'), safe='')}")
         if resp.status_code != 200:
             raise WikipediaUnavailable(f"{title}: HTTP {resp.status_code}")
-        return parse_results_grid(resp.text)
+        return resp.text
+
+    async def results_grid(self, title: str) -> ResultsGrid | None:
+        """The article's results grid; None when the article has none. Missing article → unavailable."""
+        return parse_results_grid(await self._page_html(title))
+
+    async def match_boxes(self, title: str) -> list[MatchBox]:
+        """The article's match boxes (cups); empty when it has none. Missing article → unavailable."""
+        return parse_match_boxes(await self._page_html(title))
 
     async def qids(self, titles: Iterable[str]) -> dict[str, str]:
         """Map article titles to Wikidata QIDs, following normalisation and redirects."""
