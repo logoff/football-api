@@ -39,7 +39,7 @@ The system SHALL use the results grid of the English Wikipedia article named by 
 
 ### Requirement: Verification status per match
 
-Each stored match with a counterpart in the reference SHALL get one status: `VERIFIED` (same home and away score), `MISMATCH` (both have a score and they differ), `UNCONFIRMED` (only the stored match has a score), or `SOURCE_BEHIND` (only the reference has one). Matches with no score in either source get no status.
+Each stored match with a counterpart in the reference SHALL get one status: `VERIFIED` (same home and away score), `MISMATCH` (both have a score and they differ), `UNCONFIRMED` (only the stored match has a score), or `SOURCE_BEHIND` (only the reference has one). Matches with no score in either source get no status. An awarded match whose stored score is level gets no status either: the source names no winner, so its score can't be compared with a reference that records the awarded result.
 
 #### Scenario: Scores agree
 
@@ -71,6 +71,19 @@ Each stored match with a counterpart in the reference SHALL get one status: `VER
 - **GIVEN** a match that was `UNCONFIRMED`
 - **WHEN** the reference later shows the same score and verification runs again
 - **THEN** the status becomes `VERIFIED` and its check time is updated
+
+#### Scenario: Awarded match recorded with a level score
+
+- **GIVEN** a stored awarded match SC Bastia 0–0 Olympique Lyonnais and a reference cell 0–3
+- **WHEN** verification runs
+- **THEN** the match has no status, and any status it had is removed
+- **AND** no disagreement is logged for it
+
+#### Scenario: Awarded match recorded with the awarded score
+
+- **GIVEN** a stored awarded match 1. FC Union Berlin 0–2 VfL Bochum 1848 and a reference cell 0–2
+- **WHEN** verification runs
+- **THEN** the match's status is `VERIFIED`
 
 ### Requirement: Reference content is never stored or served
 

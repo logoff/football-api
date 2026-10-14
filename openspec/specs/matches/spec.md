@@ -16,7 +16,8 @@ The system SHALL store each match with:
 - an optional reference to a venue
 - a kickoff timestamp in UTC, and an optional `original_kickoff_utc` set when the kickoff is first observed to change
 - a status: `SCHEDULED`, `COMPLETED`, `CANCELLED`, `POSTPONED`
-- home and away scores at the end of play, including extra time (nullable until `COMPLETED`)
+- home and away scores at the end of play, including extra time (nullable until `COMPLETED`); for an awarded match, the score the source records
+- `awarded`: `true` when the result was decided off the pitch (forfeit or disciplinary decision), as the source marks it; otherwise `false`
 - `decided_by`: `REGULAR`, `EXTRA_TIME`, or `PENALTIES` (nullable until `COMPLETED`)
 - home and away penalty-shootout scores (null unless `decided_by` is `PENALTIES`)
 - a stage: `QUALIFYING`, `PRELIMINARY`, `ROUND`, `LEAGUE`, `GROUP`, `PLAYOFF`, `R32`, `R16`, `QF`, `SF`, `THIRD_PLACE`, or `FINAL`; an optional matchday number, which for `ROUND` is the round's number; and the source's round label
@@ -81,6 +82,23 @@ The system SHALL store each match with:
 - **GIVEN** a source that lists a pairing as `[postponed]` and later lists the same pairing in the same stage at a new date
 - **WHEN** it is synced
 - **THEN** one match exists, with `occurrence` 1, the new kickoff and the first kickoff as `original_kickoff_utc`
+
+#### Scenario: Awarded match with the awarded score
+
+- **GIVEN** the source line `1. FC Union Berlin v VfL Bochum 1848 0-2 [awarded]`
+- **WHEN** the match is ingested
+- **THEN** it is `COMPLETED` with `home_score`=0, `away_score`=2 and `awarded`=`true`
+
+#### Scenario: Awarded match with only the played score
+
+- **GIVEN** the source line `SC Bastia v Olympique Lyonnais 0-0 [awarded]`
+- **WHEN** the match is ingested
+- **THEN** it is `COMPLETED` with `home_score`=0, `away_score`=0 and `awarded`=`true`
+
+#### Scenario: Match played normally
+
+- **WHEN** a client GETs a match with no `[awarded]` tag in the source
+- **THEN** `awarded` is `false`
 
 ### Requirement: Goal scorers
 
