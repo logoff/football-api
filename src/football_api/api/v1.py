@@ -330,6 +330,7 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
             decided_by=m.decided_by,
             home_pens=m.home_pens,
             away_pens=m.away_pens,
+            awarded=m.awarded,
             coverage=MatchCoverage(scorers=scorers_coverage),
             verification=verifications.get(m.id),
         )

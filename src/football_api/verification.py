@@ -104,7 +104,9 @@ async def apply_grid(
             continue
         stored = (match.home_score, match.away_score) if match.home_score is not None and match.away_score is not None else None
         ref = reference[key]
-        status = classify(stored, ref)
+        # An awarded match recorded with a level score names no winner, so it can't be compared (design D2).
+        level_award = match.awarded and stored is not None and stored[0] == stored[1]
+        status = None if level_award else classify(stored, ref)
         if status is None:
             await session.execute(
                 delete(MatchVerification).where(

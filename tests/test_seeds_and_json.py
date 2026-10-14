@@ -98,3 +98,21 @@ def test_competition_format_is_required_and_known(fmt: str | None) -> None:
     with pytest.raises(ValidationError, match="format"):
         CompetitionSeed.model_validate(raw)
 
+
+def test_json_mirror_awarded_status(tmp_path: Path) -> None:
+    mirror = tmp_path / "de.1.json"
+    mirror.write_text(
+        '{"matches": [{"round": "Matchday 14", "date": "2024-12-14", "team1": "1. FC Union Berlin",'
+        ' "team2": "VfL Bochum 1848", "score": {"ft": [0, 2]}, "status": "awarded"}]}',
+        encoding="utf-8",
+    )
+    [match] = read_json(mirror)
+    assert (match.awarded, match.score) == (True, ParsedScore(0, 2, DecidedBy.REGULAR))
+
+
+def test_json_mirror_that_lost_an_awarded_marker_is_not_current() -> None:
+    text = parse_file(SOURCES / "deutschland/2024-25/1-bundesliga.txt", start_year=2024, display_path="bl")
+    mirror = [replace(m, awarded=False) for m in text]
+    assert is_current(text, text)
+    assert not is_current(mirror, text)
+

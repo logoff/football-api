@@ -107,6 +107,21 @@ async def test_cup_rounds_and_repeated_pairing(client: httpx.AsyncClient) -> Non
     assert (semi["occurrence"], semi["decided_by"], semi["home_pens"], semi["away_pens"]) == (1, "PENALTIES", 2, 4)
 
 
+async def test_awarded_flag(client: httpx.AsyncClient) -> None:
+    """matches spec: `awarded` marks results decided off the pitch."""
+    bundesliga = await season_id(client, "Bundesliga")
+    matches = (await get(client, f"/v1/matches?season_id={bundesliga}&limit=200"))["data"]
+    union, bochum = await team_id(client, "1. FC Union Berlin"), await team_id(client, "VfL Bochum")
+    [awarded] = [m for m in matches if m["awarded"]]
+    assert (awarded["home_team_id"], awarded["away_team_id"], awarded["home_score"], awarded["away_score"]) == (
+        union,
+        bochum,
+        0,
+        2,
+    )
+    assert awarded["status"] == "COMPLETED"
+
+
 async def test_seasons(client: httpx.AsyncClient) -> None:
     pl = await competition_id(client, "Premier League")
     [season] = (await get(client, f"/v1/seasons?competition_id={pl}"))["data"]

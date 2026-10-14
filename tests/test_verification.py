@@ -278,3 +278,35 @@ async def test_no_reference_values_are_stored(
     assert (await stored_matches())[0] == (h, a, s)  # the stored score is untouched
     assert (await statuses())[(h, a)][0] is VerificationStatus.MISMATCH
     assert datetime.now(UTC) >= (await statuses())[(h, a)][1]
+
+
+async def test_awarded_matches(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed], caplog: pytest.LogCaptureFixture
+) -> None:
+    """An awarded match with a level score isn't compared; one with the awarded score is (match-verification spec)."""
+    pl = next(c for c in fixture_competitions if c.name == "Premier League")
+    pl = pl.model_copy(update={"seasons": [pl.seasons[0].model_copy(update={"json_file": None, "wikipedia": ARTICLE})]})
+    report = await run_sync(competitions=[pl], teams=fixture_teams, refresh_sources=False)
+    assert not report.failed
+    matches = await stored_matches()
+    ref = FakeReference()
+    ref.qid_of = {t.name: t.wikidata for t in fixture_teams if t.wikidata}
+    level, decisive = ("Nottingham Forest", "AFC Bournemouth"), ("Manchester United", "Fulham")
+    cells = [GridCell(h, a, (0, 3) if (h, a) == level else s) for h, a, s in matches]
+    ref.grid = ResultsGrid(teams=sorted({n for h, a, _ in matches for n in (h, a)}), cells=cells)
+    await verify([pl], fixture_teams, ref)
+    assert (await statuses())[level][0] is VerificationStatus.MISMATCH  # 1–1 against 0–3, not yet awarded
+
+    path = fresh_db / "england/2024-25/1-premierleague.txt"
+    text = path.read_text(encoding="utf-8")
+    for line in ("v AFC Bournemouth          1-1 (1-0)", "v Fulham FC                1-0 (0-0)"):
+        assert line in text
+        text = text.replace(line, line + "    [awarded]")
+    path.write_text(text, encoding="utf-8")
+    caplog.clear()
+    with caplog.at_level(logging.WARNING, logger="football_api.verification"):
+        await verify([pl], fixture_teams, ref)
+    got = await statuses()
+    assert level not in got
+    assert got[decisive][0] is VerificationStatus.VERIFIED
+    assert "AFC Bournemouth: stored" not in caplog.text
