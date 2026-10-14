@@ -507,6 +507,20 @@
   openfootball:
     - "AS Dragon"
 
+- name: "AS Ginglin Cesson"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q140602353
+  openfootball:
+    - "AS Ginglin Cesson"
+
+- name: "AS Guereins"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q140160755
+  openfootball:
+    - "AS Guereins"
+
 - name: "AS Monaco"
   kind: CLUB
   country: "FR"
@@ -1168,6 +1182,13 @@
   openfootball:
     - "CA Antoniano"
 
+- name: "CA Boulay"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q119519580
+  openfootball:
+    - "CA Boulay"
+
 - name: "CA Bucaramanga"
   kind: CLUB
   country: "CO"
@@ -1663,6 +1684,13 @@
   wikidata: Q115822153
   openfootball:
     - "CD l'Alcora"
+
+- name: "CD Laguna"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q5773882
+  openfootball:
+    - "CD Laguna"
 
 - name: "CD Lealtad"
   kind: CLUB
@@ -2568,6 +2596,14 @@
   openfootball:
     - "CSD Colo-Colo (CHI)"
 
+- name: "Cultural Leonesa"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q582342
+  openfootball:
+    - "CD Leonesa"
+    - "Cultural Leonesa"
+
 - name: "Curzon Ashton"
   kind: CLUB
   country: "GB-ENG"
@@ -2697,6 +2733,13 @@
   wikidata: Q211477
   openfootball:
     - "Dinamo Minsk (BLR)"
+
+- name: "Dinamo San Juan"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q114771204
+  openfootball:
+    - "Dinamo San Juan"
 
 - name: "Dinan-Léhon"
   kind: CLUB
@@ -2879,6 +2922,13 @@
   wikidata: Q104866334
   openfootball:
     - "ESA Linas-Montlhéry"
+
+- name: "ESB Marboz"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q119170479
+  openfootball:
+    - "ESB Marboz"
 
 - name: "ESOF La Roche-sur-Yon"
   kind: CLUB
@@ -4322,6 +4372,13 @@
     - "Leicester City"
     - "Leicester City FC"
 
+- name: "Lempdes SF"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q119519654
+  openfootball:
+    - "Lempdes SF"
+
 - name: "Les Herbiers VF"
   kind: CLUB
   country: "FR"
@@ -5091,105 +5148,6 @@
   openfootball:
     - "PSV (NED)"
 
-- name: "Q114771204"
-  kind: CLUB
-  country: "ES"
-  wikidata: Q114771204
-  openfootball:
-    - "Dinamo San Juan"
-
-- name: "Q119170479"
-  kind: CLUB
-  country: "FR"
-  wikidata: Q119170479
-  openfootball:
-    - "ESB Marboz"
-
-- name: "Q119519400"
-  kind: CLUB
-  country: "FR"
-  wikidata: Q119519400
-  openfootball:
-    - "US Nousseviller"
-
-- name: "Q119519512"
-  kind: CLUB
-  country: "FR"
-  wikidata: Q119519512
-  openfootball:
-    - "Valence FC"
-
-- name: "Q119519580"
-  kind: CLUB
-  country: "FR"
-  wikidata: Q119519580
-  openfootball:
-    - "CA Boulay"
-
-- name: "Q119519654"
-  kind: CLUB
-  country: "FR"
-  wikidata: Q119519654
-  openfootball:
-    - "Lempdes SF"
-
-- name: "Q119519749"
-  kind: CLUB
-  country: "FR"
-  wikidata: Q119519749
-  openfootball:
-    - "Stade Paimpolais"
-
-- name: "Q119947321"
-  kind: CLUB
-  country: "FR"
-  wikidata: Q119947321
-  openfootball:
-    - "Étoile Maritime"
-
-- name: "Q119947784"
-  kind: CLUB
-  country: "FR"
-  wikidata: Q119947784
-  openfootball:
-    - "US Bolbec"
-
-- name: "Q137003733"
-  kind: CLUB
-  country: "FR"
-  wikidata: Q137003733
-  openfootball:
-    - "RC Saint-Joseph"
-
-- name: "Q140160755"
-  kind: CLUB
-  country: "FR"
-  wikidata: Q140160755
-  openfootball:
-    - "AS Guereins"
-
-- name: "Q140602353"
-  kind: CLUB
-  country: "FR"
-  wikidata: Q140602353
-  openfootball:
-    - "AS Ginglin Cesson"
-
-- name: "Q5773882"
-  kind: CLUB
-  country: "ES"
-  wikidata: Q5773882
-  openfootball:
-    - "CD Laguna"
-
-- name: "Q582342"
-  kind: CLUB
-  country: "ES"
-  wikidata: Q582342
-  openfootball:
-    - "CD Leonesa"
-    - "Cultural Leonesa"
-
 - name: "Qarabağ"
   kind: CLUB
   country: "AZ"
@@ -5334,6 +5292,13 @@
   wikidata: Q1271664
   openfootball:
     - "RC Roubaix"
+
+- name: "RC Saint-Joseph"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q137003733
+  openfootball:
+    - "RC Saint-Joseph"
 
 - name: "RC Strasbourg Alsace"
   kind: CLUB
@@ -6276,6 +6241,13 @@
   openfootball:
     - "SM Caen"
 
+- name: "Stade Paimpolais"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q119519749
+  openfootball:
+    - "Stade Paimpolais"
+
 - name: "Stade Rennais"
   kind: CLUB
   country: "FR"
@@ -7064,6 +7036,13 @@
   openfootball:
     - "US Avranches"
 
+- name: "US Bolbec"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q119947784
+  openfootball:
+    - "US Bolbec"
+
 - name: "US Boulogne"
   kind: CLUB
   country: "FR"
@@ -7159,6 +7138,13 @@
   wikidata: Q2471679
   openfootball:
     - "US Montagnarde"
+
+- name: "US Nousseviller"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q119519400
+  openfootball:
+    - "US Nousseviller"
 
 - name: "US Noyelles-sous-Lens"
   kind: CLUB
@@ -7270,6 +7256,13 @@
   country: "ES"
   openfootball:
     - "Utrera CD"
+
+- name: "Valence FC"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q119519512
+  openfootball:
+    - "Valence FC"
 
 - name: "Valencia"
   kind: CLUB
@@ -7697,6 +7690,13 @@
   country: "FR"
   openfootball:
     - "Étoile de Matoury"
+
+- name: "Étoile Maritime"
+  kind: CLUB
+  country: "FR"
+  wikidata: Q119947321
+  openfootball:
+    - "Étoile Maritime"
 
 - name: "ŠK Slovan Bratislava"
   kind: CLUB
