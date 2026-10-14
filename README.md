@@ -53,7 +53,7 @@ The sync refuses to run until the API container has applied the migrations (exit
 
 ## Data coverage
 
-19 competitions. The five domestic leagues have every season openfootball publishes, up to the one in progress, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes. The others have their last completed edition. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
+19 competitions. The five domestic leagues have every season openfootball publishes, up to the one in progress, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The others have their last completed edition. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
 
 | Competition                | Format     | Seasons                 | Results | Verified | Goal scorers | Squads |
 | -------------------------- | ---------- | ----------------------- | ------- | -------- | ------------ | ------ |
@@ -62,12 +62,12 @@ The sync refuses to run until the API container has applied the migrations (exit
 | Bundesliga                 | LEAGUE     | 2010-11 to 2026-27 (17) | ✅      | ✅       | none         | none   |
 | Serie A                    | LEAGUE     | 2013-14 to 2026-27 (14) | ✅      | ✅       | none         | none   |
 | Ligue 1                    | LEAGUE     | 2014-15 to 2026-27 (13) | ✅      | ✅       | none         | none   |
-| FA Cup                     | CUP        | 2018-19 to 2024-25 (7)  | ✅      | none     | none         | none   |
-| EFL Cup                    | LEAGUE_CUP | 2018-19 to 2024-25 (7)  | ✅      | none     | none         | none   |
-| Copa del Rey               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | none     | none         | none   |
-| DFB-Pokal                  | CUP        | 2018-19 to 2024-25 (7)  | ✅      | none     | none         | none   |
-| Coppa Italia               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | none     | none         | none   |
-| Coupe de France            | CUP        | 2024-25                 | ✅      | none     | none         | none   |
+| FA Cup                     | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none   |
+| EFL Cup                    | LEAGUE_CUP | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none   |
+| Copa del Rey               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none   |
+| DFB-Pokal                  | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none   |
+| Coppa Italia               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none   |
+| Coupe de France            | CUP        | 2024-25                 | ✅      | ✅       | none         | none   |
 | UEFA Champions League      | TOURNAMENT | 2024-25                 | ✅      | none     | none         | none   |
 | UEFA Europa League         | TOURNAMENT | 2024-25                 | ✅      | none     | none         | none   |
 | UEFA Conference League     | TOURNAMENT | 2024-25                 | ✅      | none     | none         | none   |
@@ -89,7 +89,7 @@ The API reports this in a `coverage` field on seasons, matches, and player listi
 
 ### Verification
 
-openfootball is the only data source. Domestic league scores are additionally checked against the results grid of the English Wikipedia season article, so a wrong score in either source shows up instead of passing silently. Wikipedia is read only to compare: none of its values are stored or served.
+openfootball is the only data source. Domestic league scores are additionally checked against the results grid of the English Wikipedia season article, and domestic cup scores (including penalty shootouts) against the article's match boxes, so a wrong score in either source shows up instead of passing silently. Wikipedia is read only to compare: none of its values are stored or served.
 
 Each verified match gets a `verification` object in the API (`null` elsewhere), and `/v1/matches?verification=MISMATCH` lists the disagreements:
 

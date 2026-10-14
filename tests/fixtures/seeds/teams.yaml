@@ -648,11 +648,13 @@
 - name: "Forest Green Rovers"
   kind: CLUB
   country: "GB-ENG"
+  wikidata: Q18512
   openfootball:
     - "Forest Green Rovers"
 
 - name: "Scarborough Athletic"
   kind: CLUB
   country: "GB-ENG"
+  wikidata: Q7430259
   openfootball:
     - "Scarborough Athletic FC"

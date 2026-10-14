@@ -1,7 +1,7 @@
 """Verification against a reference grid (match-verification spec), with a fake reference."""
 
 import logging
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import pytest
@@ -11,7 +11,7 @@ from football_api.domain.enums import MatchStatus, SeasonStatus, VerificationSta
 from football_api.infra.db import get_engine, get_sessionmaker
 from football_api.infra.models import Match, MatchVerification, Season, Team
 from football_api.ingestion.seeds import CompetitionSeed, TeamSeed
-from football_api.ingestion.wikipedia import GridCell, ResultsGrid, WikipediaUnavailable
+from football_api.ingestion.wikipedia import GridCell, MatchBox, ResultsGrid, WikipediaUnavailable
 from football_api.sync import run_sync
 from football_api.verification import classify, verify_seasons
 
@@ -33,6 +33,7 @@ class FakeReference:
 
     def __init__(self) -> None:
         self.grid: ResultsGrid | None = None
+        self.boxes: list[MatchBox] = []
         self.qid_of: dict[str, str] = {}
         self.error: Exception | None = None
         self.requests: list[str] = []
@@ -42,6 +43,12 @@ class FakeReference:
         if self.error:
             raise self.error
         return self.grid
+
+    async def match_boxes(self, title: str) -> list[MatchBox]:
+        self.requests.append(title)
+        if self.error:
+            raise self.error
+        return self.boxes
 
     async def qids(self, titles: list[str]) -> dict[str, str]:
         return {t: self.qid_of[t] for t in titles if t in self.qid_of}
@@ -310,3 +317,95 @@ async def test_awarded_matches(
     assert level not in got
     assert got[decisive][0] is VerificationStatus.VERIFIED
     assert "AFC Bournemouth: stored" not in caplog.text
+
+
+FA_CUP_ARTICLE = "2023–24 FA Cup"
+
+
+async def fa_cup_synced(fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]) -> CompetitionSeed:
+    fa = next(c for c in fixture_competitions if c.name == "FA Cup")
+    fa = fa.model_copy(update={"seasons": [fa.seasons[0].model_copy(update={"wikipedia": FA_CUP_ARTICLE})]})
+    report = await run_sync(competitions=[fa], teams=fixture_teams, refresh_sources=False)
+    assert not report.failed
+    return fa
+
+
+def cup_reference(fixture_teams: list[TeamSeed], boxes: list[MatchBox]) -> FakeReference:
+    ref = FakeReference()
+    ref.qid_of = {t.name: t.wikidata for t in fixture_teams if t.wikidata}
+    ref.boxes = boxes
+    return ref
+
+
+SCARBOROUGH, FOREST_GREEN = "Scarborough Athletic", "Forest Green Rovers"
+COVENTRY, UNITED, CITY = "Coventry City", "Manchester United", "Manchester City"
+
+
+def fa_cup_boxes(**overrides: MatchBox) -> list[MatchBox]:
+    boxes = {
+        "r1": MatchBox(date(2023, 11, 4), SCARBOROUGH, FOREST_GREEN, (1, 1)),
+        "void": MatchBox(date(2023, 11, 14), FOREST_GREEN, SCARBOROUGH, None),  # the voided replay
+        "r1b": MatchBox(date(2023, 12, 12), SCARBOROUGH, FOREST_GREEN, (2, 4)),
+        "sf": MatchBox(date(2024, 4, 21), COVENTRY, UNITED, (3, 3), (2, 4)),
+        "final": MatchBox(date(2024, 5, 25), CITY, UNITED, (1, 2)),
+    }
+    boxes.update(overrides)
+    return list(boxes.values())
+
+
+async def test_cup_season_verified_from_match_boxes(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed], caplog: pytest.LogCaptureFixture
+) -> None:
+    """Cups pair boxes by QIDs and date and compare shootouts (match-verification spec)."""
+    fa = await fa_cup_synced(fixture_competitions, fixture_teams)
+    ref = cup_reference(fixture_teams, fa_cup_boxes())
+    with caplog.at_level(logging.INFO, logger="football_api.verification"):
+        await verify_seasons([(fa, fa.seasons[0])], ref)
+    got = await cup_statuses()
+    assert got == {
+        (SCARBOROUGH, FOREST_GREEN, date(2023, 11, 4)): VerificationStatus.VERIFIED,
+        (SCARBOROUGH, FOREST_GREEN, date(2023, 12, 12)): VerificationStatus.VERIFIED,
+        (COVENTRY, UNITED, date(2024, 4, 21)): VerificationStatus.VERIFIED,
+        (CITY, UNITED, date(2024, 5, 25)): VerificationStatus.VERIFIED,
+    }
+    assert ref.requests == [FA_CUP_ARTICLE]
+    assert "FA Cup 2023-24: verified against wikipedia: VERIFIED=4 MISMATCH=0 UNCONFIRMED=0 SOURCE_BEHIND=0 unpaired=0" in caplog.text
+
+
+async def test_cup_shootout_and_no_result_boxes(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed], caplog: pytest.LogCaptureFixture
+) -> None:
+    fa = await fa_cup_synced(fixture_competitions, fixture_teams)
+    boxes = fa_cup_boxes(
+        sf=MatchBox(date(2024, 4, 21), COVENTRY, UNITED, (3, 3), (4, 2)),  # shootout differs
+        final=MatchBox(date(2024, 5, 25), CITY, UNITED, None),  # e.g. `v` or `Void`
+    )
+    with caplog.at_level(logging.WARNING, logger="football_api.verification"):
+        await verify_seasons([(fa, fa.seasons[0])], cup_reference(fixture_teams, boxes))
+    got = await cup_statuses()
+    assert got[(COVENTRY, UNITED, date(2024, 4, 21))] is VerificationStatus.MISMATCH
+    assert got[(CITY, UNITED, date(2024, 5, 25))] is VerificationStatus.UNCONFIRMED
+    assert "stored 3–3 (2–4 p), wikipedia 3–3 (4–2 p)" in caplog.text
+
+
+async def test_cup_unpaired_match_is_counted(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed], caplog: pytest.LogCaptureFixture
+) -> None:
+    fa = await fa_cup_synced(fixture_competitions, fixture_teams)
+    boxes = [b for b in fa_cup_boxes() if b.home != CITY]
+    with caplog.at_level(logging.INFO, logger="football_api.verification"):
+        await verify_seasons([(fa, fa.seasons[0])], cup_reference(fixture_teams, boxes))
+    assert (CITY, UNITED, date(2024, 5, 25)) not in await cup_statuses()
+    assert "unpaired=1" in caplog.text
+
+
+async def cup_statuses() -> dict[tuple[str, str, date], VerificationStatus]:
+    async with get_sessionmaker()() as session:
+        home, away = Team.__table__.alias("home"), Team.__table__.alias("away")
+        rows = await session.execute(
+            select(home.c.name, away.c.name, Match.kickoff_utc, MatchVerification.status)
+            .join(Match, Match.id == MatchVerification.match_id)
+            .join(home, home.c.id == Match.home_team_id)
+            .join(away, away.c.id == Match.away_team_id)
+        )
+        return {(h, a, k.date()): s for h, a, k, s in rows}
