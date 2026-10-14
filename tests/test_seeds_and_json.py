@@ -1,3 +1,4 @@
+import re
 from dataclasses import replace
 from pathlib import Path
 
@@ -22,6 +23,7 @@ def test_real_seed_files_are_valid() -> None:
     assert all(t.kind is TeamKind.CLUB for t in without_qid) and len(without_qid) <= 64
     assert all(s.tz for c in competitions for s in c.seasons)
     assert len(teams) > 250
+    assert not [t.name for t in teams if re.fullmatch(r"Q\d+", t.name)]  # a Wikidata ID is never a name
 
 
 def test_json_mirror_used_only_when_current() -> None:
