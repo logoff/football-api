@@ -83,6 +83,8 @@ The Premier League's 1992-93 to 1997-98 and 1999-00 seasons have dates but no ki
 
 Ligue 1 2019-20 was stopped after 279 matches; its 101 unplayed fixtures are listed as `CANCELLED`.
 
+Matches decided off the pitch (a forfeit or a disciplinary decision) have `awarded: true` and keep the score the source records. That's usually the awarded score (Union Berlin v Bochum 2024-25, `0-2`), but for SC Bastia v Olympique Lyonnais 2016-17 it's the 0–0 at abandonment: the LFP credited Lyon with the win and no goals.
+
 The API reports this in a `coverage` field on seasons, matches, and player listings, so "no scorers" is never mistaken for "no goals".
 
 ### Verification
@@ -98,7 +100,7 @@ Each verified match gets a `verification` object in the API (`null` elsewhere), 
 | `UNCONFIRMED`   | openfootball has a result that Wikipedia doesn't have yet |
 | `SOURCE_BEHIND` | Wikipedia has a result that openfootball doesn't have yet |
 
-Statuses are recomputed on every `--verify` run, and each disagreement is logged with both scores.
+Statuses are recomputed on every `--verify` run, and each disagreement is logged with both scores. An awarded match recorded with a level score isn't compared, since the source names no winner.
 
 Known gaps:
 

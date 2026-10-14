@@ -168,6 +168,8 @@ class Match(Base):
     round_label: Mapped[str] = mapped_column(String(128))
     # 1, or 2+ for a pairing played again with the same home team in the same stage (a cup re-replay).
     occurrence: Mapped[int] = mapped_column(SmallInteger, server_default=text("1"))
+    # Decided off the pitch (forfeit or disciplinary decision); the score is whatever the source records.
+    awarded: Mapped[bool] = mapped_column(server_default=text("false"))
 
 
 class Goal(Base):

@@ -70,6 +70,7 @@ class ParsedMatch:
     goals: list[ParsedGoal] = field(default_factory=lambda: list[ParsedGoal]())
     goals_listed: bool = False
     status: MatchStatus = MatchStatus.COMPLETED
+    awarded: bool = False  # decided off the pitch; the score is whatever the source records
 
 
 def parse_score(text: str) -> ParsedScore:
@@ -286,8 +287,10 @@ def parse_text(text: str, *, start_year: int, path: str = "<text>") -> list[Pars
 
         tag = _TAG_RE.search(body)
         status: MatchStatus | None = None
+        awarded = False
         if tag and tag.group("tag").strip() in _TAG_STATUS:
             status = _TAG_STATUS[tag.group("tag").strip()]
+            awarded = tag.group("tag").strip() == "awarded"
             body = body[: tag.start()]
 
         content, venue = _split_venue(body.strip())
@@ -322,6 +325,7 @@ def parse_text(text: str, *, start_year: int, path: str = "<text>") -> list[Pars
                 venue_name=venue_name,
                 venue_city=venue_city,
                 status=status,
+                awarded=awarded,
             )
         )
 

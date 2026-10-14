@@ -352,6 +352,7 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
             match.original_kickoff_utc = None  # recorded by earlier syncs for such a time appearing
     match.kickoff_utc = kickoff
     match.matchday, match.round_label, match.status = matchday, m.round_label, m.status
+    match.awarded = m.awarded
     match.venue_id = await upsert_venue(session, m.venue_name, m.venue_city)
     score = m.score
     match.home_score = score.home if score else None

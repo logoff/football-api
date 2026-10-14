@@ -92,6 +92,8 @@ def test_awarded_match_keeps_its_score() -> None:
     awarded = find(matches, "1. FC Union Berlin", "VfL Bochum 1848")
     assert awarded.status is MatchStatus.COMPLETED
     assert awarded.score == ParsedScore(0, 2, DecidedBy.REGULAR)
+    assert awarded.awarded
+    assert not any(m.awarded for m in matches if m is not awarded)
 
 
 def test_postponed_match_and_two_legged_shootout() -> None:

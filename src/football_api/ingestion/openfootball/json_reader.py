@@ -57,6 +57,7 @@ def read_json(path: Path) -> list[ParsedMatch]:
                 away=raw["team2"],
                 score=score,
                 status=status or (MatchStatus.COMPLETED if score else MatchStatus.SCHEDULED),
+                awarded=raw.get("status") == "awarded",
             )
         )
     return matches
@@ -67,6 +68,8 @@ def is_current(json_matches: list[ParsedMatch], text_matches: list[ParsedMatch])
         return False
     if sum(m.score is not None for m in json_matches) < sum(m.score is not None for m in text_matches):
         return False
+    if sum(m.awarded for m in json_matches) < sum(m.awarded for m in text_matches):
+        return False  # the mirror lost an `[awarded]` marker
     for m in json_matches:
         if m.status is MatchStatus.COMPLETED and m.score is None:
             return False

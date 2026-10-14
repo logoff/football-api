@@ -141,6 +141,10 @@ class MatchOut(BaseModel):
     decided_by: DecidedBy | None
     home_pens: int | None
     away_pens: int | None
+    awarded: bool = Field(
+        description="Decided off the pitch (forfeit or disciplinary decision), as the source marks it; the score is "
+        "the one the source records, which can be the score when play stopped"
+    )
     coverage: MatchCoverage
     verification: MatchVerificationOut | None = Field(
         description="Score check against an independent open reference; null when the match isn't verified. "
