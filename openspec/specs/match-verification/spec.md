@@ -159,9 +159,9 @@ Match responses SHALL include `verification`: `null` when the match has no statu
 - **WHEN** a client GETs `/v1/matches?verification=MAYBE`
 - **THEN** the API responds 422 with the standard error envelope
 
-### Requirement: Reference results for domestic cups
+### Requirement: Reference results for cups and tournaments
 
-The system SHALL use the match boxes of the English Wikipedia article named by each configured domestic cup season as the verification reference. Each box is paired with the stored match of the same home and away teams, identified only through Wikidata QIDs, and, when the pairing occurs more than once, the same date.
+The system SHALL use as the verification reference the match boxes of the English Wikipedia article named by each cup or tournament season and of the sub-articles it links whose titles extend its own, each box used once. Qualifying sub-articles are read only for seasons holding qualifying matches; squad, other-edition and non-match sub-articles are not. Each box pairs with the stored match of the same teams, identified only through Wikidata QIDs, and, when the pairing recurs, the same date.
 
 #### Scenario: Cup season verified from its article
 
@@ -185,4 +185,28 @@ The system SHALL use the match boxes of the English Wikipedia article named by e
 
 - **GIVEN** a box `3–0 (awd.)` and a stored awarded match 3–0 for the same pairing
 - **WHEN** verification runs
-- **THEN** the match's status is `VERIFIED`
+
+#### Scenario: Season spread over several articles
+
+- **GIVEN** CONMEBOL Copa Libertadores 2024 names the article `2024 Copa Libertadores`
+- **WHEN** verification runs
+- **THEN** the boxes of its `qualifying stages`, `group stage` and `final stages` sub-articles are read
+- **AND** its `Femenina` and `de Futsal` sub-articles are not
+
+#### Scenario: Separate qualification tournament
+
+- **GIVEN** the UEFA Euro 2024 article links `UEFA Euro 2024 qualifying`, and the season holds no qualifying matches
+- **WHEN** verification runs
+- **THEN** the qualification article is not read
+
+#### Scenario: Same match in the main article and a sub-article
+
+- **GIVEN** the 2022 FIFA World Cup article and its `Group A` sub-article both show Qatar v Ecuador
+- **WHEN** verification runs
+- **THEN** the match is compared once
+
+#### Scenario: Teams named the other way round
+
+- **GIVEN** openfootball lists the 1990 quarter-final as Yugoslavia v Argentina, and the Wikipedia box as Argentina v Yugoslavia, both on 30 June 1990
+- **WHEN** verification runs
+- **THEN** they are compared, with the box's score and shoot-out read the other way round
