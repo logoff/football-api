@@ -21,7 +21,7 @@ from collections import defaultdict
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from datetime import UTC, date, datetime, time
+from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -185,6 +185,7 @@ class SeasonContext:
     sources: Path
     scorer_names_capitalised: bool
     squads: dict[uuid.UUID, list[tuple[Player, str]]]  # team_id → [(player, display)]
+    seen: set[uuid.UUID] = field(default_factory=lambda: set[uuid.UUID]())  # matches this sync matched or created
 
 
 async def resolve_team(session: AsyncSession, path: str, line_no: int, name: str) -> uuid.UUID:
@@ -334,6 +335,30 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
         )
     )
     if match is None:
+        # The source may have relabelled the round (`10. Runde` → `Round of 32`): reuse the match of
+        # the same teams and date this sync hasn't matched yet, so it keeps its UUID.
+        match = await session.scalar(
+            select(Match)
+            .where(
+                Match.season_id == ctx.season.id,
+                Match.home_team_id == home_id,
+                Match.away_team_id == away_id,
+                Match.id.not_in(ctx.seen),
+                Match.kickoff_utc.between(kickoff - timedelta(days=1), kickoff + timedelta(days=1)),
+            )
+            .order_by(Match.kickoff_utc)
+        )
+        if match is not None:
+            log.info("%s: %s v %s moved from %s to %s", path, m.home, m.away, match.stage.value, stage.value)
+            match.stage, match.occurrence = stage, occurrence
+            await session.execute(
+                delete(ExternalRef).where(
+                    ExternalRef.entity_type == EntityType.MATCH,
+                    ExternalRef.entity_id == match.id,
+                    ExternalRef.source == OPENFOOTBALL,
+                )
+            )
+    if match is None:
         match = Match(
             season_id=ctx.season.id,
             stage=stage,
@@ -363,6 +388,7 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
     await session.flush()
     key = f"{path}#{stage.value}#{m.home}#{m.away}" + (f"#{occurrence}" if occurrence > 1 else "")
     await ensure_ref(session, EntityType.MATCH, match.id, OPENFOOTBALL, key)
+    ctx.seen.add(match.id)
     if m.goals_listed:
         await sync_goals(session, ctx, match, m)
 
@@ -412,6 +438,15 @@ async def sync_season(session: AsyncSession, seed: CompetitionSeed, src: SeasonS
     await sync_squads(session, ctx)
     for m, occurrence in zip(matches, occurrences(matches, team_of), strict=True):
         await sync_match(session, ctx, m, path, occurrence)
+
+    # Matches the source no longer lists go, with their references; goals and statuses cascade.
+    stale = list(await session.scalars(select(Match.id).where(Match.season_id == season.id, Match.id.not_in(ctx.seen))))
+    if stale:
+        await session.execute(
+            delete(ExternalRef).where(ExternalRef.entity_type == EntityType.MATCH, ExternalRef.entity_id.in_(stale))
+        )
+        await session.execute(delete(Match).where(Match.id.in_(stale)))
+        log.info("%s %s: removed %d matches no longer in the source", seed.name, src.label, len(stale))
     return len(matches)
 
 

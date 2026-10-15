@@ -1,15 +1,16 @@
 """Ingestion against a real database: idempotency and reconciliation scenarios (ingestion spec)."""
 
 import re
+import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 from sqlalchemy import func, select, text
 
-from football_api.domain.enums import Coverage, DecidedBy, MatchStatus, Stage
+from football_api.domain.enums import Coverage, DecidedBy, MatchStatus, Stage, VerificationReference, VerificationStatus
 from football_api.infra.db import get_sessionmaker
-from football_api.infra.models import Competition, Goal, Match, Player, Season, Team
+from football_api.infra.models import Competition, ExternalRef, Goal, Match, MatchVerification, Player, Season, Team
 from football_api.ingestion.openfootball.squads import parse_more_squads, parse_per_team_squad
 from football_api.ingestion.seeds import CompetitionSeed, TeamSeed
 from football_api.sync import UnknownTeamError, run_sync
@@ -316,3 +317,56 @@ async def test_earlier_local_midnight_placeholder_is_not_a_move(
     await sync(competitions, fixture_teams)
     match = await match_by("Manchester United", "Fulham", Stage.LEAGUE)
     assert (match.kickoff_utc, match.original_kickoff_utc) == (datetime(2024, 8, 16, 19, 0, tzinfo=UTC), None)
+
+
+async def fa_cup_ids() -> dict[tuple[str, str, int], tuple[uuid.UUID, Stage]]:
+    async with get_sessionmaker()() as session:
+        home, away = Team.__table__.alias("home"), Team.__table__.alias("away")
+        rows = await session.execute(
+            select(home.c.name, away.c.name, Match.occurrence, Match.id, Match.stage)
+            .join(home, home.c.id == Match.home_team_id)
+            .join(away, away.c.id == Match.away_team_id)
+        )
+        return {(h, a, o): (i, s) for h, a, o, i, s in rows}
+
+
+async def test_relabelled_round_keeps_its_matches(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """A round renamed in the source moves its matches to the new stage, same UUIDs (ingestion spec)."""
+    fa_cup = [c for c in fixture_competitions if c.name == "FA Cup"]
+    await sync(fa_cup, fixture_teams)
+    before = await fa_cup_ids()
+    path = fresh_db / "england/2023-24/facup.txt"
+    path.write_text(path.read_text(encoding="utf-8").replace("▪ Semifinals", "▪ Round 5"), encoding="utf-8")
+    await sync(fa_cup, fixture_teams)
+    after = await fa_cup_ids()
+    assert {k: v[0] for k, v in after.items()} == {k: v[0] for k, v in before.items()}
+    assert after[("Coventry City", "Manchester United", 1)][1] is Stage.ROUND
+
+
+async def test_match_removed_from_source_is_deleted(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """A match the source no longer lists is deleted with its verification status (ingestion spec)."""
+    fa_cup = [c for c in fixture_competitions if c.name == "FA Cup"]
+    await sync(fa_cup, fixture_teams)
+    before = await fa_cup_ids()
+    final_id = before[("Manchester City", "Manchester United", 1)][0]
+    async with get_sessionmaker()() as session, session.begin():
+        session.add(
+            MatchVerification(
+                match_id=final_id, reference=VerificationReference.WIKIPEDIA,
+                status=VerificationStatus.VERIFIED, checked_at=datetime.now(UTC),
+            )
+        )
+    path = fresh_db / "england/2023-24/facup.txt"
+    text = path.read_text(encoding="utf-8")
+    path.write_text(text[: text.index("▪ Final")], encoding="utf-8")
+    await sync(fa_cup, fixture_teams)
+    after = await fa_cup_ids()
+    assert ("Manchester City", "Manchester United", 1) not in after
+    assert {k: v[0] for k, v in after.items()} == {k: v[0] for k, v in before.items() if k[0] != "Manchester City"}
+    async with get_sessionmaker()() as session:
+        assert await session.scalar(select(func.count()).select_from(MatchVerification)) == 0
+        assert await session.scalar(select(func.count()).select_from(ExternalRef).where(ExternalRef.entity_id == final_id)) == 0
