@@ -33,8 +33,9 @@ The system SHALL parse the Open Football text DSL used in the league repositorie
 The parser handles, at minimum:
 
 - matchday headers (`Matchday N`, `Regular Season - N`, `Round of 16`, `Final`, etc.)
-- cup round headers (`Round N`, `N. Round`, `N. Runde`, `Preliminary round`, `Quarterfinals`, `Semi-finals`, etc.)
-- date markers
+- cup round headers (`Round N`, `N. Round`, `N. Runde`, `1st Round`, `First round`, `Preliminary round`, `Quarterfinals`, `Semi-finals`, etc.)
+- group headers in English or German (`Group A`, `Gruppe G`, `Gruppe 1`) and placement matches (`Match for fifth place`, `5th Place`)
+- date markers, with or without a weekday (`Fri Aug 15`, `June 14`, `Jun 14 2016`), on their own line or at the start of a match line, optionally followed by a kickoff time and a venue (`June 10 @ Düsseldorf  West Germany 1-1 Italy`, `Jul 1  21:45  Argentina 1-1 Bolivia`)
 - match lines with home team, away team, and final score
 - comments (lines starting with `#`) and blank lines
 - team-name aliases (e.g. `Man United` → `Manchester United`)
@@ -60,6 +61,17 @@ The parser handles, at minimum:
 
 - **WHEN** a header matches no stage rule
 - **THEN** the season's sync fails with an error naming the label, and the other seasons are synced
+
+#### Scenario: Date at the start of a match line
+
+- **GIVEN** the line `June 10 @ Düsseldorf     West Germany     1-1 Italy` in a file for 1988
+- **WHEN** it is parsed
+- **THEN** it is a match West Germany v Italy on 1988-06-10, 1–1, at venue city Düsseldorf
+
+#### Scenario: German group header
+
+- **WHEN** the header `Gruppe G` is parsed
+- **THEN** it maps to stage `GROUP`
 
 ### Requirement: Open Football JSON path
 
@@ -99,7 +111,7 @@ Natural keys for step 2:
 - teams — none beyond step 1: teams are created only from `seeds/teams.yaml` and matched through their Open Football spellings and Wikidata QID
 - players — `(team_id, season_id, display_name)`, created only from squad files
 - venues — `(name, city)`
-- matches — `(season_id, stage, home_team_id, away_team_id)`; kickoff is an attribute, not part of the key
+- matches — `(season_id, stage, home_team_id, away_team_id, occurrence)`; kickoff is an attribute, not part of the key. A source match with no row under that key reuses a match of the same season, teams and date (within a day) that this sync hasn't matched yet, so a relabelled round keeps its UUID. After a season syncs, matches of that season the source no longer lists are deleted, with their goals, verification status and external references
 - goals — `(match_id, ordinal)`; goals have no `external_ref` rows, and ordinals beyond the source's goal count are deleted
 
 No source is privileged in this algorithm: the same reconciliation flow applies whether the inbound record came from Wikidata, Open Football, or any future source.
@@ -116,6 +128,20 @@ No source is privileged in this algorithm: the same reconciliation flow applies 
 - **WHEN** the source is corrected to list 2 goals and sync runs
 - **THEN** goals with ordinals 1 and 2 keep their UUIDs and are updated in place
 - **AND** the goal with ordinal 3 is deleted
+
+#### Scenario: Round relabelled in the source
+
+- **GIVEN** a synced Coupe de France season whose round headed `10. Runde` (stage `ROUND`) is renamed `Round of 32` in the source
+- **WHEN** sync runs
+- **THEN** those matches keep their UUIDs, now with stage `R32`
+- **AND** the season has the same number of matches as before
+
+#### Scenario: Match removed from the source
+
+- **GIVEN** a synced season and a source correction that removes one match
+- **WHEN** sync runs
+- **THEN** that match, its goals and its verification status are deleted
+- **AND** every other match keeps its UUID
 
 ### Requirement: Source attribution
 

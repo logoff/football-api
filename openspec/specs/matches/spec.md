@@ -20,7 +20,7 @@ The system SHALL store each match with:
 - `awarded`: `true` when the result was decided off the pitch (forfeit or disciplinary decision), as the source marks it; otherwise `false`
 - `decided_by`: `REGULAR`, `EXTRA_TIME`, or `PENALTIES` (nullable until `COMPLETED`)
 - home and away penalty-shootout scores (null unless `decided_by` is `PENALTIES`)
-- a stage: `QUALIFYING`, `PRELIMINARY`, `ROUND`, `LEAGUE`, `GROUP`, `PLAYOFF`, `R32`, `R16`, `QF`, `SF`, `THIRD_PLACE`, or `FINAL`; an optional matchday number, which for `ROUND` is the round's number; and the source's round label
+- a stage: `QUALIFYING`, `PRELIMINARY`, `ROUND`, `LEAGUE`, `GROUP`, `PLAYOFF`, `R32`, `R16`, `QF`, `SF`, `THIRD_PLACE`, `FIFTH_PLACE`, or `FINAL`; an optional matchday number, which for `ROUND` is the round's number; and the source's round label
 - an `occurrence`: 1 for a pairing's first game in a stage, 2 for a further game with the same home team in that stage, and so on in source order. A further listing counts as a new game only when the previous one has a score; otherwise it is the same game rescheduled
 
 #### Scenario: Filtering matches by competition and season
@@ -99,6 +99,12 @@ The system SHALL store each match with:
 
 - **WHEN** a client GETs a match with no `[awarded]` tag in the source
 - **THEN** `awarded` is `false`
+
+#### Scenario: Fifth-place match
+
+- **GIVEN** a FIFA Club World Cup round headed `Match for fifth place` or `5th Place`
+- **WHEN** it is synced
+- **THEN** its match has stage `FIFTH_PLACE`
 
 ### Requirement: Goal scorers
 
