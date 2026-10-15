@@ -144,15 +144,28 @@ def _cell_name(cell: Tag) -> str:
     return re.sub(r"\s*\([^)]*\)\s*$", "", cell.get_text(" ", strip=True)).strip()
 
 
-def _team_title(cell: Tag, linked: dict[str, str]) -> str | None:
+def _cell_flag(cell: Tag) -> str | None:
+    """The country or federation a cell's flag icon links to: it tells apart two clubs called `Nacional`."""
+    link = cell.select_one(".flagicon a[href]")
+    return _anchor_title(link) if link is not None else None
+
+
+# (visible name, flag) → the articles cells showing them link to.
+Linked = dict[tuple[str, str | None], set[str]]
+
+
+def _team_title(cell: Tag, linked: Linked) -> str | None:
     """The club or team a box cell links to, skipping flag icons (a club's flag links to its
     federation, `Croatian Football Federation`). A cell without a link uses the article its visible
-    name links to elsewhere on the page: Wikipedia links a club only on first mention."""
+    name and flag link to elsewhere on the page, as Wikipedia links a club only on first mention;
+    a name that links to more than one article is left unresolved."""
     for link in cell.find_all("a", href=True):
         if not link.get_text(strip=True) or link.find_parent(class_="flagicon"):
             continue
         return _anchor_title(link)
-    return linked.get(_cell_name(cell))
+    name = _cell_name(cell)
+    titles = linked.get((name, _cell_flag(cell))) or {t for (n, _), ts in linked.items() if n == name for t in ts}
+    return next(iter(titles)) if len(titles) == 1 else None
 
 
 def _anchor_title(link: Tag) -> str | None:
@@ -165,7 +178,7 @@ def _anchor_title(link: Tag) -> str | None:
     return None
 
 
-def _collapsible_box(table: Tag, linked: dict[str, str]) -> MatchBox | None:
+def _collapsible_box(table: Tag, linked: Linked) -> MatchBox | None:
     row = table.find("tr")
     cells: list[Tag] = list(row.find_all("td", recursive=False)) if isinstance(row, Tag) else []
     if len(cells) < 4:
@@ -177,7 +190,7 @@ def _collapsible_box(table: Tag, linked: dict[str, str]) -> MatchBox | None:
     return MatchBox(_box_day(cells[0]), home, away, score, shootout, awarded)
 
 
-def _football_box(box: Tag, linked: dict[str, str]) -> MatchBox | None:
+def _football_box(box: Tag, linked: Linked) -> MatchBox | None:
     table = box.select_one("table.fevent")
     home_cell, score_cell, away_cell = (box.select_one(c) for c in (".fhome", ".fscore", ".faway"))
     if table is None or home_cell is None or score_cell is None or away_cell is None:
@@ -201,13 +214,13 @@ def parse_match_boxes(html: str) -> list[MatchBox]:
     for note in soup.find_all("sup"):
         note.decompose()
     nodes = soup.select("table.tmpl-football-box-collapsible, div.footballbox")
-    linked: dict[str, str] = {}  # visible team name → linked article, from the cells that do link
+    linked: Linked = {}  # from the cells that do link
     for node in nodes:
         cells = node.select(".fhome, .faway") if node.name == "div" else node.select("td.vcard")
         for cell in cells:
             title = _team_title(cell, {})
             if title:
-                linked.setdefault(_cell_name(cell), title)
+                linked.setdefault((_cell_name(cell), _cell_flag(cell)), set()).add(title)
     boxes: list[MatchBox] = []
     for node in nodes:
         box = _collapsible_box(node, linked) if node.name == "table" else _football_box(node, linked)

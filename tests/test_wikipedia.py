@@ -275,3 +275,25 @@ def test_box_day_reads_us_style_dates() -> None:
     html = _fb("x", '<a href="./Alpha_F.C." title="Alpha F.C.">Alpha</a>', '<a href="./Beta_F.C." title="Beta F.C.">Beta</a>', "0–0")
     html = html.replace('<span class="dtstart">x</span>', "July 29, 2015")
     assert [b.day for b in parse_match_boxes(html)] == [date(2015, 7, 29)]
+
+
+def test_unlinked_names_resolve_by_flag_and_never_by_guess() -> None:
+    """Two clubs called `Nacional` on one page: an unlinked one resolves only through its flag."""
+
+    def flag(country: str) -> str:
+        return f'<span class="flagicon"><a href="./{country}" title="{country}"><img alt="{country}"/></a></span>'
+
+    def club(name: str, title: str, country: str) -> str:
+        return f'<a href="./{title.replace(" ", "_")}" title="{title}">{name}</a> {flag(country)}'
+
+    html = (
+        _fb("2031-02-01", club("Nacional", "Club Nacional", "Paraguay"), club("Aucas", "S.D. Aucas", "Ecuador"), "0–1")
+        + _fb("2031-02-02", club("Nacional", "Club Nacional de Football", "Uruguay"), club("Cabello", "Academia Puerto Cabello", "Venezuela"), "2–0")
+        + _fb("2031-02-08", f"Nacional {flag('Uruguay')}", f"{flag('Venezuela')} Cabello", "2–0")  # the Uruguayan club
+        + _fb("2031-02-09", "Nacional", f"{flag('Ecuador')} Aucas", "3–0")  # no flag: either club
+    )
+    assert [(b.home, b.away) for b in parse_match_boxes(html)] == [
+        ("Club Nacional", "S.D. Aucas"),
+        ("Club Nacional de Football", "Academia Puerto Cabello"),
+        ("Club Nacional de Football", "Academia Puerto Cabello"),
+    ]
