@@ -15,11 +15,25 @@ from football_api.domain.enums import DecidedBy, MatchStatus, Side, Stage
 
 MONTHS = {m: i for i, m in enumerate("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec".split(), 1)}
 
+# `Fri Aug 15`, `Aug 15 2025`, `June 14`: weekday optional, month name short or full.
 _DATE_RE = re.compile(
-    r"^\s*(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+(?P<mon>[A-Z][a-z]{2})\s+(?P<day>\d{1,2})"
-    r"(?:\s+(?P<year>\d{4}))?\b(?P<rest>.*)$"
+    r"^\s*(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun)\s+)?"
+    r"(?P<mon>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)(?:uary|ruary|ch|il|e|y|ust|tember|ober|ember)?"
+    r"\s+(?P<day>\d{1,2})(?:\s+(?P<year>\d{4}))?\b(?P<rest>.*)$"
 )
-_TIME_RE = re.compile(r"^\s*(?P<h>\d{1,2}):(?P<m>\d{2})(?:\s+UTC(?P<off>[+-]\d{1,2}))?\b(?P<rest>.*)$")
+# `20:45`, `18:00 UTC-3`, or `15:00 (17:00 UTC+4)` where the bracketed local time carries the offset.
+_TIME_RE = re.compile(
+    r"^\s*(?P<h>\d{1,2}):(?P<m>\d{2})\b(?:\s+UTC(?P<off>[+-]\d{1,2})\b)?"
+    r"(?:\s+\((?P<lh>\d{1,2}):(?P<lm>\d{2})\s+UTC(?P<loff>[+-]\d{1,2})\))?"
+    r"(?:\s+\(\d{1,2}:\d{2}\s+[A-Z]{2,5}\))?"  # `18:00 (19:00 EEST)`: a note; the first time is in the file's zone
+    r"(?P<rest>.*)$"
+)
+_TRAILING_SHOOTOUT_RE = re.compile(r"\s*\(\s*\d+-\d+\s*pen\.?\s*\)\s*$")
+# `England 2-2 Portugal (aet, 6-5 pen)`, `(aet/gg)`, `(aet/sg)`: golden and silver goals were extra time.
+_TRAILING_AET_RE = re.compile(r"\s*\(\s*aet(?:/[gs]g)?(?:\s*,\s*(?P<pens>\d+-\d+)\s*pen\.?)?\s*\)\s*$", re.I)
+_PLACEHOLDER_TEAMS = {"N.N.", "N.N"}  # a fixture whose teams aren't known yet
+_PENALTIES_RE = re.compile(r"^penalties\s*:", re.I)
+_LEADING_VENUE_RE = re.compile(r"^\s*@\s*(?P<venue>.+?)\s{2,}(?P<rest>\S.*)$")
 _SCORE_TOKEN_RE = re.compile(r"\s*(\d+-\d+|a\.e\.t\.?,?|pen\.?,?|\([^)]*\),?|,)")
 _FIRST_SCORE_RE = re.compile(r"(?:^|\s)(\d+-\d+)(?=\s|,|$)")
 _V_SPLIT_RE = re.compile(r"\s+v\s+")
@@ -130,6 +144,11 @@ def _parse_teams_and_score(text: str) -> tuple[str, str, ParsedScore | None] | N
     if parts is None:
         return None
     home, score, away = parts
+    if shootout := _TRAILING_SHOOTOUT_RE.search(away):  # `Czechoslovakia 1-1 Italy (9-8 pen)`
+        away, score = away[: shootout.start()].strip(), f"{score} {shootout.group(0).strip()}"
+    elif extra := _TRAILING_AET_RE.search(away):
+        pens = f", {extra.group('pens')} pen." if extra.group("pens") else ""
+        away, score = away[: extra.start()].strip(), f"{score} a.e.t.{pens}"
     if not home or not away:
         return None
     return home, away, parse_score(score)
@@ -239,8 +258,17 @@ def parse_text(text: str, *, start_year: int, path: str = "<text>") -> list[Pars
             goal_target.goals_listed = True
         goal_buf, goal_target = None, None
 
+    in_shootout = False  # inside a `Penalties: 1-0 Masny, 1-1 Bonhof, …` kick-by-kick block
     for line_no, raw in enumerate(lines, 1):
         stripped = raw.strip()
+
+        if _PENALTIES_RE.match(stripped):
+            in_shootout = True
+            continue
+        if in_shootout:
+            if stripped and ":" not in stripped and not stripped.startswith(("▪", "#")):
+                continue
+            in_shootout = False
 
         if goal_buf is not None:
             goal_buf.append(stripped)
@@ -280,10 +308,20 @@ def parse_text(text: str, *, start_year: int, path: str = "<text>") -> list[Pars
 
         time_match = _TIME_RE.match(body)
         if time_match:
-            state.kickoff = time(int(time_match.group("h")), int(time_match.group("m")))
-            off = time_match.group("off")
-            state.offset = timedelta(hours=int(off)) if off else None
+            if time_match.group("lh"):  # a local time with its own offset wins over the file's zone
+                state.kickoff = time(int(time_match.group("lh")), int(time_match.group("lm")))
+                state.offset = timedelta(hours=int(time_match.group("loff")))
+            else:
+                state.kickoff = time(int(time_match.group("h")), int(time_match.group("m")))
+                off = time_match.group("off")
+                state.offset = timedelta(hours=int(off)) if off else None
             body = time_match.group("rest")
+
+        leading_venue = _LEADING_VENUE_RE.match(body)
+        if leading_venue and _FIRST_SCORE_RE.search(leading_venue.group("rest")):
+            # `June 10 @ Düsseldorf     West Germany  1-1 Italy`: the venue precedes the match
+            state.pending_venue = leading_venue.group("venue").strip()
+            body = leading_venue.group("rest")
 
         tag = _TAG_RE.search(body)
         status: MatchStatus | None = None
@@ -310,6 +348,8 @@ def parse_text(text: str, *, start_year: int, path: str = "<text>") -> list[Pars
         state.pending_venue = None
         venue_name, venue_city = _split_venue_text(venue, stadiums)
         home, away, score = parsed
+        if home in _PLACEHOLDER_TEAMS or away in _PLACEHOLDER_TEAMS:
+            continue
         if status is None:
             status = MatchStatus.COMPLETED if score else MatchStatus.SCHEDULED
         matches.append(
@@ -348,20 +388,29 @@ def parse_file(path: Path, *, start_year: int, display_path: str) -> list[Parsed
     return parse_text(path.read_text(encoding="utf-8"), start_year=start_year, path=display_path)
 
 
+_ORDINALS = {"first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5}
+
 _STAGE_RULES: list[tuple[re.Pattern[str], Stage]] = [
     (re.compile(r"qualif", re.I), Stage.QUALIFYING),
     (re.compile(r"third place|3rd place", re.I), Stage.THIRD_PLACE),
+    (re.compile(r"fifth place|5th place", re.I), Stage.FIFTH_PLACE),
+    # German knockout labels in some UEFA files: Sechzehntel-/Achtel-/Viertel-/Halbfinale.
+    (re.compile(r"sechzehntelfinale", re.I), Stage.R32),
+    (re.compile(r"achtelfinale", re.I), Stage.R16),
+    (re.compile(r"viertelfinale", re.I), Stage.QF),
+    (re.compile(r"halbfinale", re.I), Stage.SF),
     (re.compile(r"semi", re.I), Stage.SF),
     (re.compile(r"quarter", re.I), Stage.QF),
     (re.compile(r"round of 16", re.I), Stage.R16),
     (re.compile(r"round of 32", re.I), Stage.R32),
     (re.compile(r"\bfinal\b", re.I), Stage.FINAL),
     (re.compile(r"play-?offs?", re.I), Stage.PLAYOFF),
-    (re.compile(r"group", re.I), Stage.GROUP),
+    (re.compile(r"group|gruppe", re.I), Stage.GROUP),
     (re.compile(r"league|matchday|regular season", re.I), Stage.LEAGUE),
     (re.compile(r"prelim", re.I), Stage.PRELIMINARY),
-    # Numbered cup rounds, after the named ones so `Round of 16` stays R16: `Round 3`, `2. Round`, `10. Runde`.
-    (re.compile(r"^(?:(?:round|runde)\s*\d+|\d+\.\s*(?:round|runde))$", re.I), Stage.ROUND),
+    # Numbered cup rounds, after the named ones so `Round of 16` stays R16:
+    # `Round 3`, `2. Round`, `10. Runde`, `1st Round`, `First round`.
+    (re.compile(r"^(?:(?:round|runde)\s*\d+|\d+\.\s*(?:round|runde)|(?:\d+(?:st|nd|rd|th)|" + "|".join(_ORDINALS) + r")\s+round)$", re.I), Stage.ROUND),
 ]
 
 
@@ -371,8 +420,13 @@ def normalize_stage(round_label: str) -> tuple[Stage, int | None]:
     Rules are tried in priority order against the whole label, so the most specific
     one wins (`Finals, Semifinals` → `SF`, `Playoffs, Matchday 1` → `PLAYOFF`).
     """
-    number = re.search(r"(?:matchday|round|runde|regular season\s*-)\s*(\d+)\s*$|^(\d+)\.\s*(?:round|runde)$", round_label, re.I)
+    number = re.search(
+        r"(?:matchday|round|runde|regular season\s*-)\s*(\d+)\s*$|^(\d+)(?:\.|st|nd|rd|th)\s*(?:round|runde)$", round_label, re.I
+    )
+    ordinal = re.match(r"^(" + "|".join(_ORDINALS) + r")\s+round$", round_label, re.I)
     for pattern, code in _STAGE_RULES:
         if pattern.search(round_label):
+            if ordinal:
+                return code, _ORDINALS[ordinal.group(1).lower()]
             return code, int(number.group(1) or number.group(2)) if number else None
     raise ValueError(f"unrecognised round label: {round_label!r}")
