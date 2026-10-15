@@ -79,7 +79,7 @@ The system SHALL track one or more seasons per competition. Each season has:
 - a start and end date
 - a status: `SCHEDULED`, `IN_PROGRESS`, `COMPLETED`
 
-The seasons ingested for each competition are those listed in its seed. The five domestic leagues list every season their source provides: Premier League 1992-93, Bundesliga 2010-11, La Liga 2012-13, Serie A 2013-14 and Ligue 1 2014-15, each up to 2026-27. The domestic cups list every completed season their source provides in full: FA Cup, EFL Cup and DFB-Pokal 2018-19 to 2024-25, Copa del Rey and Coppa Italia 2020-21 to 2024-25, and Coupe de France 2024-25. Every other competition lists only its most recently completed season.
+The seasons ingested for each competition are those listed in its seed. The five domestic leagues list every season their source provides: Premier League 1992-93, Bundesliga 2010-11, La Liga 2012-13, Serie A 2013-14 and Ligue 1 2014-15, each up to 2026-27. The domestic cups list every completed season their source provides in full: FA Cup, EFL Cup and DFB-Pokal 2018-19 to 2024-25, Copa del Rey and Coppa Italia 2020-21 to 2024-25, and Coupe de France 2024-25. The international competitions list every edition their source provides with a date for every match: UEFA Champions League 2011-12 to 2025-26, UEFA Europa League 2020-21 to 2024-25, UEFA Conference League 2021-22 to 2024-25, CONMEBOL Copa Libertadores 2012 to 2026, FIFA Club World Cup 2000 to 2025, FIFA World Cup 1930 to 2026, UEFA European Championship 1960 to 2024, and CONMEBOL Copa América 2011, 2021 and 2024. Editions in progress are included.
 
 #### Scenario: Listing seasons for a competition
 
@@ -118,6 +118,18 @@ The seasons ingested for each competition are those listed in its seed. The five
 - **GIVEN** the DFB-Pokal 2024-25, with two rounds numbered by the source and then named rounds down to the final
 - **WHEN** it is synced
 - **THEN** the season has 63 `COMPLETED` matches and status `COMPLETED`
+
+#### Scenario: Full history of a tournament
+
+- **GIVEN** the FIFA World Cup is seeded with every edition from 1930 to 2026
+- **WHEN** a client GETs `/v1/seasons?competition_id={world-cup}` after a sync
+- **THEN** the response lists 23 seasons, the 1930 one with 18 matches and the 2026 one with 104
+
+#### Scenario: Edition without dates for every match
+
+- **GIVEN** a tournament edition whose source lists some matches without a date
+- **WHEN** the seeds are reviewed
+- **THEN** that edition is not listed, and the README names it as a known gap
 
 ### Requirement: Team catalog
 
