@@ -10,7 +10,7 @@ from sqlalchemy import func, select, text
 
 from football_api.domain.enums import Coverage, DecidedBy, MatchStatus, Stage, VerificationReference, VerificationStatus
 from football_api.infra.db import get_sessionmaker
-from football_api.infra.models import Competition, ExternalRef, Goal, Match, MatchVerification, Player, Season, Team
+from football_api.infra.models import Competition, ExternalRef, Goal, Match, MatchVerification, Player, Season, Team, TeamSeason
 from football_api.ingestion.openfootball.squads import parse_more_squads, parse_per_team_squad
 from football_api.ingestion.seeds import CompetitionSeed, TeamSeed
 from football_api.sync import UnknownTeamError, run_sync
@@ -370,3 +370,44 @@ async def test_match_removed_from_source_is_deleted(
     async with get_sessionmaker()() as session:
         assert await session.scalar(select(func.count()).select_from(MatchVerification)) == 0
         assert await session.scalar(select(func.count()).select_from(ExternalRef).where(ExternalRef.entity_id == final_id)) == 0
+
+
+async def test_alias_moved_to_another_club_follows_it(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """An alias wrongly listed under one club and later moved to its own entry takes its matches
+    along; the club it left keeps its row and loses that season."""
+    dortmund = next(t for t in fixture_teams if t.name == "Borussia Dortmund")
+    merged = [
+        t.model_copy(update={"openfootball": [*t.openfootball, *dortmund.openfootball]}) if t.name == "Arsenal" else t
+        for t in fixture_teams
+        if t is not dortmund
+    ]
+    await sync(fixture_competitions, merged)
+    async with get_sessionmaker()() as session:
+        arsenal = await session.scalar(select(Team).where(Team.name == "Arsenal"))
+        assert arsenal is not None
+        seasons_before = await session.scalar(select(func.count()).select_from(TeamSeason).where(TeamSeason.team_id == arsenal.id))
+
+    await sync(fixture_competitions, fixture_teams)
+    async with get_sessionmaker()() as session:
+        moved = await session.scalar(select(Team).where(Team.name == "Borussia Dortmund"))
+        assert moved is not None and moved.id != arsenal.id
+        assert (await session.scalar(select(func.count()).select_from(Match).where(Match.home_team_id == moved.id)) or 0) > 0
+        seasons_after = await session.scalar(select(func.count()).select_from(TeamSeason).where(TeamSeason.team_id == arsenal.id))
+        refs = set(await session.scalars(select(ExternalRef.source_id).where(ExternalRef.entity_id == arsenal.id)))
+    assert seasons_after is not None and seasons_before is not None and seasons_after < seasons_before
+    assert not refs & set(dortmund.openfootball)
+
+
+async def test_corrected_qid_replaces_the_old_one(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    await sync(fixture_competitions, fixture_teams)
+    corrected = [t.model_copy(update={"wikidata": "Q999999999"}) if t.name == "Arsenal" else t for t in fixture_teams]
+    await sync(fixture_competitions, corrected)
+    async with get_sessionmaker()() as session:
+        arsenal = await session.scalar(select(Team).where(Team.name == "Arsenal"))
+        assert arsenal is not None
+        qids = set(await session.scalars(select(ExternalRef.source_id).where(ExternalRef.entity_id == arsenal.id, ExternalRef.source == "wikidata")))
+    assert qids == {"Q999999999"}

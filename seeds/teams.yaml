@@ -529,7 +529,6 @@
   wikidata: Q338285
   openfootball:
     - "América MG (BRA)"
-    - "América (MEX)"
 
 - name: "Angers SCO"
   kind: CLUB
@@ -1038,6 +1037,7 @@
   wikidata: Q248782
   openfootball:
     - "Barcelona SC (ECU)"
+    - "Barcelona (ECU)"
 
 - name: "Barnet"
   kind: CLUB
@@ -1300,10 +1300,10 @@
   openfootball:
     - "Brazil"
 
-- name: "Breiðablik UBK"
+- name: "Breiðablik"
   kind: CLUB
   country: "IS"
-  wikidata: Q377953
+  wikidata: Q41634649
   openfootball:
     - "Breiðablik (ISL)"
 
@@ -2688,6 +2688,13 @@
     - "Club Always Ready (BOL)"
     - "Always Ready (BOL)"
 
+- name: "Club América"
+  kind: CLUB
+  country: "MX"
+  wikidata: Q459090
+  openfootball:
+    - "América (MEX)"
+
 - name: "Club Athletico Paranaense"
   kind: CLUB
   country: "BR"
@@ -2848,6 +2855,7 @@
   wikidata: Q427446
   openfootball:
     - "CD Universidad Católica (CHI)"
+    - "Universidad Católica (CHI)"
 
 - name: "Club Guaraní"
   kind: CLUB
@@ -3405,10 +3413,10 @@
     - "Deportivo La Guaira (VEN)"
     - "Deportivo La Guaira FC (VEN)"
 
-- name: "Deportivo Lara Fútbol Club"
+- name: "Deportivo Lara"
   kind: CLUB
   country: "VE"
-  wikidata: Q20983494
+  wikidata: Q1023195
   openfootball:
     - "Deportivo Lara (VEN)"
 
@@ -3789,6 +3797,12 @@
   openfootball:
     - "Everton FC"
     - "Everton"
+
+- name: "Everton de Viña del Mar"
+  kind: CLUB
+  country: "CL"
+  wikidata: Q1103684
+  openfootball:
     - "Everton (CHI)"
 
 - name: "Evian Thonon Gaillard"
@@ -3896,7 +3910,6 @@
     - "Barcelona"
     - "FC Barcelona"
     - "FC Barcelona (ESP)"
-    - "Barcelona (ECU)"
     - "Barcelona (ESP)"
 
 - name: "FC Basel"
@@ -5329,7 +5342,7 @@
 - name: "Juan Aurich"
   kind: CLUB
   country: "PE"
-  wikidata: Q16842352
+  wikidata: Q603017
   openfootball:
     - "Juan Aurich (PER)"
 
@@ -5676,6 +5689,12 @@
     - "Liverpool FC (ENG)"
     - "Liverpool"
     - "Liverpool (ENG)"
+
+- name: "Liverpool F.C. (Montevideo)"
+  kind: CLUB
+  country: "UY"
+  wikidata: Q1131189
+  openfootball:
     - "Liverpool (URU)"
     - "Liverpool FC (URU)"
 
@@ -7186,6 +7205,13 @@
     - "SC Corinthians Paulista (BRA)"
     - "Corinthians (BRA)"
     - "Corinthians SP (BRA)"
+
+- name: "SC Dnipro-1"
+  kind: CLUB
+  country: "UA"
+  wikidata: Q30964198
+  openfootball:
+    - "SK Dnipro-1 (UKR)"
 
 - name: "SC Freiburg"
   kind: CLUB
@@ -8730,7 +8756,6 @@
   wikidata: Q2308911
   openfootball:
     - "Universidad Catolica (ECU)"
-    - "Universidad Católica (CHI)"
 
 - name: "Universidad Central de Venezuela"
   kind: CLUB
@@ -9505,13 +9530,6 @@
   wikidata: Q544120
   openfootball:
     - "Zamora CF"
-
-- name: "Zlahoda-Dnipro-1"
-  kind: CLUB
-  country: "UA"
-  wikidata: Q56246637
-  openfootball:
-    - "SK Dnipro-1 (UKR)"
 
 - name: "Zulia"
   kind: CLUB

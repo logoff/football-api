@@ -143,7 +143,31 @@ async def find_team(session: AsyncSession, seed: TeamSeed) -> Team | None:
     return await session.get(Team, known.pop()) if known else None
 
 
+async def release_moved_aliases(session: AsyncSession, seeds: list[TeamSeed]) -> None:
+    """Drop the reference of an alias that now belongs to another entry: one listed under a seed
+    while pointing at a team another seed claims through its Wikidata QID (an alias moved between
+    clubs, e.g. `Liverpool (URU)` away from Liverpool F.C.). The entry it moved to then resolves
+    to its own team."""
+    owner_by_team: dict[uuid.UUID, int] = {}
+    for i, seed in enumerate(seeds):
+        if seed.wikidata and (team_id := await lookup_ref(session, EntityType.TEAM, WIKIDATA, seed.wikidata)):
+            owner_by_team[team_id] = i
+    for i, seed in enumerate(seeds):
+        for alias in seed.openfootball:
+            team_id = await lookup_ref(session, EntityType.TEAM, OPENFOOTBALL, alias)
+            if team_id is not None and owner_by_team.get(team_id, i) != i:
+                log.info("teams.yaml: alias %r moves from %s to %r", alias, team_id, seed.name)
+                await session.execute(
+                    delete(ExternalRef).where(
+                        ExternalRef.entity_type == EntityType.TEAM,
+                        ExternalRef.source == OPENFOOTBALL,
+                        ExternalRef.source_id == alias,
+                    )
+                )
+
+
 async def sync_teams(session: AsyncSession, seeds: list[TeamSeed]) -> None:
+    await release_moved_aliases(session, seeds)
     for seed in seeds:
         team = await find_team(session, seed)
         if team is None:
@@ -154,6 +178,15 @@ async def sync_teams(session: AsyncSession, seeds: list[TeamSeed]) -> None:
         for alias in seed.openfootball:
             await ensure_ref(session, EntityType.TEAM, team.id, OPENFOOTBALL, alias)
         if seed.wikidata:
+            # A corrected QID replaces the old one rather than sitting next to it.
+            await session.execute(
+                delete(ExternalRef).where(
+                    ExternalRef.entity_type == EntityType.TEAM,
+                    ExternalRef.entity_id == team.id,
+                    ExternalRef.source == WIKIDATA,
+                    ExternalRef.source_id != seed.wikidata,
+                )
+            )
             await ensure_ref(session, EntityType.TEAM, team.id, WIKIDATA, seed.wikidata)
 
 
@@ -325,6 +358,7 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
     away_id = await resolve_team(session, path, m.line_no, m.away)
     stage, matchday = normalize_stage(m.round_label)
     kickoff = kickoff_utc(m, ctx.src.tz, path)
+    key = f"{path}#{stage.value}#{m.home}#{m.away}" + (f"#{occurrence}" if occurrence > 1 else "")
     match = await session.scalar(
         select(Match).where(
             Match.season_id == ctx.season.id,
@@ -359,6 +393,15 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
                 )
             )
     if match is None:
+        # The same listing, now resolving to another team (an alias moved to its own club in
+        # teams.yaml): the match follows it and keeps its UUID.
+        listed = await lookup_ref(session, EntityType.MATCH, OPENFOOTBALL, key)
+        if listed is not None and listed not in ctx.seen:
+            match = await session.get(Match, listed)
+        if match is not None:
+            log.info("%s: %s v %s now resolves to other teams", path, m.home, m.away)
+            match.home_team_id, match.away_team_id = home_id, away_id
+    if match is None:
         match = Match(
             season_id=ctx.season.id,
             stage=stage,
@@ -386,7 +429,6 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
     match.home_pens = score.home_pens if score else None
     match.away_pens = score.away_pens if score else None
     await session.flush()
-    key = f"{path}#{stage.value}#{m.home}#{m.away}" + (f"#{occurrence}" if occurrence > 1 else "")
     await ensure_ref(session, EntityType.MATCH, match.id, OPENFOOTBALL, key)
     ctx.seen.add(match.id)
     if m.goals_listed:
@@ -432,6 +474,10 @@ async def sync_season(session: AsyncSession, seed: CompetitionSeed, src: SeasonS
     for team_id in set(team_of.values()):
         if await session.get(TeamSeason, (team_id, season.id)) is None:
             session.add(TeamSeason(team_id=team_id, season_id=season.id))
+    # A team no longer in the source (an alias moved to another club) leaves the season.
+    await session.execute(
+        delete(TeamSeason).where(TeamSeason.season_id == season.id, TeamSeason.team_id.not_in(set(team_of.values())))
+    )
 
     squads_style = src.squads.style if src.squads else None
     ctx = SeasonContext(seed, src, season, sources, scorer_names_capitalised=squads_style == "more", squads=defaultdict(list))
