@@ -13,6 +13,7 @@ from football_api.ingestion.openfootball.text_parser import (
     parse_file,
     parse_goals,
     parse_score,
+    parse_text,
 )
 
 SOURCES = Path(__file__).parent / "fixtures" / "sources"
@@ -55,6 +56,14 @@ def test_score_notations(text: str, expected: ParsedScore) -> None:
         ("Preliminary round", Stage.PRELIMINARY, None),
         ("Round of 32", Stage.R32, None),
         ("Quarterfinals", Stage.QF, None),
+        ("Gruppe G", Stage.GROUP, None),
+        ("Sechzehntelfinale", Stage.R32, None),
+        ("Halbfinale", Stage.SF, None),
+        ("Gruppe 1", Stage.GROUP, None),
+        ("1st Round", Stage.ROUND, 1),
+        ("Second round", Stage.ROUND, 2),
+        ("Match for fifth place", Stage.FIFTH_PLACE, None),
+        ("5th Place", Stage.FIFTH_PLACE, None),
         ("Playoffs, Matchday 1", Stage.PLAYOFF, 1),
         ("Group, Matchday 2", Stage.GROUP, 2),
         ("First stage / Group A", Stage.GROUP, None),
@@ -220,3 +229,58 @@ def test_la_liga_2020_layout_with_score_between_teams() -> None:
     rescheduled = find(matches, "Athletic Club", "FC Barcelona")
     assert (rescheduled.round_label, rescheduled.day) == ("Matchday 2", date(2021, 1, 6))
     assert rescheduled.score == ParsedScore(2, 3, DecidedBy.REGULAR)
+
+
+# Excerpts of openfootball/euro and openfootball/copa-america (CC0), one per date layout.
+DATE_LAYOUTS = [
+    (  # a date line without weekday, then timed matches
+        "▪ Final\nJuly 10 \n  20:30    Soviet Union   v Yugoslavia  2-1 a.e.t.  @ Parc des Princes, Paris\n",
+        1960, ("Soviet Union", "Yugoslavia", date(1960, 7, 10), time(20, 30), "Parc des Princes, Paris"),
+    ),
+    (  # a date, time and venue block line, then the match
+        "▪ Semi-finals\nJune 14 20:00 @ Antwerpen, Bosuil\nWest Germany     2-1 Belgium\n",
+        1972, ("West Germany", "Belgium", date(1972, 6, 14), time(20, 0), "Antwerpen, Bosuil"),
+    ),
+    (  # date, venue and match on one line
+        "▪ Group 1\nJune 10 @ Düsseldorf     West Germany     1-1 Italy\n",
+        1988, ("West Germany", "Italy", date(1988, 6, 10), None, "Düsseldorf"),
+    ),
+    (  # date, time, venue and match on one line
+        "▪ Group A\nJune 12 18:00 @ Liège       Germany            1-1 Romania\n",
+        2000, ("Germany", "Romania", date(2000, 6, 12), time(18, 0), "Liège"),
+    ),
+    (  # short month, time and match on one line
+        "▪ Group A\nJul 1  21:45   Argentina  1-1  Bolivia\n",
+        2011, ("Argentina", "Bolivia", date(2011, 7, 1), time(21, 45), None),
+    ),
+]
+
+
+@pytest.mark.parametrize(("text", "year", "expected"), DATE_LAYOUTS)
+def test_dates_without_weekday(text: str, year: int, expected: tuple[str, str, date, time | None, str | None]) -> None:
+    [m] = parse_text(text, start_year=year)
+    venue = " ".join(v for v in (m.venue_name, m.venue_city) if v) or None
+    home, away, day, kickoff, where = expected
+    assert (m.home, m.away, m.day, m.kickoff) == (home, away, day, kickoff)
+    assert (where is None and venue is None) or (where is not None and venue is not None and where.split(",")[0] in venue)
+
+
+def test_local_time_with_offset_wins() -> None:
+    [m] = parse_text("▪ Group A\nJun 12\n  15:00 (17:00 UTC+4)    Wales    1-1 (0-0)   Switzerland   @ Baku\n", start_year=2021)
+    assert (m.kickoff, m.utc_offset) == (time(17, 0), timedelta(hours=4))
+
+
+def test_penalty_kick_lines_are_not_matches_and_trailing_shootout_is_read() -> None:
+    text = (
+        "▪ Third place play-off\nJune 21 20:30 @ Napoli, San Paolo\n"
+        "Czechoslovakia   1-1 Italy    (9-8 pen)        # note - no extra time played\n"
+        "  (Jurkemik 54; Graziani 73)\n"
+        "  Penalties: 0-1 Causio, 1-1 Masny,\n"
+        "             1-2 Altobelli, 2-2 Nehoda,\n"
+        "                 Collovati (saved), 9-8 Barmos\n"
+        "  Czechoslovakia: Netolicka, Barmos, Jurkemik\n"
+    )
+    [m] = parse_text(text, start_year=1980)
+    assert (m.home, m.away) == ("Czechoslovakia", "Italy")
+    assert m.score == ParsedScore(1, 1, DecidedBy.PENALTIES, 9, 8)
+

@@ -70,6 +70,7 @@ class Stage(StrEnum):
     QF = "QF"
     SF = "SF"
     THIRD_PLACE = "THIRD_PLACE"
+    FIFTH_PLACE = "FIFTH_PLACE"
     FINAL = "FINAL"
 
 

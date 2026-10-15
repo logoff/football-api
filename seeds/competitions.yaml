@@ -825,19 +825,102 @@
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q18756
+  # Every season openfootball/champions-league has (2011-12 onwards); times are Central European.
   seasons:
+    - label: 2011-12
+      start_year: 2011
+      file: champions-league/2011-12/cl.txt
+      tz: Europe/Berlin
+      json: football.json/2011-12/uefa.cl.json
+    - label: 2012-13
+      start_year: 2012
+      file: champions-league/2012-13/cl.txt
+      tz: Europe/Berlin
+      json: football.json/2012-13/uefa.cl.json
+    - label: 2013-14
+      start_year: 2013
+      file: champions-league/2013-14/cl.txt
+      tz: Europe/Berlin
+      json: football.json/2013-14/uefa.cl.json
+    - label: 2014-15
+      start_year: 2014
+      file: champions-league/2014-15/cl.txt
+      tz: Europe/Berlin
+      json: football.json/2014-15/uefa.cl.json
+    - label: 2015-16
+      start_year: 2015
+      file: champions-league/2015-16/cl.txt
+      tz: Europe/Berlin
+      json: football.json/2015-16/uefa.cl.json
+    - label: 2016-17
+      start_year: 2016
+      file: champions-league/2016-17/cl.txt
+      tz: Europe/Berlin
+      json: football.json/2016-17/uefa.cl.json
+    - label: 2017-18
+      start_year: 2017
+      file: champions-league/2017-18/cl.txt
+      tz: Europe/Berlin
+      json: football.json/2017-18/uefa.cl.json
+    - label: 2018-19
+      start_year: 2018
+      file: champions-league/2018-19/cl.txt
+      tz: Europe/Berlin
+      json: football.json/2018-19/uefa.cl.json
+    - label: 2019-20
+      start_year: 2019
+      file: champions-league/2019-20/cl.txt
+      tz: Europe/Berlin
+      json: football.json/2019-20/uefa.cl.json
+    - label: 2020-21
+      start_year: 2020
+      file: champions-league/2020-21/cl.txt
+      tz: Europe/Berlin
+    - label: 2021-22
+      start_year: 2021
+      file: champions-league/2021-22/cl.txt
+      tz: Europe/Berlin
+    - label: 2022-23
+      start_year: 2022
+      file: champions-league/2022-23/cl.txt
+      tz: Europe/Berlin
+    - label: 2023-24
+      start_year: 2023
+      file: champions-league/2023-24/cl.txt
+      tz: Europe/Berlin
     - label: 2024-25
       start_year: 2024
       file: champions-league/2024-25/cl.txt
       tz: Europe/Berlin
       json: football.json/2024-25/uefa.cl.json
+    - label: 2025-26
+      start_year: 2025
+      file: champions-league/2025-26/cl.txt
+      tz: Europe/Berlin
 
 - name: UEFA Europa League
   team_kind: CLUB
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q18760
+  # Every season openfootball/champions-league has (2020-21 onwards).
   seasons:
+    - label: 2020-21
+      start_year: 2020
+      file: champions-league/2020-21/el.txt
+      tz: Europe/Berlin
+    - label: 2021-22
+      start_year: 2021
+      file: champions-league/2021-22/el.txt
+      tz: Europe/Berlin
+    - label: 2022-23
+      start_year: 2022
+      file: champions-league/2022-23/el.txt
+      tz: Europe/Berlin
+    - label: 2023-24
+      start_year: 2023
+      file: champions-league/2023-24/el.txt
+      tz: Europe/Berlin
     - label: 2024-25
       start_year: 2024
       file: champions-league/2024-25/el.txt
@@ -848,7 +931,20 @@
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q59365764
+  # Every season openfootball/champions-league has (2021-22 onwards).
   seasons:
+    - label: 2021-22
+      start_year: 2021
+      file: champions-league/2021-22/conf.txt
+      tz: Europe/Berlin
+    - label: 2022-23
+      start_year: 2022
+      file: champions-league/2022-23/conf.txt
+      tz: Europe/Berlin
+    - label: 2023-24
+      start_year: 2023
+      file: champions-league/2023-24/conf.txt
+      tz: Europe/Berlin
     - label: 2024-25
       start_year: 2024
       file: champions-league/2024-25/conf.txt
@@ -859,10 +955,68 @@
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q184795
+  # Every edition openfootball/south-america has (2012 onwards); times are Brasília time.
   seasons:
+    - label: "2012"
+      start_year: 2012
+      file: south-america/copa-libertadores/2012_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2013"
+      start_year: 2013
+      file: south-america/copa-libertadores/2013_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2014"
+      start_year: 2014
+      file: south-america/copa-libertadores/2014_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2015"
+      start_year: 2015
+      file: south-america/copa-libertadores/2015_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2016"
+      start_year: 2016
+      file: south-america/copa-libertadores/2016_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2017"
+      start_year: 2017
+      file: south-america/copa-libertadores/2017_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2018"
+      start_year: 2018
+      file: south-america/copa-libertadores/2018_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2019"
+      start_year: 2019
+      file: south-america/copa-libertadores/2019_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2020"
+      start_year: 2020
+      file: south-america/copa-libertadores/2020_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2021"
+      start_year: 2021
+      file: south-america/copa-libertadores/2021_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2022"
+      start_year: 2022
+      file: south-america/copa-libertadores/2022_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2023"
+      start_year: 2023
+      file: south-america/copa-libertadores/2023_copal.txt
+      tz: America/Sao_Paulo
+    - label: "2024"
+      start_year: 2024
+      file: south-america/copa-libertadores/2024_copal.txt
+      tz: America/Sao_Paulo
     - label: "2025"
       start_year: 2025
       file: south-america/copa-libertadores/2025_copal.txt
+      tz: America/Sao_Paulo
+      json: football.json/2025/copa.l.json
+    - label: "2026"
+      start_year: 2026
+      file: south-america/copa-libertadores/2026_copal.txt
       tz: America/Sao_Paulo
 
 - name: FIFA Club World Cup
@@ -870,7 +1024,88 @@
   scope: INTERCONTINENTAL
   format: TOURNAMENT
   wikidata: Q223366
+  # Every edition openfootball/club-worldcup has (2000, 2005-2023, 2025).
   seasons:
+    - label: "2000"
+      start_year: 2000
+      file: club-worldcup/more/2000_clubworldcup-full.txt
+      tz: inline
+    - label: "2005"
+      start_year: 2005
+      file: club-worldcup/more/2005_clubworldcup-full.txt
+      tz: inline
+    - label: "2006"
+      start_year: 2006
+      file: club-worldcup/more/2006_clubworldcup-full.txt
+      tz: inline
+    - label: "2007"
+      start_year: 2007
+      file: club-worldcup/more/2007_clubworldcup-full.txt
+      tz: inline
+    - label: "2008"
+      start_year: 2008
+      file: club-worldcup/more/2008_clubworldcup-full.txt
+      tz: inline
+    - label: "2009"
+      start_year: 2009
+      file: club-worldcup/more/2009_clubworldcup-full.txt
+      tz: inline
+    - label: "2010"
+      start_year: 2010
+      file: club-worldcup/more/2010_clubworldcup-full.txt
+      tz: inline
+    - label: "2011"
+      start_year: 2011
+      file: club-worldcup/more/2011_clubworldcup-full.txt
+      tz: inline
+    - label: "2012"
+      start_year: 2012
+      file: club-worldcup/more/2012_clubworldcup-full.txt
+      tz: inline
+    - label: "2013"
+      start_year: 2013
+      file: club-worldcup/more/2013_clubworldcup-full.txt
+      tz: inline
+    - label: "2014"
+      start_year: 2014
+      file: club-worldcup/more/2014_clubworldcup-full.txt
+      tz: inline
+    - label: "2015"
+      start_year: 2015
+      file: club-worldcup/more/2015_clubworldcup-full.txt
+      tz: inline
+    - label: "2016"
+      start_year: 2016
+      file: club-worldcup/more/2016_clubworldcup-full.txt
+      tz: inline
+    - label: "2017"
+      start_year: 2017
+      file: club-worldcup/more/2017_clubworldcup-full.txt
+      tz: inline
+    - label: "2018"
+      start_year: 2018
+      file: club-worldcup/more/2018_clubworldcup-full.txt
+      tz: inline
+    - label: "2019"
+      start_year: 2019
+      file: club-worldcup/more/2019_clubworldcup-full.txt
+      tz: inline
+    - label: "2020"
+      start_year: 2020
+      file: club-worldcup/more/2020_clubworldcup-full.txt
+      tz: inline
+    - label: "2021"
+      start_year: 2021
+      file: club-worldcup/more/2021_clubworldcup-full.txt
+      tz: inline
+    - label: "2022"
+      start_year: 2022
+      file: club-worldcup/more/2022_clubworldcup-full.txt
+      tz: inline
+    - label: "2023"
+      start_year: 2023
+      file: club-worldcup/more/2023_clubworldcup-full.txt
+      tz: inline
     - label: "2025"
       start_year: 2025
       file: club-worldcup/more/2025_clubworldcup-full.txt
@@ -884,7 +1119,92 @@
   scope: INTERCONTINENTAL
   format: TOURNAMENT
   wikidata: Q19317
+  # Every edition openfootball/worldcup has (1930-2026).
   seasons:
+    - label: "1930"
+      start_year: 1930
+      file: worldcup/more/1930.txt
+      tz: inline
+    - label: "1934"
+      start_year: 1934
+      file: worldcup/more/1934.txt
+      tz: inline
+    - label: "1938"
+      start_year: 1938
+      file: worldcup/more/1938.txt
+      tz: inline
+    - label: "1950"
+      start_year: 1950
+      file: worldcup/more/1950.txt
+      tz: inline
+    - label: "1954"
+      start_year: 1954
+      file: worldcup/more/1954.txt
+      tz: inline
+    - label: "1958"
+      start_year: 1958
+      file: worldcup/more/1958.txt
+      tz: inline
+    - label: "1962"
+      start_year: 1962
+      file: worldcup/more/1962.txt
+      tz: inline
+    - label: "1966"
+      start_year: 1966
+      file: worldcup/more/1966.txt
+      tz: inline
+    - label: "1970"
+      start_year: 1970
+      file: worldcup/more/1970.txt
+      tz: inline
+    - label: "1974"
+      start_year: 1974
+      file: worldcup/more/1974.txt
+      tz: inline
+    - label: "1978"
+      start_year: 1978
+      file: worldcup/more/1978.txt
+      tz: inline
+    - label: "1982"
+      start_year: 1982
+      file: worldcup/more/1982.txt
+      tz: inline
+    - label: "1986"
+      start_year: 1986
+      file: worldcup/more/1986.txt
+      tz: inline
+    - label: "1990"
+      start_year: 1990
+      file: worldcup/more/1990.txt
+      tz: inline
+    - label: "1994"
+      start_year: 1994
+      file: worldcup/more/1994.txt
+      tz: inline
+    - label: "1998"
+      start_year: 1998
+      file: worldcup/more/1998.txt
+      tz: inline
+    - label: "2002"
+      start_year: 2002
+      file: worldcup/more/2002.txt
+      tz: inline
+    - label: "2006"
+      start_year: 2006
+      file: worldcup/more/2006.txt
+      tz: inline
+    - label: "2010"
+      start_year: 2010
+      file: worldcup/more/2010.txt
+      tz: inline
+    - label: "2014"
+      start_year: 2014
+      file: worldcup/more/2014.txt
+      tz: inline
+    - label: "2018"
+      start_year: 2018
+      file: worldcup/more/2018.txt
+      tz: inline
     - label: "2022"
       start_year: 2022
       file: worldcup/more/2022.txt
@@ -892,13 +1212,75 @@
       squads:
         style: more
         files: [worldcup/more/2022_squads.txt]
+    - label: "2026"
+      start_year: 2026
+      file: worldcup/more/2026.txt
+      tz: inline
 
 - name: UEFA European Championship
   team_kind: NATIONAL
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q260858
+  # Every edition openfootball/euro has with a date for every match: 1984 and 1992 list matches without dates.
+  # Each file states a fixed local offset (CET = Etc/GMT-1, CEST/BST/WEST as written = Etc/GMT-2/-1).
   seasons:
+    - label: "1960"
+      start_year: 1960
+      file: euro/1960--france/euro.txt
+      tz: Etc/GMT-1
+    - label: "1964"
+      start_year: 1964
+      file: euro/1964--spain/euro.txt
+      tz: Etc/GMT-1
+    - label: "1968"
+      start_year: 1968
+      file: euro/1968--italy/euro.txt
+      tz: Etc/GMT-2
+    - label: "1972"
+      start_year: 1972
+      file: euro/1972--belgium/euro.txt
+      tz: Etc/GMT-1
+    - label: "1976"
+      start_year: 1976
+      file: euro/1976--yugoslavia/euro.txt
+      tz: Etc/GMT-1
+    - label: "1980"
+      start_year: 1980
+      file: euro/1980--italy/euro.txt
+      tz: Etc/GMT-2
+    - label: "1988"
+      start_year: 1988
+      file: euro/1988--west-germany/euro.txt
+      tz: Etc/GMT-2
+    - label: "1996"
+      start_year: 1996
+      file: euro/1996--england/euro.txt
+      tz: Etc/GMT-1
+    - label: "2000"
+      start_year: 2000
+      file: euro/2000--belgium-netherlands/euro.txt
+      tz: Etc/GMT-2
+    - label: "2004"
+      start_year: 2004
+      file: euro/2004--portugal/euro.txt
+      tz: Etc/GMT-1
+    - label: "2008"
+      start_year: 2008
+      file: euro/2008--austria-switzerland/euro.txt
+      tz: Etc/GMT-2
+    - label: "2012"
+      start_year: 2012
+      file: euro/2012--poland-ukraine/euro.txt
+      tz: Etc/GMT-2
+    - label: "2016"
+      start_year: 2016
+      file: euro/2016--france/euro.txt
+      tz: Etc/GMT-2
+    - label: "2021"
+      start_year: 2021
+      file: euro/2021--europe/euro.txt
+      tz: Etc/GMT-2
     - label: "2024"
       start_year: 2024
       file: euro/2024--germany/euro.txt
@@ -912,7 +1294,16 @@
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q178750
+  # Every edition openfootball/copa-america has (2011, 2021, 2024).
   seasons:
+    - label: "2011"
+      start_year: 2011
+      file: copa-america/2011--argentina/copa.txt
+      tz: America/Argentina/Buenos_Aires
+    - label: "2021"
+      start_year: 2021
+      file: copa-america/2021--brazil/copa.txt
+      tz: inline
     - label: "2024"
       start_year: 2024
       file: copa-america/2024--usa/copa.txt
