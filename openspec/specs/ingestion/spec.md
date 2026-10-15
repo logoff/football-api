@@ -108,10 +108,10 @@ Natural keys for step 2:
 
 - competitions — none beyond step 1: competitions are created only from `seeds/competitions.yaml` and matched through their Wikidata QID
 - seasons — `(competition_id, label)`
-- teams — none beyond step 1: teams are created only from `seeds/teams.yaml` and matched through their Open Football spellings and Wikidata QID
+- teams — none beyond step 1: teams are created only from `seeds/teams.yaml` and matched through their Open Football spellings and Wikidata QID. A spelling listed under one entry that still points at the team another entry claims through its QID has moved: its reference is released first, so the entry it moved to resolves to its own team. A team's Wikidata reference is the one its entry names; a corrected QID replaces the old one
 - players — `(team_id, season_id, display_name)`, created only from squad files
 - venues — `(name, city)`
-- matches — `(season_id, stage, home_team_id, away_team_id, occurrence)`; kickoff is an attribute, not part of the key. A source match with no row under that key reuses a match of the same season, teams and date (within a day) that this sync hasn't matched yet, so a relabelled round keeps its UUID. After a season syncs, matches of that season the source no longer lists are deleted, with their goals, verification status and external references
+- matches — `(season_id, stage, home_team_id, away_team_id, occurrence)`; kickoff is an attribute, not part of the key. A source match with no row under that key reuses a match of the same season, teams and date (within a day) that this sync hasn't matched yet, so a relabelled round keeps its UUID. Failing that, the match the same source listing (file, stage and spellings) was synced to follows the listing to its new teams, keeping its UUID. After a season syncs, teams that no longer play in it leave the season, and matches of that season the source no longer lists are deleted, with their goals, verification status and external references
 - goals — `(match_id, ordinal)`; goals have no `external_ref` rows, and ordinals beyond the source's goal count are deleted
 
 No source is privileged in this algorithm: the same reconciliation flow applies whether the inbound record came from Wikidata, Open Football, or any future source.
@@ -142,6 +142,19 @@ No source is privileged in this algorithm: the same reconciliation flow applies 
 - **WHEN** sync runs
 - **THEN** that match, its goals and its verification status are deleted
 - **AND** every other match keeps its UUID
+
+#### Scenario: Spelling moved to its own club
+
+- **GIVEN** a synced database where `Liverpool (URU)` was listed under Liverpool F.C. of England
+- **WHEN** `seeds/teams.yaml` moves it to a new entry for Liverpool F.C. (Montevideo) and sync runs
+- **THEN** a team row for the Montevideo club exists, and the matches listed with that spelling point at it, keeping their UUIDs
+- **AND** Liverpool F.C. of England keeps its UUID, no longer has the moved spelling, and leaves the seasons it only played through it
+
+#### Scenario: Corrected Wikidata QID
+
+- **GIVEN** a team synced with a wrong QID
+- **WHEN** its entry is corrected and sync runs
+- **THEN** the team keeps its UUID and its only Wikidata reference is the corrected QID
 
 ### Requirement: Source attribution
 
