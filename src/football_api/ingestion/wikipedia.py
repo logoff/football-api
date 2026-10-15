@@ -21,9 +21,9 @@ USER_AGENT = f"football-api/{version('football-api')} (+https://github.com/logof
 TIMEOUT = 20.0
 MAX_RETRY_AFTER = 30.0
 TITLES_PER_QUERY = 50
-_SCORE = re.compile(r"^(\d+)\s*[–-]\s*(\d+)$")
-_BOX_SCORE = re.compile(r"^(\d+)\s*[–-]\s*(\d+)\b")
-_BOX_PENS = re.compile(r"\(\s*(\d+)\s*[–-]\s*(\d+)\s*p\s*\)")
+_SCORE = re.compile(r"^(\d+)\s*[–−-]\s*(\d+)$")
+_BOX_SCORE = re.compile(r"^(\d+)\s*[–−-]\s*(\d+)\b")
+_BOX_PENS = re.compile(r"\(\s*(\d+)\s*[–−-]\s*(\d+)\s*p\s*\)")
 _BOX_AWARDED = re.compile(r"\bawd\.|\bawarded\b", re.I)
 
 

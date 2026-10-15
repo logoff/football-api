@@ -297,3 +297,9 @@ def test_unlinked_names_resolve_by_flag_and_never_by_guess() -> None:
         ("Club Nacional de Football", "Academia Puerto Cabello"),
         ("Club Nacional de Football", "Academia Puerto Cabello"),
     ]
+
+
+def test_box_scores_written_with_a_minus_sign() -> None:
+    """Some boxes use U+2212 (`2−0`) where the style guide asks for an en dash."""
+    html = _fb("2012-07-04", '<a href="./Alpha_F.C." title="Alpha F.C.">Alpha</a>', '<a href="./Beta_F.C." title="Beta F.C.">Beta</a>', "2−0")
+    assert [b.score for b in parse_match_boxes(html)] == [(2, 0)]
