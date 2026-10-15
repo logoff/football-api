@@ -31,7 +31,7 @@ Score = tuple[int, int]
 class ResultsReference(Protocol):
     async def results_grid(self, title: str) -> ResultsGrid | None: ...
 
-    async def match_boxes(self, title: str) -> list[MatchBox]: ...
+    async def match_boxes(self, title: str, *, qualifying: bool = False) -> list[MatchBox]: ...
 
     async def qids(self, titles: list[str]) -> dict[str, str]: ...
 
@@ -171,6 +171,20 @@ async def apply_grid(
     return counts
 
 
+async def _stores_qualifying(seed: CompetitionSeed, src: SeasonSource) -> bool:
+    """Whether the season holds qualifying matches, whose sub-articles are then worth reading."""
+    async with get_sessionmaker()() as session:
+        season_id = await _season_id(session, seed, src)
+        if season_id is None:
+            return False
+        stage = await session.scalar(
+            select(Match.stage)
+            .where(Match.season_id == season_id, Match.stage.in_((Stage.QUALIFYING, Stage.PRELIMINARY, Stage.ROUND)))
+            .limit(1)
+        )
+        return stage is not None
+
+
 def _pair(stored: list[Match], boxes: list[MatchBox]) -> list[tuple[Match, MatchBox]]:
     """Pair the stored matches and boxes of one (home, away) pairing (design D2): alone, they pair;
     otherwise by date (allowing a day for kickoffs stored after midnight UTC), then in date order."""
@@ -212,11 +226,35 @@ async def apply_boxes(
     names = await _team_names(session)
     counts: Counter[VerificationStatus] = Counter()
     paired = 0
+    used: set[int] = set()
+    left: list[Match] = []
     for key, matches in stored.items():
-        for match, box in _pair(matches, by_pairing.get(key, [])):
+        pairs = _pair(matches, by_pairing.get(key, []))
+        for match, box in pairs:
             paired += 1
+            used.add(id(box))
             await _record(session, label, names, match, box.score, box.shootout, now, counts)
+        done = {match.id for match, _ in pairs}
+        left += [m for m in matches if m.id not in done]
+    # At neutral venues the sources may name the teams the other way round: a match left over pairs
+    # with the one unused box of the reversed pairing on its date, compared with the box flipped.
+    for match in left:
+        day = match.kickoff_utc.date()
+        reverse = [
+            b
+            for b in by_pairing.get((match.away_team_id, match.home_team_id), [])
+            if id(b) not in used and b.day and abs(b.day - day) <= timedelta(days=1)
+        ]
+        if len(reverse) == 1:
+            box = reverse[0]
+            paired += 1
+            used.add(id(box))
+            await _record(session, label, names, match, _flip(box.score), _flip(box.shootout), now, counts)
     return counts, sum(len(m) for m in stored.values()) - paired
+
+
+def _flip(score: tuple[int, int] | None) -> tuple[int, int] | None:
+    return (score[1], score[0]) if score else None
 
 
 async def verify_seasons(
@@ -233,10 +271,10 @@ async def verify_seasons(
         if not src.wikipedia:
             continue
         label = f"{seed.name} {src.label}"
-        cup = seed.format in (CompetitionFormat.CUP, CompetitionFormat.LEAGUE_CUP)
+        cup = seed.format in (CompetitionFormat.CUP, CompetitionFormat.LEAGUE_CUP, CompetitionFormat.TOURNAMENT)
         try:
             if cup:
-                boxes = await reference.match_boxes(src.wikipedia)
+                boxes = await reference.match_boxes(src.wikipedia, qualifying=await _stores_qualifying(seed, src))
                 if not boxes:
                     log.warning("%s: no match boxes in %r; statuses unchanged", label, src.wikipedia)
                     continue

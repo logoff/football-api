@@ -37,6 +37,7 @@ class FakeReference:
         self.qid_of: dict[str, str] = {}
         self.error: Exception | None = None
         self.requests: list[str] = []
+        self.qualifying: list[bool] = []
 
     async def results_grid(self, title: str) -> ResultsGrid | None:
         self.requests.append(title)
@@ -44,8 +45,9 @@ class FakeReference:
             raise self.error
         return self.grid
 
-    async def match_boxes(self, title: str) -> list[MatchBox]:
+    async def match_boxes(self, title: str, *, qualifying: bool = False) -> list[MatchBox]:
         self.requests.append(title)
+        self.qualifying.append(qualifying)
         if self.error:
             raise self.error
         return self.boxes
@@ -409,3 +411,41 @@ async def cup_statuses() -> dict[tuple[str, str, date], VerificationStatus]:
             .join(away, away.c.id == Match.away_team_id)
         )
         return {(h, a, k.date()): s for h, a, k, s in rows}
+
+
+async def test_tournament_season_verified_from_match_boxes(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed], caplog: pytest.LogCaptureFixture
+) -> None:
+    """Tournaments use the same match-box reference as cups (match-verification spec)."""
+    wc = next(c for c in fixture_competitions if c.name == "FIFA World Cup")
+    wc = wc.model_copy(update={"seasons": [wc.seasons[0].model_copy(update={"wikipedia": "2022 FIFA World Cup"})]})
+    report = await run_sync(competitions=[wc], teams=fixture_teams, refresh_sources=False)
+    assert not report.failed
+    ref = FakeReference()
+    ref.qid_of = {t.name: t.wikidata for t in fixture_teams if t.wikidata}
+    ref.boxes = [MatchBox(date(2022, 12, 18), "Argentina", "France", (3, 3), (4, 2))]
+    with caplog.at_level(logging.INFO, logger="football_api.verification"):
+        await verify_seasons([(wc, wc.seasons[0])], ref)
+    assert ref.requests == ["2022 FIFA World Cup"]
+    assert ref.qualifying == [False]  # no qualifying matches stored: `… qualification` pages are not read
+    assert await cup_statuses() == {("Argentina", "France", date(2022, 12, 18)): VerificationStatus.VERIFIED}
+    assert "FIFA World Cup 2022: verified against wikipedia: VERIFIED=1" in caplog.text
+
+
+async def test_box_with_teams_the_other_way_round_pairs_flipped(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """At neutral venues the sources may name the teams in the other order (design D5)."""
+    wc = next(c for c in fixture_competitions if c.name == "FIFA World Cup")
+    wc = wc.model_copy(update={"seasons": [wc.seasons[0].model_copy(update={"wikipedia": "2022 FIFA World Cup"})]})
+    report = await run_sync(competitions=[wc], teams=fixture_teams, refresh_sources=False)
+    assert not report.failed
+    ref = FakeReference()
+    ref.qid_of = {t.name: t.wikidata for t in fixture_teams if t.wikidata}
+    ref.boxes = [MatchBox(date(2022, 12, 18), "France", "Argentina", (3, 3), (2, 4))]
+    await verify_seasons([(wc, wc.seasons[0])], ref)
+    assert await cup_statuses() == {("Argentina", "France", date(2022, 12, 18)): VerificationStatus.VERIFIED}
+
+    ref.boxes = [MatchBox(date(2022, 12, 18), "France", "Argentina", (3, 3), (4, 2))]
+    await verify_seasons([(wc, wc.seasons[0])], ref)
+    assert await cup_statuses() == {("Argentina", "France", date(2022, 12, 18)): VerificationStatus.MISMATCH}
