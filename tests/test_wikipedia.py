@@ -2,6 +2,7 @@
 
 from datetime import date
 from pathlib import Path
+from urllib.parse import unquote
 
 import httpx
 import pytest
@@ -11,6 +12,7 @@ from football_api.ingestion.wikipedia import (
     WikipediaClient,
     WikipediaUnavailable,
     parse_match_boxes,
+    parse_subarticle_titles,
     parse_results_grid,
 )
 
@@ -185,3 +187,91 @@ def test_match_box_dates() -> None:
 
 def test_page_without_match_boxes() -> None:
     assert parse_match_boxes(FIXTURE.read_text(encoding="utf-8")) == []
+
+
+def _box(day: str, home: str, away: str, score: str) -> str:
+    return (
+        '<table class="tmpl-football-box-collapsible"><tbody><tr>'
+        f'<td><span class="dtstart">{day}</span></td>'
+        f'<td class="vcard"><a href="./{home.replace(" ", "_")}" title="{home}">{home}</a></td>'
+        f"<td><b>{score}</b></td>"
+        f'<td class="vcard"><a href="./{away.replace(" ", "_")}" title="{away}">{away}</a></td><td></td>'
+        "</tr></tbody></table>"
+    )
+
+
+SEASON = "Made-up Cup 2031"
+PAGES = {
+    SEASON: f"<html><head><title>{SEASON}</title></head><body>"
+    + "".join(
+        f'<a href="./{(SEASON + " " + sub).replace(" ", "_")}">{sub}</a>'
+        for sub in ("Group A", "knockout phase", "qualification", "squads", "Femenina", "Group A", "Final", "qualifying stages")
+    )
+    + '<a href="./Other_article">other</a>'
+    + _box("2031-07-01", "Alpha F.C.", "Beta F.C.", "1–0")
+    + "</body></html>",
+    f"{SEASON} Group A": _box("2031-07-01", "Alpha F.C.", "Beta F.C.", "1–0") + _box("2031-07-02", "Gamma F.C.", "Delta F.C.", "2–2"),
+    f"{SEASON} knockout phase": _box("2031-07-10", "Alpha F.C.", "Gamma F.C.", "3–1"),
+    f"{SEASON} qualification": _box("2030-03-01", "Qualifier F.C.", "Beta F.C.", "9–9"),
+    f"{SEASON} qualifying stages": _box("2031-03-01", "Epsilon F.C.", "Beta F.C.", "0–1"),
+}
+
+
+def test_subarticles_follow_the_season_title_and_skip_noise() -> None:
+    assert parse_subarticle_titles(PAGES[SEASON], SEASON) == [f"{SEASON} Group A", f"{SEASON} knockout phase", f"{SEASON} Final"]
+
+
+def test_qualifying_subarticles_only_when_asked() -> None:
+    """A competition's own qualifying stages, never a separate qualification tournament."""
+    assert parse_subarticle_titles(PAGES[SEASON], SEASON, qualifying=True) == [
+        f"{SEASON} Group A",
+        f"{SEASON} knockout phase",
+        f"{SEASON} Final",
+        f"{SEASON} qualifying stages",
+    ]
+
+
+async def test_match_boxes_read_subarticles_once_each() -> None:
+    requested: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        title = unquote(request.url.raw_path.decode().rsplit("/", 1)[1]).replace("_", " ")
+        requested.append(title)
+        page = PAGES.get(title)
+        return httpx.Response(200, text=page) if page is not None else httpx.Response(404)
+
+    async with client_with(httpx.MockTransport(handler)) as wiki:
+        boxes = await wiki.match_boxes(SEASON, qualifying=True)
+    assert requested == [SEASON, f"{SEASON} Group A", f"{SEASON} knockout phase", f"{SEASON} Final", f"{SEASON} qualifying stages"]
+    assert [(b.home, b.away, b.score) for b in boxes] == [
+        ("Alpha F.C.", "Beta F.C.", (1, 0)),  # in the season article and in Group A: once
+        ("Gamma F.C.", "Delta F.C.", (2, 2)),
+        ("Alpha F.C.", "Gamma F.C.", (3, 1)),
+        ("Epsilon F.C.", "Beta F.C.", (0, 1)),
+    ]
+
+
+def _fb(day: str, home: str, away: str, score: str) -> str:
+    return (
+        f'<div class="footballbox"><div class="fdate"><span class="dtstart">{day}</span></div>'
+        f'<table class="fevent"><tbody><tr><th class="fhome">{home}</th><th class="fscore">{score}</th>'
+        f'<th class="faway">{away}</th></tr></tbody></table></div>'
+    )
+
+
+def test_box_teams_skip_flags_and_resolve_unlinked_names() -> None:
+    flag = '<span class="flagicon"><a href="./Made-up_Football_Federation" title="Made-up Football Federation"><img alt="X"/></a></span>'
+    html = (
+        _fb("2031-02-01", f'{flag} <a href="./Alpha_F.C." title="Alpha F.C.">Alpha</a>', f'<a href="./Beta_F.C." title="Beta F.C.">Beta</a> {flag}', "1–0")
+        + _fb("2031-02-08", f"Beta {flag}", f"{flag} Alpha", "2–2")  # linked only on first mention
+    )
+    assert [(b.home, b.away, b.score) for b in parse_match_boxes(html)] == [
+        ("Alpha F.C.", "Beta F.C.", (1, 0)),
+        ("Beta F.C.", "Alpha F.C.", (2, 2)),
+    ]
+
+
+def test_box_day_reads_us_style_dates() -> None:
+    html = _fb("x", '<a href="./Alpha_F.C." title="Alpha F.C.">Alpha</a>', '<a href="./Beta_F.C." title="Beta F.C.">Beta</a>', "0–0")
+    html = html.replace('<span class="dtstart">x</span>', "July 29, 2015")
+    assert [b.day for b in parse_match_boxes(html)] == [date(2015, 7, 29)]

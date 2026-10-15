@@ -107,19 +107,25 @@ _MONTHS = {m: i for i, m in enumerate(
     ("january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"), 1
 )}
 _TEXT_DATE = re.compile(r"\b(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})\b")
+_US_TEXT_DATE = re.compile(r"\b([A-Za-z]+)\s+(\d{1,2}),\s+(\d{4})\b")  # `July 29, 2015`
 
 
 def _box_day(node: Tag | None) -> date | None:
-    """The box's date: the hidden ISO `dtstart` when the article uses {{Start date}}, else `14 November 2023`."""
+    """The box's date: the hidden ISO `dtstart` when the article uses {{Start date}}, else
+    `14 November 2023` or `November 14, 2023`."""
     if node is None:
         return None
     stamp = node.select_one(".dtstart")
     try:
         if stamp:
             return date.fromisoformat(stamp.get_text(strip=True)[:10])
-        m = _TEXT_DATE.search(node.get_text(" ", strip=True))
+        text = node.get_text(" ", strip=True)
+        m = _TEXT_DATE.search(text)
         if m and m[2].lower() in _MONTHS:
             return date(int(m[3]), _MONTHS[m[2].lower()], int(m[1]))
+        m = _US_TEXT_DATE.search(text)
+        if m and m[1].lower() in _MONTHS:
+            return date(int(m[3]), _MONTHS[m[1].lower()], int(m[2]))
     except ValueError:
         pass
     return None
@@ -133,24 +139,50 @@ def _box_result(cell_text: str, shootout_text: str | None = None) -> tuple[tuple
     return (int(m[1]), int(m[2])), (int(pens[1]), int(pens[2])) if pens else None, bool(_BOX_AWARDED.search(cell_text))
 
 
-def _collapsible_box(table: Tag) -> MatchBox | None:
+def _cell_name(cell: Tag) -> str:
+    """A team cell's visible name without a `(7)` tier note: `Arsenal`."""
+    return re.sub(r"\s*\([^)]*\)\s*$", "", cell.get_text(" ", strip=True)).strip()
+
+
+def _team_title(cell: Tag, linked: dict[str, str]) -> str | None:
+    """The club or team a box cell links to, skipping flag icons (a club's flag links to its
+    federation, `Croatian Football Federation`). A cell without a link uses the article its visible
+    name links to elsewhere on the page: Wikipedia links a club only on first mention."""
+    for link in cell.find_all("a", href=True):
+        if not link.get_text(strip=True) or link.find_parent(class_="flagicon"):
+            continue
+        return _anchor_title(link)
+    return linked.get(_cell_name(cell))
+
+
+def _anchor_title(link: Tag) -> str | None:
+    title = link.get("title")
+    if isinstance(title, str) and title:
+        return title
+    href = link.get("href")
+    if isinstance(href, str) and href.startswith("./"):
+        return unquote(href[2:].split("#", 1)[0]).replace("_", " ")
+    return None
+
+
+def _collapsible_box(table: Tag, linked: dict[str, str]) -> MatchBox | None:
     row = table.find("tr")
     cells: list[Tag] = list(row.find_all("td", recursive=False)) if isinstance(row, Tag) else []
     if len(cells) < 4:
         return None
-    home, away = _link_title(cells[1]), _link_title(cells[3])
+    home, away = _team_title(cells[1], linked), _team_title(cells[3], linked)
     if home is None or away is None:
         return None
     score, shootout, awarded = _box_result(cells[2].get_text(" ", strip=True))
     return MatchBox(_box_day(cells[0]), home, away, score, shootout, awarded)
 
 
-def _football_box(box: Tag) -> MatchBox | None:
+def _football_box(box: Tag, linked: dict[str, str]) -> MatchBox | None:
     table = box.select_one("table.fevent")
     home_cell, score_cell, away_cell = (box.select_one(c) for c in (".fhome", ".fscore", ".faway"))
     if table is None or home_cell is None or score_cell is None or away_cell is None:
         return None
-    home, away = _link_title(home_cell), _link_title(away_cell)
+    home, away = _team_title(home_cell, linked), _team_title(away_cell, linked)
     if home is None or away is None:
         return None
     shootout_text = None
@@ -168,12 +200,66 @@ def parse_match_boxes(html: str) -> list[MatchBox]:
     soup = BeautifulSoup(html, "html.parser")
     for note in soup.find_all("sup"):
         note.decompose()
+    nodes = soup.select("table.tmpl-football-box-collapsible, div.footballbox")
+    linked: dict[str, str] = {}  # visible team name → linked article, from the cells that do link
+    for node in nodes:
+        cells = node.select(".fhome, .faway") if node.name == "div" else node.select("td.vcard")
+        for cell in cells:
+            title = _team_title(cell, {})
+            if title:
+                linked.setdefault(_cell_name(cell), title)
     boxes: list[MatchBox] = []
-    for node in soup.select("table.tmpl-football-box-collapsible, div.footballbox"):
-        box = _collapsible_box(node) if node.name == "table" else _football_box(node)
+    for node in nodes:
+        box = _collapsible_box(node, linked) if node.name == "table" else _football_box(node, linked)
         if box is not None:
             boxes.append(box)
     return boxes
+
+
+# Sub-articles a season article links that hold no reference matches for us (design D1). Qualifying
+# sub-articles are read only for seasons that store qualifying matches (`… qualifying stages`);
+# `UEFA Euro 2024 qualifying` or `2026 FIFA World Cup qualification` are other tournaments.
+_QUALIFYING = re.compile(r"qualif", re.I)
+_SKIP_SUBARTICLE = re.compile(
+    r"qualification|squad|femenin|futsal|\bbids?\b|statistic|broadcast|official|controvers|seeding|ceremon|disciplin|record",
+    re.I,
+)
+
+
+def page_title(html: str) -> str | None:
+    title = BeautifulSoup(html, "html.parser").find("title")
+    return title.get_text(strip=True) if isinstance(title, Tag) else None
+
+
+def parse_subarticle_titles(html: str, title: str, *, qualifying: bool = False) -> list[str]:
+    """Linked articles whose titles extend the season article's own (`… Group A`, `… knockout phase`),
+    minus qualifying, squads, other editions and non-match topics; in link order, no duplicates."""
+    soup = BeautifulSoup(html, "html.parser")
+    out: list[str] = []
+    for link in soup.select("a[href]"):
+        href = link.get("href")
+        if not isinstance(href, str) or not href.startswith("./"):
+            continue
+        target = unquote(href[2:].split("#", 1)[0]).replace("_", " ")
+        suffix = target[len(title) :]
+        if not target.startswith(title + " ") or _SKIP_SUBARTICLE.search(suffix) or target in out:
+            continue
+        if qualifying or not _QUALIFYING.search(suffix):
+            out.append(target)
+    return out
+
+
+def merge_boxes(groups: Iterable[list[MatchBox]]) -> list[MatchBox]:
+    """One box per (date, home, away): the season article first, then sub-articles (design D2)."""
+    seen: set[tuple[date | None, str, str]] = set()
+    out: list[MatchBox] = []
+    for boxes in groups:
+        for box in boxes:
+            key = (box.day, box.home, box.away)
+            if key not in seen:
+                seen.add(key)
+                out.append(box)
+    return out
 
 
 def parse_results_grid(html: str) -> ResultsGrid | None:
@@ -235,9 +321,18 @@ class WikipediaClient:
         """The article's results grid; None when the article has none. Missing article → unavailable."""
         return parse_results_grid(await self._page_html(title))
 
-    async def match_boxes(self, title: str) -> list[MatchBox]:
-        """The article's match boxes (cups); empty when it has none. Missing article → unavailable."""
-        return parse_match_boxes(await self._page_html(title))
+    async def match_boxes(self, title: str, *, qualifying: bool = False) -> list[MatchBox]:
+        """The match boxes of a cup or tournament season: the article's own, then those of the
+        sub-articles it links (groups, knockout phase, and qualifying stages when asked), each match once. Missing article → unavailable;
+        a missing sub-article is skipped."""
+        html = await self._page_html(title)
+        groups = [parse_match_boxes(html)]
+        for sub in parse_subarticle_titles(html, page_title(html) or title, qualifying=qualifying):
+            try:
+                groups.append(parse_match_boxes(await self._page_html(sub)))
+            except WikipediaUnavailable:
+                continue
+        return merge_boxes(groups)
 
     async def qids(self, titles: Iterable[str]) -> dict[str, str]:
         """Map article titles to Wikidata QIDs, following normalisation and redirects."""

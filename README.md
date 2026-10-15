@@ -53,7 +53,7 @@ The sync refuses to run until the API container has applied the migrations (exit
 
 ## Data coverage
 
-19 competitions. The five domestic leagues have every season openfootball publishes, up to the one in progress, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The international competitions have every edition openfootball publishes with a date for every match, including those in progress; their Wikipedia check is planned. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
+19 competitions. The five domestic leagues have every season openfootball publishes, up to the one in progress, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The international competitions have every edition openfootball publishes with a date for every match, including those in progress, also checked against Wikipedia. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
 
 | Competition                | Format     | Seasons                 | Results | Verified | Goal scorers | Squads |
 | -------------------------- | ---------- | ----------------------- | ------- | -------- | ------------ | ------ |
@@ -68,14 +68,14 @@ The sync refuses to run until the API container has applied the migrations (exit
 | DFB-Pokal                  | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none   |
 | Coppa Italia               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none   |
 | Coupe de France            | CUP        | 2024-25                 | ✅      | ✅       | none         | none   |
-| UEFA Champions League      | TOURNAMENT | 2011-12 to 2025-26 (15) | ✅      | none     | none         | none   |
-| UEFA Europa League         | TOURNAMENT | 2020-21 to 2024-25 (5)  | ✅      | none     | none         | none   |
-| UEFA Conference League     | TOURNAMENT | 2021-22 to 2024-25 (4)  | ✅      | none     | none         | none   |
-| CONMEBOL Copa Libertadores | TOURNAMENT | 2012 to 2026 (15)       | ✅      | none     | none         | none   |
-| FIFA Club World Cup        | TOURNAMENT | 2000 to 2025 (21)       | ✅      | none     | most         | 2025   |
-| FIFA World Cup             | TOURNAMENT | 1930 to 2026 (23)       | ✅      | none     | ✅           | 2022   |
-| UEFA European Championship | TOURNAMENT | 1960 to 2024 (15)       | ✅      | none     | most         | 2024   |
-| CONMEBOL Copa América      | TOURNAMENT | 2011, 2021, 2024        | ✅      | none     | 2024         | 2024   |
+| UEFA Champions League      | TOURNAMENT | 2011-12 to 2025-26 (15) | ✅      | ✅       | none         | none   |
+| UEFA Europa League         | TOURNAMENT | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none   |
+| UEFA Conference League     | TOURNAMENT | 2021-22 to 2024-25 (4)  | ✅      | ✅       | none         | none   |
+| CONMEBOL Copa Libertadores | TOURNAMENT | 2012 to 2026 (15)       | ✅      | ✅       | none         | none   |
+| FIFA Club World Cup        | TOURNAMENT | 2000 to 2025 (21)       | ✅      | ✅       | most         | 2025   |
+| FIFA World Cup             | TOURNAMENT | 1930 to 2026 (23)       | ✅      | ✅       | ✅           | 2022   |
+| UEFA European Championship | TOURNAMENT | 1960 to 2024 (15)       | ✅      | ✅       | most         | 2024   |
+| CONMEBOL Copa América      | TOURNAMENT | 2011, 2021, 2024        | ✅      | ✅       | 2024         | 2024   |
 
 Euro 1984 and Euro 1992 are not included: openfootball lists some of their matches without a date. Euro 2020, played in 2021, has the season label `2021`. The Club World Cup's placement match has stage `FIFTH_PLACE`.
 
@@ -91,7 +91,7 @@ The API reports this in a `coverage` field on seasons, matches, and player listi
 
 ### Verification
 
-openfootball is the only data source. Domestic league scores are additionally checked against the results grid of the English Wikipedia season article, and domestic cup scores (including penalty shootouts) against the article's match boxes, so a wrong score in either source shows up instead of passing silently. Wikipedia is read only to compare: none of its values are stored or served.
+openfootball is the only data source. Domestic league scores are additionally checked against the results grid of the English Wikipedia season article, and cup and tournament scores (including penalty shootouts) against the match boxes of the season article and its group and knockout sub-articles, so a wrong score in either source shows up instead of passing silently. Wikipedia is read only to compare: none of its values are stored or served.
 
 Each verified match gets a `verification` object in the API (`null` elsewhere), and `/v1/matches?verification=MISMATCH` lists the disagreements:
 

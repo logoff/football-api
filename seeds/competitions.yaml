@@ -831,72 +831,87 @@
       start_year: 2011
       file: champions-league/2011-12/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2011–12 UEFA Champions League"
       json: football.json/2011-12/uefa.cl.json
     - label: 2012-13
       start_year: 2012
       file: champions-league/2012-13/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2012–13 UEFA Champions League"
       json: football.json/2012-13/uefa.cl.json
     - label: 2013-14
       start_year: 2013
       file: champions-league/2013-14/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2013–14 UEFA Champions League"
       json: football.json/2013-14/uefa.cl.json
     - label: 2014-15
       start_year: 2014
       file: champions-league/2014-15/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2014–15 UEFA Champions League"
       json: football.json/2014-15/uefa.cl.json
     - label: 2015-16
       start_year: 2015
       file: champions-league/2015-16/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2015–16 UEFA Champions League"
       json: football.json/2015-16/uefa.cl.json
     - label: 2016-17
       start_year: 2016
       file: champions-league/2016-17/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2016–17 UEFA Champions League"
       json: football.json/2016-17/uefa.cl.json
     - label: 2017-18
       start_year: 2017
       file: champions-league/2017-18/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2017–18 UEFA Champions League"
       json: football.json/2017-18/uefa.cl.json
     - label: 2018-19
       start_year: 2018
       file: champions-league/2018-19/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2018–19 UEFA Champions League"
       json: football.json/2018-19/uefa.cl.json
     - label: 2019-20
       start_year: 2019
       file: champions-league/2019-20/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2019–20 UEFA Champions League"
       json: football.json/2019-20/uefa.cl.json
     - label: 2020-21
       start_year: 2020
       file: champions-league/2020-21/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2020–21 UEFA Champions League"
     - label: 2021-22
       start_year: 2021
       file: champions-league/2021-22/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2021–22 UEFA Champions League"
     - label: 2022-23
       start_year: 2022
       file: champions-league/2022-23/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2022–23 UEFA Champions League"
     - label: 2023-24
       start_year: 2023
       file: champions-league/2023-24/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2023–24 UEFA Champions League"
     - label: 2024-25
       start_year: 2024
       file: champions-league/2024-25/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2024–25 UEFA Champions League"
       json: football.json/2024-25/uefa.cl.json
     - label: 2025-26
       start_year: 2025
       file: champions-league/2025-26/cl.txt
       tz: Europe/Berlin
+      wikipedia: "2025–26 UEFA Champions League"
 
 - name: UEFA Europa League
   team_kind: CLUB
@@ -909,22 +924,27 @@
       start_year: 2020
       file: champions-league/2020-21/el.txt
       tz: Europe/Berlin
+      wikipedia: "2020–21 UEFA Europa League"
     - label: 2021-22
       start_year: 2021
       file: champions-league/2021-22/el.txt
       tz: Europe/Berlin
+      wikipedia: "2021–22 UEFA Europa League"
     - label: 2022-23
       start_year: 2022
       file: champions-league/2022-23/el.txt
       tz: Europe/Berlin
+      wikipedia: "2022–23 UEFA Europa League"
     - label: 2023-24
       start_year: 2023
       file: champions-league/2023-24/el.txt
       tz: Europe/Berlin
+      wikipedia: "2023–24 UEFA Europa League"
     - label: 2024-25
       start_year: 2024
       file: champions-league/2024-25/el.txt
       tz: Europe/Berlin
+      wikipedia: "2024–25 UEFA Europa League"
 
 - name: UEFA Conference League
   team_kind: CLUB
@@ -937,18 +957,22 @@
       start_year: 2021
       file: champions-league/2021-22/conf.txt
       tz: Europe/Berlin
+      wikipedia: "2021–22 UEFA Europa Conference League"
     - label: 2022-23
       start_year: 2022
       file: champions-league/2022-23/conf.txt
       tz: Europe/Berlin
+      wikipedia: "2022–23 UEFA Europa Conference League"
     - label: 2023-24
       start_year: 2023
       file: champions-league/2023-24/conf.txt
       tz: Europe/Berlin
+      wikipedia: "2023–24 UEFA Europa Conference League"
     - label: 2024-25
       start_year: 2024
       file: champions-league/2024-25/conf.txt
       tz: Europe/Berlin
+      wikipedia: "2024–25 UEFA Conference League"
 
 - name: CONMEBOL Copa Libertadores
   team_kind: CLUB
@@ -961,63 +985,78 @@
       start_year: 2012
       file: south-america/copa-libertadores/2012_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2012 Copa Libertadores"
     - label: "2013"
       start_year: 2013
       file: south-america/copa-libertadores/2013_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2013 Copa Libertadores"
     - label: "2014"
       start_year: 2014
       file: south-america/copa-libertadores/2014_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2014 Copa Libertadores"
     - label: "2015"
       start_year: 2015
       file: south-america/copa-libertadores/2015_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2015 Copa Libertadores"
     - label: "2016"
       start_year: 2016
       file: south-america/copa-libertadores/2016_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2016 Copa Libertadores"
     - label: "2017"
       start_year: 2017
       file: south-america/copa-libertadores/2017_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2017 Copa Libertadores"
     - label: "2018"
       start_year: 2018
       file: south-america/copa-libertadores/2018_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2018 Copa Libertadores"
     - label: "2019"
       start_year: 2019
       file: south-america/copa-libertadores/2019_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2019 Copa Libertadores"
     - label: "2020"
       start_year: 2020
       file: south-america/copa-libertadores/2020_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2020 Copa Libertadores"
     - label: "2021"
       start_year: 2021
       file: south-america/copa-libertadores/2021_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2021 Copa Libertadores"
     - label: "2022"
       start_year: 2022
       file: south-america/copa-libertadores/2022_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2022 Copa Libertadores"
     - label: "2023"
       start_year: 2023
       file: south-america/copa-libertadores/2023_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2023 Copa Libertadores"
     - label: "2024"
       start_year: 2024
       file: south-america/copa-libertadores/2024_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2024 Copa Libertadores"
     - label: "2025"
       start_year: 2025
       file: south-america/copa-libertadores/2025_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2025 Copa Libertadores"
       json: football.json/2025/copa.l.json
     - label: "2026"
       start_year: 2026
       file: south-america/copa-libertadores/2026_copal.txt
       tz: America/Sao_Paulo
+      wikipedia: "2026 Copa Libertadores"
 
 - name: FIFA Club World Cup
   team_kind: CLUB
@@ -1030,86 +1069,107 @@
       start_year: 2000
       file: club-worldcup/more/2000_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2000 FIFA Club World Championship"
     - label: "2005"
       start_year: 2005
       file: club-worldcup/more/2005_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2005 FIFA Club World Championship"
     - label: "2006"
       start_year: 2006
       file: club-worldcup/more/2006_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2006 FIFA Club World Cup"
     - label: "2007"
       start_year: 2007
       file: club-worldcup/more/2007_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2007 FIFA Club World Cup"
     - label: "2008"
       start_year: 2008
       file: club-worldcup/more/2008_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2008 FIFA Club World Cup"
     - label: "2009"
       start_year: 2009
       file: club-worldcup/more/2009_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2009 FIFA Club World Cup"
     - label: "2010"
       start_year: 2010
       file: club-worldcup/more/2010_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2010 FIFA Club World Cup"
     - label: "2011"
       start_year: 2011
       file: club-worldcup/more/2011_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2011 FIFA Club World Cup"
     - label: "2012"
       start_year: 2012
       file: club-worldcup/more/2012_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2012 FIFA Club World Cup"
     - label: "2013"
       start_year: 2013
       file: club-worldcup/more/2013_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2013 FIFA Club World Cup"
     - label: "2014"
       start_year: 2014
       file: club-worldcup/more/2014_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2014 FIFA Club World Cup"
     - label: "2015"
       start_year: 2015
       file: club-worldcup/more/2015_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2015 FIFA Club World Cup"
     - label: "2016"
       start_year: 2016
       file: club-worldcup/more/2016_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2016 FIFA Club World Cup"
     - label: "2017"
       start_year: 2017
       file: club-worldcup/more/2017_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2017 FIFA Club World Cup"
     - label: "2018"
       start_year: 2018
       file: club-worldcup/more/2018_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2018 FIFA Club World Cup"
     - label: "2019"
       start_year: 2019
       file: club-worldcup/more/2019_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2019 FIFA Club World Cup"
     - label: "2020"
       start_year: 2020
       file: club-worldcup/more/2020_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2020 FIFA Club World Cup"
     - label: "2021"
       start_year: 2021
       file: club-worldcup/more/2021_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2021 FIFA Club World Cup"
     - label: "2022"
       start_year: 2022
       file: club-worldcup/more/2022_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2022 FIFA Club World Cup"
     - label: "2023"
       start_year: 2023
       file: club-worldcup/more/2023_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2023 FIFA Club World Cup"
     - label: "2025"
       start_year: 2025
       file: club-worldcup/more/2025_clubworldcup-full.txt
       tz: inline
+      wikipedia: "2025 FIFA Club World Cup"
       squads:
         style: more
         files: [club-worldcup/more/2025_clubworldcup-squads.txt]
@@ -1125,90 +1185,112 @@
       start_year: 1930
       file: worldcup/more/1930.txt
       tz: inline
+      wikipedia: "1930 FIFA World Cup"
     - label: "1934"
       start_year: 1934
       file: worldcup/more/1934.txt
       tz: inline
+      wikipedia: "1934 FIFA World Cup"
     - label: "1938"
       start_year: 1938
       file: worldcup/more/1938.txt
       tz: inline
+      wikipedia: "1938 FIFA World Cup"
     - label: "1950"
       start_year: 1950
       file: worldcup/more/1950.txt
       tz: inline
+      wikipedia: "1950 FIFA World Cup"
     - label: "1954"
       start_year: 1954
       file: worldcup/more/1954.txt
       tz: inline
+      wikipedia: "1954 FIFA World Cup"
     - label: "1958"
       start_year: 1958
       file: worldcup/more/1958.txt
       tz: inline
+      wikipedia: "1958 FIFA World Cup"
     - label: "1962"
       start_year: 1962
       file: worldcup/more/1962.txt
       tz: inline
+      wikipedia: "1962 FIFA World Cup"
     - label: "1966"
       start_year: 1966
       file: worldcup/more/1966.txt
       tz: inline
+      wikipedia: "1966 FIFA World Cup"
     - label: "1970"
       start_year: 1970
       file: worldcup/more/1970.txt
       tz: inline
+      wikipedia: "1970 FIFA World Cup"
     - label: "1974"
       start_year: 1974
       file: worldcup/more/1974.txt
       tz: inline
+      wikipedia: "1974 FIFA World Cup"
     - label: "1978"
       start_year: 1978
       file: worldcup/more/1978.txt
       tz: inline
+      wikipedia: "1978 FIFA World Cup"
     - label: "1982"
       start_year: 1982
       file: worldcup/more/1982.txt
       tz: inline
+      wikipedia: "1982 FIFA World Cup"
     - label: "1986"
       start_year: 1986
       file: worldcup/more/1986.txt
       tz: inline
+      wikipedia: "1986 FIFA World Cup"
     - label: "1990"
       start_year: 1990
       file: worldcup/more/1990.txt
       tz: inline
+      wikipedia: "1990 FIFA World Cup"
     - label: "1994"
       start_year: 1994
       file: worldcup/more/1994.txt
       tz: inline
+      wikipedia: "1994 FIFA World Cup"
     - label: "1998"
       start_year: 1998
       file: worldcup/more/1998.txt
       tz: inline
+      wikipedia: "1998 FIFA World Cup"
     - label: "2002"
       start_year: 2002
       file: worldcup/more/2002.txt
       tz: inline
+      wikipedia: "2002 FIFA World Cup"
     - label: "2006"
       start_year: 2006
       file: worldcup/more/2006.txt
       tz: inline
+      wikipedia: "2006 FIFA World Cup"
     - label: "2010"
       start_year: 2010
       file: worldcup/more/2010.txt
       tz: inline
+      wikipedia: "2010 FIFA World Cup"
     - label: "2014"
       start_year: 2014
       file: worldcup/more/2014.txt
       tz: inline
+      wikipedia: "2014 FIFA World Cup"
     - label: "2018"
       start_year: 2018
       file: worldcup/more/2018.txt
       tz: inline
+      wikipedia: "2018 FIFA World Cup"
     - label: "2022"
       start_year: 2022
       file: worldcup/more/2022.txt
       tz: inline
+      wikipedia: "2022 FIFA World Cup"
       squads:
         style: more
         files: [worldcup/more/2022_squads.txt]
@@ -1216,6 +1298,7 @@
       start_year: 2026
       file: worldcup/more/2026.txt
       tz: inline
+      wikipedia: "2026 FIFA World Cup"
 
 - name: UEFA European Championship
   team_kind: NATIONAL
@@ -1229,62 +1312,77 @@
       start_year: 1960
       file: euro/1960--france/euro.txt
       tz: Etc/GMT-1
+      wikipedia: '1960 European Nations'' Cup'
     - label: "1964"
       start_year: 1964
       file: euro/1964--spain/euro.txt
       tz: Etc/GMT-1
+      wikipedia: '1964 European Nations'' Cup'
     - label: "1968"
       start_year: 1968
       file: euro/1968--italy/euro.txt
       tz: Etc/GMT-2
+      wikipedia: "UEFA Euro 1968"
     - label: "1972"
       start_year: 1972
       file: euro/1972--belgium/euro.txt
       tz: Etc/GMT-1
+      wikipedia: "UEFA Euro 1972"
     - label: "1976"
       start_year: 1976
       file: euro/1976--yugoslavia/euro.txt
       tz: Etc/GMT-1
+      wikipedia: "UEFA Euro 1976"
     - label: "1980"
       start_year: 1980
       file: euro/1980--italy/euro.txt
       tz: Etc/GMT-2
+      wikipedia: "UEFA Euro 1980"
     - label: "1988"
       start_year: 1988
       file: euro/1988--west-germany/euro.txt
       tz: Etc/GMT-2
+      wikipedia: "UEFA Euro 1988"
     - label: "1996"
       start_year: 1996
       file: euro/1996--england/euro.txt
       tz: Etc/GMT-1
+      wikipedia: "UEFA Euro 1996"
     - label: "2000"
       start_year: 2000
       file: euro/2000--belgium-netherlands/euro.txt
       tz: Etc/GMT-2
+      wikipedia: "UEFA Euro 2000"
     - label: "2004"
       start_year: 2004
       file: euro/2004--portugal/euro.txt
       tz: Etc/GMT-1
+      wikipedia: "UEFA Euro 2004"
     - label: "2008"
       start_year: 2008
       file: euro/2008--austria-switzerland/euro.txt
       tz: Etc/GMT-2
+      wikipedia: "UEFA Euro 2008"
     - label: "2012"
       start_year: 2012
       file: euro/2012--poland-ukraine/euro.txt
       tz: Etc/GMT-2
+      wikipedia: "UEFA Euro 2012"
     - label: "2016"
       start_year: 2016
       file: euro/2016--france/euro.txt
       tz: Etc/GMT-2
+      wikipedia: "UEFA Euro 2016"
     - label: "2021"
       start_year: 2021
       file: euro/2021--europe/euro.txt
       tz: Etc/GMT-2
+      wikipedia: "UEFA Euro 2020"
     - label: "2024"
       start_year: 2024
       file: euro/2024--germany/euro.txt
       tz: Europe/Berlin
+      wikipedia: "UEFA Euro 2024"
       squads:
         style: per-team
         files: [euro/2024--germany/squads/*.txt]
@@ -1300,14 +1398,17 @@
       start_year: 2011
       file: copa-america/2011--argentina/copa.txt
       tz: America/Argentina/Buenos_Aires
+      wikipedia: "2011 Copa América"
     - label: "2021"
       start_year: 2021
       file: copa-america/2021--brazil/copa.txt
       tz: inline
+      wikipedia: "2021 Copa América"
     - label: "2024"
       start_year: 2024
       file: copa-america/2024--usa/copa.txt
       tz: inline
+      wikipedia: "2024 Copa América"
       squads:
         style: per-team
         files: [copa-america/2024--usa/squads/*.txt]
