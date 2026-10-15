@@ -107,7 +107,6 @@ Known gaps:
 - **Not included:** Africa Cup of Nations 2025 and FIFA Intercontinental Cup 2024 (no openfootball data), Copa Sudamericana 2025 (openfootball data is incomplete).
 - **Super cups and other league cups:** openfootball has no super cups (Supercopa, Community Shield, DFL-Supercup, Supercoppa, Trophée des Champions) and no league cup besides the EFL Cup.
 - **DFB-Pokal 2025-26:** openfootball's file stops after round 2, so the season isn't included yet.
-- **EFL Cup 2020-21:** Leyton Orient v Tottenham Hotspur (called off and awarded to Tottenham) has no result in the source, so the season shows as in progress.
 - **Unresolved scorers:** where a scorer's name matches no single squad member (e.g. two players called Rodríguez), the goal keeps the source name with no player link. About 1.6% of goals.
 - **Accents:** World Cup and Club World Cup sources strip accents (`Angel Di Maria`).
 - **Players are per team-season:** the same person at Euro 2024 and the Club World Cup is two player records for now.
