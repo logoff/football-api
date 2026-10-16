@@ -5,6 +5,10 @@
   scope: DOMESTIC
   format: LEAGUE
   wikidata: Q9448
+  standings:
+    - from: 1992
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for]
   seasons:
     - label: 2024-25
       start_year: 2024
@@ -63,6 +67,13 @@
   scope: INTERCONTINENTAL
   format: TOURNAMENT
   wikidata: Q19317
+  standings:
+    - from: 1930
+      points: {win: 2, draw: 1, loss: 0}
+      tiebreakers: [goal_ratio]
+    - from: 1994
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, h2h_points]
   seasons:
     - label: '2022'
       start_year: 2022

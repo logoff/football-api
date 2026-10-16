@@ -2,7 +2,7 @@
 
 import uuid
 from datetime import date, datetime
-from typing import Annotated
+from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
 
@@ -169,3 +169,42 @@ class PlayerPage(Page[PlayerOut]):
     coverage: PlayerCoverage | None = Field(
         default=None, description="Present when filtering by `team_id` and `season_id`"
     )
+
+
+class StandingAdjustmentOut(BaseModel):
+    points: int = Field(examples=[-8], description="Added to the team's total; negative for a deduction")
+    reason: str
+    source: str = Field(description="Where the adjustment is documented")
+
+
+class StandingRowOut(BaseModel):
+    position: int
+    team_id: uuid.UUID
+    team: TeamOut | None = Field(default=None, description="Present with `expand=teams`")
+    played: int
+    won: int
+    drawn: int
+    lost: int
+    goals_for: int
+    goals_against: int
+    goal_difference: int
+    points: int = Field(description="Including adjustments")
+    adjustments: list[StandingAdjustmentOut]
+    tied: bool = Field(
+        description="Results alone don't separate this team from a neighbour: the order then comes from a "
+        "curated decision (play-off, lots, fair play) or, failing one, team name"
+    )
+
+
+class StandingTableOut(BaseModel):
+    stage: Stage = Field(description="`LEAGUE` for a league or league phase, `GROUP` for a group stage")
+    phase: int = Field(description="1, or 2 for a second group round (World Cup 1974–1982)")
+    group: str | None = Field(examples=["A"], description="Null for a league, and for groups the source doesn't name")
+    status: Literal["final", "provisional"]
+    rows: list[StandingRowOut]
+
+
+class StandingsOut(BaseModel):
+    season_id: uuid.UUID
+    as_of: date | None = Field(description="The date the tables were computed for; null for the latest results")
+    tables: list[StandingTableOut]

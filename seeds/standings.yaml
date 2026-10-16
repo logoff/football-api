@@ -1,0 +1,121 @@
+# Curated standings decisions that results alone don't give (standings spec, "Curated adjustments").
+#
+# adjustments: points added to a team's table total (negative for a deduction), from `effective`
+#   on (tables as of an earlier date leave them out). A decision later changed on appeal is a
+#   further entry, so a table on any date shows what applied then.
+# orders: the final order of teams level on every tie-breaker (a play-off, lots, fair play).
+#
+# Every entry names an official source where one exists. Teams are Wikidata QIDs, as in teams.yaml.
+
+adjustments:
+  # --- Premier League (Q9448) ----------------------------------------------------------------
+  - competition: Q9448
+    season: "1996-97"
+    team: Q18661 # Middlesbrough
+    points: -3
+    effective: 1997-01-14
+    reason: "Failed to fulfil the fixture at Blackburn Rovers on 21 December 1996"
+    source: https://www.fourfourtwo.com/features/when-boro-got-bonkers-rucks-relegation-two-cup-finals-and-training-a-prison
+  - competition: Q9448
+    season: "2009-10"
+    team: Q19604 # Portsmouth
+    points: -9
+    effective: 2010-03-17
+    reason: "Entered administration"
+    source: https://www.aljazeera.com/sports/2010/3/17/points-deduction-dooms-portsmouth
+  - competition: Q9448
+    season: "2023-24"
+    team: Q5794 # Everton
+    points: -10
+    effective: 2023-11-17
+    reason: "Breach of the Profitability and Sustainability Rules (period to 2021-22)"
+    source: https://www.premierleague.com/en/news/3912574
+  - competition: Q9448
+    season: "2023-24"
+    team: Q5794 # Everton
+    points: 4
+    effective: 2024-02-26
+    reason: "Appeal Board reduced the 10-point deduction to 6"
+    source: https://www.premierleague.com/en/news/3969115
+  - competition: Q9448
+    season: "2023-24"
+    team: Q5794 # Everton
+    points: -2
+    effective: 2024-04-08
+    reason: "Breach of the Profitability and Sustainability Rules (period to 2022-23)"
+    source: https://www.premierleague.com/en/news/3960088
+  - competition: Q9448
+    season: "2023-24"
+    team: Q19490 # Nottingham Forest
+    points: -4
+    effective: 2024-03-18
+    reason: "Breach of the Profitability and Sustainability Rules (period to 2022-23); upheld on appeal"
+    source: https://www.premierleague.com/en/news/3936397
+
+  # --- Serie A (Q15804) ----------------------------------------------------------------------
+  - competition: Q15804
+    season: "2014-15"
+    team: Q2693 # Parma
+    points: -1
+    effective: 2014-12-09
+    reason: "Unpaid taxes and wages (FIGC)"
+    source: https://www.calcioefinanza.it/2014/12/09/parma-dalla-figc-un-punto-di-penalizzazione-ai-gialloblu/
+  - competition: Q15804
+    season: "2014-15"
+    team: Q2693 # Parma
+    points: -2
+    effective: 2015-03-13
+    reason: "Unpaid wages (FIGC)"
+    source: https://www.calcioefinanza.it/2015/03/13/ufficiale-parma-altri-2-punti-di-penalizzazione-ghirardi-e-leonardi-inibiti-per-4-mesi/
+  - competition: Q15804
+    season: "2014-15"
+    team: Q2693 # Parma
+    points: -4
+    effective: 2015-04-16
+    reason: "Unpaid wages (FIGC)"
+    source: https://www.ilpost.it/2015/04/16/parma-penalizzazione-quattro-punti-serie-a/
+  - competition: Q15804
+    season: "2018-19"
+    team: Q2037 # Chievo Verona
+    points: -3
+    effective: 2018-09-13
+    reason: "Fictitious capital gains (plusvalenze), FIGC National Federal Tribunal"
+    source: https://www.calcioefinanza.it/?p=37776
+  - competition: Q15804
+    season: "2022-23"
+    team: Q1422 # Juventus
+    points: -15
+    effective: 2023-01-20
+    reason: "Capital gains case (plusvalenze), FIGC Federal Court of Appeal"
+    source: https://www.figc.it/it/federazione/news/inchiesta-plusvalenze-accolto-il-ricorso-della-procura-15-punti-di-penalizzazione-alla-juventus-g2ys9kwo
+  - competition: Q15804
+    season: "2022-23"
+    team: Q1422 # Juventus
+    points: 15
+    effective: 2023-04-20
+    reason: "CONI Guarantee Board annulled the 15-point deduction and sent it back for review"
+    source: https://www.figc.it/it/federazione/news/caso-plusvalenze-dieci-punti-di-penalizzazione-per-la-juventus-da-scontare-nella-corrente-stagione-sportiva-nkac3p2i
+  - competition: Q15804
+    season: "2022-23"
+    team: Q1422 # Juventus
+    points: -10
+    effective: 2023-05-22
+    reason: "Capital gains case (plusvalenze), FIGC Federal Court of Appeal on review"
+    source: https://www.figc.it/it/federazione/news/caso-plusvalenze-dieci-punti-di-penalizzazione-per-la-juventus-da-scontare-nella-corrente-stagione-sportiva-nkac3p2i
+
+  # --- Ligue 1 (Q13394) ----------------------------------------------------------------------
+  - competition: Q13394
+    season: "2021-22"
+    team: Q704 # Olympique Lyonnais
+    points: -1
+    effective: 2021-12-08
+    reason: "Crowd trouble at Lyon v Marseille (21 November 2021), LFP disciplinary committee"
+    source: https://www.malaymail.com/news/sports/2021/12/09/lyon-docked-one-point-after-crowd-trouble-in-marseille-game/2027075
+
+orders:
+  # Serie A decides title and relegation ties by a play-off (spareggio) since 2022-23.
+  - competition: Q15804
+    season: "2022-23"
+    order: [Q8639, Q8615] # Hellas Verona, Spezia
+    reason: "Relegation play-off on 11 June 2023 at the Mapei Stadium: Spezia 1–3 Hellas Verona"
+    source: https://sport.sky.it/calcio/serie-a/partite/2022/giornata-39/spezia-verona/risultato-gol

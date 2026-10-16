@@ -1,0 +1,10 @@
+# Test subset of seeds/standings.yaml: a made-up deduction, to exercise adjustments.
+adjustments:
+  - competition: Q9448
+    season: "2024-25"
+    team: Q9617 # Arsenal
+    points: -2
+    effective: 2024-08-21
+    reason: "Test deduction"
+    source: https://example.org/test-deduction
+orders: []

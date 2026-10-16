@@ -8,9 +8,11 @@ from pydantic import ValidationError
 from football_api.domain.enums import DecidedBy, TeamKind
 from football_api.ingestion.openfootball.json_reader import is_current, read_json
 from football_api.ingestion.openfootball.text_parser import ParsedScore, parse_file
-from football_api.ingestion.seeds import CompetitionSeed, load_competitions, load_teams
+from football_api.ingestion.seeds import CompetitionSeed, StandingsEra, load_competitions, load_standings, load_teams
 
 SOURCES = Path(__file__).parent / "fixtures" / "sources"
+SEEDS = Path(__file__).parent.parent / "seeds"
+FIXTURE_SEEDS = Path(__file__).parent / "fixtures" / "seeds"
 
 
 def test_real_seed_files_are_valid() -> None:
@@ -116,3 +118,48 @@ def test_json_mirror_that_lost_an_awarded_marker_is_not_current() -> None:
     assert is_current(text, text)
     assert not is_current(mirror, text)
 
+
+
+def test_real_standings_seeds_are_valid() -> None:
+    """Every league and tournament has ranking rules for each season, and standings.yaml loads."""
+    competitions = load_competitions(SEEDS / "competitions.yaml")
+    for comp in competitions:
+        if comp.format.value in ("LEAGUE", "TOURNAMENT"):
+            assert all(comp.era(s) is not None for s in comp.seasons), comp.name
+    seeds = load_standings(SEEDS / "standings.yaml", competitions, load_teams(SEEDS / "teams.yaml"))
+    assert seeds.adjustments and all(a.source.startswith("https://") for a in seeds.adjustments)
+
+
+def _standings_file(tmp_path: Path, entry: str) -> Path:
+    path = tmp_path / "standings.yaml"
+    path.write_text(entry, encoding="utf-8")
+    return path
+
+
+@pytest.mark.parametrize(
+    ("entry", "error"),
+    [
+        ("competition: Q0\n    season: '2024-25'\n    team: Q9617", "no season"),
+        ("competition: Q9448\n    season: '1900-01'\n    team: Q9617", "no season"),
+        ("competition: Q9448\n    season: '2024-25'\n    team: Q0", "not in teams.yaml"),
+    ],
+)
+def test_standings_entry_must_name_known_things(tmp_path: Path, entry: str, error: str) -> None:
+    text = f"adjustments:\n  - {entry}\n    points: -1\n    reason: r\n    source: https://example.org\n"
+    with pytest.raises(ValueError, match=error):
+        load_standings(_standings_file(tmp_path, text), load_competitions(FIXTURE_SEEDS / "competitions.yaml"), load_teams(FIXTURE_SEEDS / "teams.yaml"))
+
+
+def test_unknown_tie_breaker_is_rejected() -> None:
+    with pytest.raises(ValidationError):
+        StandingsEra.model_validate({"from": 2000, "points": {"win": 3, "draw": 1}, "tiebreakers": ["coin_toss"]})
+
+
+def test_eras_must_be_in_order() -> None:
+    base = load_competitions(FIXTURE_SEEDS / "competitions.yaml")[0].model_dump(by_alias=True)
+    base["standings"] = [
+        {"from": 2000, "points": {"win": 3, "draw": 1}, "tiebreakers": []},
+        {"from": 1990, "points": {"win": 2, "draw": 1}, "tiebreakers": []},
+    ]
+    with pytest.raises(ValidationError, match="increasing"):
+        CompetitionSeed.model_validate(base)
