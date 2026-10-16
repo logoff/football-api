@@ -9,9 +9,9 @@ from sqlalchemy import func, inspect, select, update
 
 from football_api.domain.enums import MatchStatus, SeasonStatus, VerificationStatus
 from football_api.infra.db import get_engine, get_sessionmaker
-from football_api.infra.models import Match, MatchVerification, Season, Team
+from football_api.infra.models import Match, MatchVerification, Season, StandingVerification, Team
 from football_api.ingestion.seeds import CompetitionSeed, TeamSeed
-from football_api.ingestion.wikipedia import GridCell, MatchBox, ResultsGrid, WikipediaUnavailable
+from football_api.ingestion.wikipedia import GridCell, MatchBox, ResultsGrid, StandingsLine, StandingsTable, WikipediaUnavailable
 from football_api.sync import run_sync
 from football_api.verification import classify, verify_seasons
 
@@ -38,6 +38,7 @@ class FakeReference:
         self.error: Exception | None = None
         self.requests: list[str] = []
         self.qualifying: list[bool] = []
+        self.tables: list[StandingsTable] = []
 
     async def results_grid(self, title: str) -> ResultsGrid | None:
         self.requests.append(title)
@@ -51,6 +52,11 @@ class FakeReference:
         if self.error:
             raise self.error
         return self.boxes
+
+    async def standings(self, title: str, *, qualifying: bool = False) -> list[StandingsTable]:
+        if self.error:
+            raise self.error
+        return self.tables
 
     async def qids(self, titles: list[str]) -> dict[str, str]:
         return {t: self.qid_of[t] for t in titles if t in self.qid_of}
@@ -449,3 +455,84 @@ async def test_box_with_teams_the_other_way_round_pairs_flipped(
     ref.boxes = [MatchBox(date(2022, 12, 18), "France", "Argentina", (3, 3), (4, 2))]
     await verify_seasons([(wc, wc.seasons[0])], ref)
     assert await cup_statuses() == {("Argentina", "France", date(2022, 12, 18)): VerificationStatus.MISMATCH}
+
+
+GROUP_A = [
+    StandingsLine(1, "Netherlands", 3, 2, 1, 0, 5, 1, 7),
+    StandingsLine(2, "Senegal", 3, 2, 0, 1, 5, 4, 6),
+    StandingsLine(3, "Ecuador", 3, 1, 1, 1, 4, 3, 4),
+    StandingsLine(4, "Qatar", 3, 0, 0, 3, 1, 7, 0),
+]
+
+
+async def standing_statuses() -> dict[str, VerificationStatus]:
+    async with get_sessionmaker()() as session:
+        rows = await session.execute(
+            select(Team.name, StandingVerification.status).join(Team, Team.id == StandingVerification.team_id)
+        )
+        return {name: status for name, status in rows}
+
+
+async def world_cup_synced(fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]) -> CompetitionSeed:
+    wc = next(c for c in fixture_competitions if c.name == "FIFA World Cup")
+    wc = wc.model_copy(update={"seasons": [wc.seasons[0].model_copy(update={"wikipedia": "2022 FIFA World Cup"})]})
+    report = await run_sync(competitions=[wc], teams=fixture_teams, refresh_sources=False)
+    assert not report.failed
+    return wc
+
+
+def standings_reference(fixture_teams: list[TeamSeed], tables: list[StandingsTable]) -> FakeReference:
+    ref = FakeReference()
+    ref.qid_of = {t.name: t.wikidata for t in fixture_teams if t.wikidata}
+    ref.tables = tables
+    return ref
+
+
+async def test_final_table_verified_against_wikipedia(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed], fixture_seeds: None
+) -> None:
+    wc = await world_cup_synced(fixture_competitions, fixture_teams)
+    await verify_seasons([(wc, wc.seasons[0])], standings_reference(fixture_teams, [GROUP_A]))
+    assert await standing_statuses() == dict.fromkeys(["Netherlands", "Senegal", "Ecuador", "Qatar"], VerificationStatus.VERIFIED)
+
+
+async def test_table_points_mismatch_is_flagged_and_logged(
+    fresh_db: Path,
+    fixture_competitions: list[CompetitionSeed],
+    fixture_teams: list[TeamSeed],
+    fixture_seeds: None,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    wc = await world_cup_synced(fixture_competitions, fixture_teams)
+    deducted = [*GROUP_A[:1], StandingsLine(2, "Senegal", 3, 2, 0, 1, 5, 4, 5), *GROUP_A[2:]]
+    with caplog.at_level(logging.INFO, logger="football_api.verification"):
+        await verify_seasons([(wc, wc.seasons[0])], standings_reference(fixture_teams, [deducted]))
+    statuses = await standing_statuses()
+    assert statuses["Senegal"] is VerificationStatus.MISMATCH and statuses["Qatar"] is VerificationStatus.VERIFIED
+    assert "FIFA World Cup 2022: MISMATCH table Senegal: stored pos 2, P3 W2 D0 L1 5-4 6 pts, wikipedia pos 2, P3 W2 D0 L1 5-4 5 pts" in caplog.text
+    assert "standings checked against wikipedia: VERIFIED=3 MISMATCH=1 UNCONFIRMED=0" in caplog.text
+
+
+async def test_table_without_counterpart_is_unconfirmed(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed], fixture_seeds: None
+) -> None:
+    wc = await world_cup_synced(fixture_competitions, fixture_teams)
+    await verify_seasons([(wc, wc.seasons[0])], standings_reference(fixture_teams, [GROUP_A[:3]]))  # a different team set
+    assert set((await standing_statuses()).values()) == {VerificationStatus.UNCONFIRMED}
+
+
+async def test_provisional_table_keeps_no_status(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed], fixture_seeds: None
+) -> None:
+    pl = next(c for c in fixture_competitions if c.name == "Premier League")
+    pl = pl.model_copy(update={"seasons": [pl.seasons[0].model_copy(update={"wikipedia": "2024–25 Premier League"})]})
+    report = await run_sync(competitions=[pl], teams=fixture_teams, refresh_sources=False)
+    assert not report.failed
+    async with get_sessionmaker()() as session, session.begin():  # one match still to play
+        match = await session.scalar(select(Match).limit(1))
+        assert match is not None
+        match.home_score = match.away_score = None
+        match.status = MatchStatus.SCHEDULED
+        await session.execute(update(Season).values(status=SeasonStatus.IN_PROGRESS))
+    await verify_seasons([(pl, pl.seasons[0])], standings_reference(fixture_teams, []))
+    assert await standing_statuses() == {}

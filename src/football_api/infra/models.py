@@ -188,6 +188,27 @@ class Goal(Base):
     is_penalty: Mapped[bool] = mapped_column(default=False)
 
 
+class StandingVerification(Base):
+    """A standings row's status against one reference's final table (verify-standings D4).
+
+    (season, team, stage, phase, group) names the row: `group_name` is the table's group, or empty
+    for a league and for groups the source doesn't name. The reference's values are never stored.
+    """
+
+    __tablename__ = "standing_verification"
+    __table_args__ = (UniqueConstraint("season_id", "team_id", "stage", "phase", "group_name", "reference"),)
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    season_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("season.id", ondelete="CASCADE"), index=True)
+    team_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("team.id", ondelete="CASCADE"))
+    stage: Mapped[Stage] = mapped_column(_enum(Stage, "stage"))
+    phase: Mapped[int]
+    group_name: Mapped[str] = mapped_column(String(8), default="")
+    reference: Mapped[VerificationReference] = mapped_column(_enum(VerificationReference, "verification_reference"))
+    status: Mapped[VerificationStatus] = mapped_column(_enum(VerificationStatus, "verification_status"))
+    checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+
+
 class ExternalRef(Base):
     """Maps a canonical entity UUID to its identifier in an external source."""
 

@@ -3,18 +3,17 @@
 IDs are found the way a client finds them: by listing a resource and reading names.
 """
 
-from collections.abc import Iterator
+import uuid
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any, cast
 
 import httpx
 import pytest
 from sqlalchemy import delete
 
-from football_api.domain.enums import VerificationReference, VerificationStatus
+from football_api.domain.enums import Stage, VerificationReference, VerificationStatus
 from football_api.infra.db import get_sessionmaker
-from football_api.infra.models import MatchVerification
+from football_api.infra.models import MatchVerification, StandingVerification
 
 pytestmark = pytest.mark.db
 
@@ -282,21 +281,6 @@ async def test_openapi_lists_verification_statuses(client: httpx.AsyncClient) ->
     assert "verification" in spec["components"]["schemas"]["MatchOut"]["properties"]
 
 
-@pytest.fixture
-def fixture_seeds(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    """Standings read the seeds the app ships; point them at the test subset."""
-    from football_api.api import v1
-    from football_api.infra.settings import get_settings
-
-    monkeypatch.setenv("SEEDS_DIR", str(Path(__file__).parent / "fixtures" / "seeds"))
-    get_settings.cache_clear()
-    v1._standings_seeds.cache_clear()  # pyright: ignore[reportPrivateUsage]
-    yield
-    monkeypatch.undo()
-    get_settings.cache_clear()
-    v1._standings_seeds.cache_clear()  # pyright: ignore[reportPrivateUsage]
-
-
 async def test_league_standings(client: httpx.AsyncClient, fixture_seeds: None) -> None:
     sid = await season_id(client, "Premier League")
     body = await get(client, f"/v1/seasons/{sid}/standings?expand=teams")
@@ -338,3 +322,31 @@ async def test_standings_without_tables_and_unknown_season(client: httpx.AsyncCl
     sid = await season_id(client, "FA Cup")
     assert (await get(client, f"/v1/seasons/{sid}/standings"))["tables"] == []
     assert_error(await get(client, f"/v1/seasons/{UNKNOWN}/standings", status=404), "not_found")
+
+
+async def test_standings_rows_show_their_verification(client: httpx.AsyncClient, fixture_seeds: None) -> None:
+    sid = await season_id(client, "FIFA World Cup")
+    netherlands = await team_id(client, "Netherlands")
+    async with get_sessionmaker()() as session, session.begin():
+        session.add(
+            StandingVerification(
+                season_id=uuid.UUID(sid),
+                team_id=uuid.UUID(netherlands),
+                stage=Stage.GROUP,
+                phase=1,
+                group_name="A",
+                reference=VerificationReference.WIKIPEDIA,
+                status=VerificationStatus.VERIFIED,
+                checked_at=datetime(2031, 1, 1, tzinfo=UTC),
+            )
+        )
+    try:
+        [table] = (await get(client, f"/v1/seasons/{sid}/standings"))["tables"]
+        rows = {r["team_id"]: r for r in table["rows"]}
+        assert rows[netherlands]["verification"] == {"status": "VERIFIED", "reference": "wikipedia", "checked_at": "2031-01-01T00:00:00Z"}
+        assert all(r["verification"] is None for t, r in rows.items() if t != netherlands)
+        [dated] = (await get(client, f"/v1/seasons/{sid}/standings?as_of=2022-12-31"))["tables"]
+        assert all(r["verification"] is None for r in dated["rows"])  # statuses are for the final table only
+    finally:
+        async with get_sessionmaker()() as session, session.begin():
+            await session.execute(delete(StandingVerification))

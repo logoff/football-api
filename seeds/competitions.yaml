@@ -1263,12 +1263,21 @@
   format: TOURNAMENT
   wikidata: Q19317
   standings:
-    # Two points for a win; goal average separated level teams (1962–1966); earlier ties went to play-offs (standings.yaml)
+    # Two points for a win; level teams shared the position, or met in a play-off when it
+    # mattered (1954, 1958: standings.yaml)
     - from: 1930
       points: {win: 2, draw: 1, loss: 0}
+      tiebreakers: []
+    # 1962–1966: goal average separated level teams
+    - from: 1962
+      points: {win: 2, draw: 1, loss: 0}
       tiebreakers: [goal_ratio]
-    # From 1970: goal difference, goals scored, then lots
+    # 1970: goal difference, then lots
     - from: 1970
+      points: {win: 2, draw: 1, loss: 0}
+      tiebreakers: [goal_difference]
+    # From 1974: goal difference, goals scored, then lots
+    - from: 1974
       points: {win: 2, draw: 1, loss: 0}
       tiebreakers: [goal_difference, goals_for]
     # From 1994: three points for a win; then head-to-head, fair play (2018–2022) and lots

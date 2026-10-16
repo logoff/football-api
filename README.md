@@ -120,6 +120,8 @@ The rules for each competition are declared in `seeds/competitions.yaml` (`stand
 
 openfootball records results, not sanctions. Point deductions, and orders decided off the table (a relegation play-off, lots), are curated in `seeds/standings.yaml`, each with its reason and source. Rows list the adjustments applied, and `tied: true` marks teams that results alone don't separate.
 
+Final tables are also checked against the standings tables of the Wikipedia season article and its group sub-articles. Each row of a final table gets a `verification` status: `VERIFIED` when position, played, won, drawn, lost, goals and points all agree, `MISMATCH` when any differs (logged with both), and `UNCONFIRMED` when no Wikipedia table holds the same teams. This is how a missing deduction or a wrongly encoded tie-breaker shows up.
+
 Groups that openfootball lists by matchday only, such as the 2023-24 Champions League, are found from who played whom, and come without a group name.
 
 Known gaps:
