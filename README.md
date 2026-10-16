@@ -104,6 +104,24 @@ Each verified match gets a `verification` object in the API (`null` elsewhere), 
 
 Statuses are recomputed on every `--verify` run, and each disagreement is logged with both scores. An awarded match recorded with a level score isn't compared, since the source names no winner.
 
+### Standings
+
+`/v1/seasons/{id}/standings` returns a league season's table, or one table per group for a tournament's group stage (the UEFA league phases are one table). The tables are computed from the stored results:
+
+- **Rows:** played, won, drawn, lost, goals, goal difference and points per team.
+- **Ranking:** the competition's own rules for that era. That means two points for a win before the 1990s in tournaments, goal average in the 1960s, head-to-head first in La Liga, Serie A and UEFA groups, and points per game for Ligue 1 2019-20.
+- **Options:** `as_of=YYYY-MM-DD` gives the table on any date, and `expand=teams` embeds the teams.
+
+```sh
+curl "localhost:8000/v1/seasons/{id}/standings?as_of=2023-12-31&expand=teams"
+```
+
+The rules for each competition are declared in `seeds/competitions.yaml` (`standings`), with the regulation each era follows.
+
+openfootball records results, not sanctions. Point deductions, and orders decided off the table (a relegation play-off, lots), are curated in `seeds/standings.yaml`, each with its reason and source. Rows list the adjustments applied, and `tied: true` marks teams that results alone don't separate.
+
+Groups that openfootball lists by matchday only, such as the 2023-24 Champions League, are found from who played whom, and come without a group name.
+
 Known gaps:
 
 - **Not included:** Africa Cup of Nations 2025 and FIFA Intercontinental Cup 2024 (no openfootball data), Copa Sudamericana 2025 (openfootball data is incomplete).
@@ -112,10 +130,12 @@ Known gaps:
 - **Unresolved scorers:** where a scorer's name matches no single squad member (e.g. two players called Rodríguez), the goal keeps the source name with no player link. About 1.6% of goals.
 - **Accents:** World Cup and Club World Cup sources strip accents (`Angel Di Maria`).
 - **Players are per team-season:** the same person at Euro 2024 and the Club World Cup is two player records for now.
+- **Standings tie-breakers needing cards or coefficients** (fair play, UEFA coefficient) aren't computed. Teams they would separate are marked `tied`, unless `seeds/standings.yaml` gives their order.
 
 ## How it works
 
 - `seeds/competitions.yaml`: the competitions, their source files, and each file's hand-verified time zone.
+- `seeds/standings.yaml`: point deductions and off-the-table orders for standings, each with a source.
 - `seeds/teams.yaml`: canonical teams, each with its Wikidata QID and every openfootball spelling. A season whose file uses a team name not listed here fails to sync. `tools/propose_teams.py` drafts entries for new sources; review them before committing.
 - `just sync` is idempotent: running it again with unchanged sources leaves the database byte-for-byte identical, UUIDs included.
 - Design and specs: `openspec/changes/init-football-api-v0.1/`.

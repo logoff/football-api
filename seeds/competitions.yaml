@@ -19,6 +19,11 @@
   scope: DOMESTIC
   format: LEAGUE
   wikidata: Q9448
+  standings:
+    # Premier League Handbook, section C: goal difference, then goals scored (then head-to-head or a play-off, settled in standings.yaml)
+    - from: 1992
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for]
   # Every Premier League season openfootball/england has: 1992-93 to 1999-00 from archive/1990s/
   # (dates only, apart from 1998-99), then the per-season folders from 2000-01.
   seasons:
@@ -221,6 +226,11 @@
   scope: DOMESTIC
   format: LEAGUE
   wikidata: Q324867
+  standings:
+    # RFEF Reglamento General: head-to-head points and goal difference among the tied clubs, then overall goal difference and goals scored
+    - from: 1992
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, goal_difference, goals_for]
   # Every season openfootball/espana has (2012-13 onwards).
   seasons:
     - label: 2012-13
@@ -320,6 +330,11 @@
   scope: DOMESTIC
   format: LEAGUE
   wikidata: Q82595
+  standings:
+    # DFL Spielordnung §6: goal difference, goals scored, head-to-head, away goals in it, away goals
+    - from: 1992
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, h2h_points, h2h_away_goals_for, away_goals_for]
   # Every season openfootball/deutschland has (2010-11 onwards).
   seasons:
     - label: 2010-11
@@ -431,6 +446,11 @@
   scope: DOMESTIC
   format: LEAGUE
   wikidata: Q15804
+  standings:
+    # Lega Serie A (since 2005-06): head-to-head points and goal difference, then overall goal difference and goals scored; title and relegation ties are play-offs since 2022-23 (standings.yaml)
+    - from: 2005
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, goal_difference, goals_for]
   # Every season openfootball/italy has (2013-14 onwards).
   seasons:
     - label: 2013-14
@@ -524,6 +544,15 @@
   scope: DOMESTIC
   format: LEAGUE
   wikidata: Q13394
+  standings:
+    # LFP règlement: goal difference, head-to-head points, goal difference and away goals, goals scored, away goals
+    - from: 2002
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, h2h_points, h2h_goal_difference, h2h_away_goals_for, goals_for, away_goals_for]
+    # LFP 2025-26: away-goal criteria removed, wins and away wins added
+    - from: 2025
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, h2h_points, h2h_goal_difference, goals_for, wins, away_wins]
   # Every season openfootball/europe/france has (2014-15 onwards).
   seasons:
     - label: 2014-15
@@ -562,6 +591,7 @@
       tz: Europe/Paris
       json: football.json/2019-20/fr.1.json
       wikipedia: "2019–20 Ligue 1"
+      ranking: points_per_game # season stopped by COVID-19; LFP ranked clubs by points per game
     - label: 2020-21
       start_year: 2020
       file: europe/france/2020-21_fr1.txt
@@ -825,6 +855,19 @@
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q18756
+  standings:
+    # UEFA Champions League regulations, group stage: head-to-head (with away goals until 2020-21), reapplied to smaller ties, then overall
+    - from: 2011
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, h2h_away_goals_for, h2h_reapply, goal_difference, goals_for, away_goals_for, wins, away_wins]
+    # UEFA 2021-22: away goals no longer count in head-to-head
+    - from: 2021
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, h2h_reapply, goal_difference, goals_for, away_goals_for, wins, away_wins]
+    # UEFA 2024-25 league phase: goal difference, goals, away goals, wins, away wins, then opponents' points, goal difference and goals
+    - from: 2024
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, away_goals_for, wins, away_wins, opponents_points, opponents_goal_difference, opponents_goals_for]
   # Every season openfootball/champions-league has (2011-12 onwards); times are Central European.
   seasons:
     - label: 2011-12
@@ -918,6 +961,19 @@
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q18760
+  standings:
+    # UEFA Europa League regulations, group stage (as the Champions League)
+    - from: 2020
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, h2h_away_goals_for, h2h_reapply, goal_difference, goals_for, away_goals_for, wins, away_wins]
+    # UEFA 2021-22: away goals no longer count in head-to-head
+    - from: 2021
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, h2h_reapply, goal_difference, goals_for, away_goals_for, wins, away_wins]
+    # UEFA 2024-25 league phase
+    - from: 2024
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, away_goals_for, wins, away_wins, opponents_points, opponents_goal_difference, opponents_goals_for]
   # Every season openfootball/champions-league has (2020-21 onwards).
   seasons:
     - label: 2020-21
@@ -951,6 +1007,15 @@
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q59365764
+  standings:
+    # UEFA Conference League regulations, group stage (as the Champions League from 2021-22)
+    - from: 2021
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, h2h_reapply, goal_difference, goals_for, away_goals_for, wins, away_wins]
+    # UEFA 2024-25 league phase
+    - from: 2024
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, away_goals_for, wins, away_wins, opponents_points, opponents_goal_difference, opponents_goals_for]
   # Every season openfootball/champions-league has (2021-22 onwards).
   seasons:
     - label: 2021-22
@@ -979,6 +1044,15 @@
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q184795
+  standings:
+    # CONMEBOL Libertadores regulations: goal difference, goals scored, away goals, then lots
+    - from: 2012
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, away_goals_for]
+    # CONMEBOL 2026: head-to-head first, then overall goal difference and goals scored
+    - from: 2026
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, goal_difference, goals_for]
   # Every edition openfootball/south-america has (2012 onwards); times are Brasília time.
   seasons:
     - label: "2012"
@@ -1063,6 +1137,15 @@
   scope: INTERCONTINENTAL
   format: TOURNAMENT
   wikidata: Q223366
+  standings:
+    # FIFA Club World Championship 2000: goal difference, goals scored, head-to-head
+    - from: 2000
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, h2h_points]
+    # FIFA Club World Cup 2025 regulations: head-to-head among the tied teams (reapplied), then overall
+    - from: 2025
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, h2h_reapply, goal_difference, goals_for]
   # Every edition openfootball/club-worldcup has (2000, 2005-2023, 2025).
   seasons:
     - label: "2000"
@@ -1179,6 +1262,23 @@
   scope: INTERCONTINENTAL
   format: TOURNAMENT
   wikidata: Q19317
+  standings:
+    # Two points for a win; goal average separated level teams (1962–1966); earlier ties went to play-offs (standings.yaml)
+    - from: 1930
+      points: {win: 2, draw: 1, loss: 0}
+      tiebreakers: [goal_ratio]
+    # From 1970: goal difference, goals scored, then lots
+    - from: 1970
+      points: {win: 2, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for]
+    # From 1994: three points for a win; then head-to-head, fair play (2018–2022) and lots
+    - from: 1994
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, h2h_points, h2h_goal_difference, h2h_goals_for]
+    # FIFA World Cup 2026 regulations: head-to-head first, then overall goal difference and goals scored
+    - from: 2026
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, h2h_reapply, goal_difference, goals_for]
   # Every edition openfootball/worldcup has (1930-2026).
   seasons:
     - label: "1930"
@@ -1305,6 +1405,19 @@
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q260858
+  standings:
+    # Two points for a win; goal difference, goals scored
+    - from: 1960
+      points: {win: 2, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for]
+    # UEFA Euro regulations from 1996: three points, head-to-head among the tied teams first
+    - from: 1996
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, goal_difference, goals_for]
+    # From Euro 2016: head-to-head reapplied to smaller ties; then overall
+    - from: 2016
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, h2h_reapply, goal_difference, goals_for, wins]
   # Every edition openfootball/euro has with a date for every match: 1984 and 1992 list matches without dates.
   # Each file states a fixed local offset (CET = Etc/GMT-1, CEST/BST/WEST as written = Etc/GMT-2/-1).
   seasons:
@@ -1392,6 +1505,11 @@
   scope: CONTINENTAL
   format: TOURNAMENT
   wikidata: Q178750
+  standings:
+    # CONMEBOL Copa América regulations: goal difference, goals scored, head-to-head, then cards and lots
+    - from: 2011
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, h2h_points, h2h_goal_difference, h2h_goals_for]
   # Every edition openfootball/copa-america has (2011, 2021, 2024).
   seasons:
     - label: "2011"

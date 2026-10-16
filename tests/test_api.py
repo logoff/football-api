@@ -3,7 +3,9 @@
 IDs are found the way a client finds them: by listing a resource and reading names.
 """
 
+from collections.abc import Iterator
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, cast
 
 import httpx
@@ -278,3 +280,61 @@ async def test_openapi_lists_verification_statuses(client: httpx.AsyncClient) ->
     enum_ref = next(s["$ref"] for s in schema["anyOf"] if "$ref" in s).rsplit("/", 1)[-1]
     assert spec["components"]["schemas"][enum_ref]["enum"] == ["VERIFIED", "MISMATCH", "UNCONFIRMED", "SOURCE_BEHIND"]
     assert "verification" in spec["components"]["schemas"]["MatchOut"]["properties"]
+
+
+@pytest.fixture
+def fixture_seeds(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """Standings read the seeds the app ships; point them at the test subset."""
+    from football_api.api import v1
+    from football_api.infra.settings import get_settings
+
+    monkeypatch.setenv("SEEDS_DIR", str(Path(__file__).parent / "fixtures" / "seeds"))
+    get_settings.cache_clear()
+    v1._standings_seeds.cache_clear()  # pyright: ignore[reportPrivateUsage]
+    yield
+    monkeypatch.undo()
+    get_settings.cache_clear()
+    v1._standings_seeds.cache_clear()  # pyright: ignore[reportPrivateUsage]
+
+
+async def test_league_standings(client: httpx.AsyncClient, fixture_seeds: None) -> None:
+    sid = await season_id(client, "Premier League")
+    body = await get(client, f"/v1/seasons/{sid}/standings?expand=teams")
+    assert body["season_id"] == sid and body["as_of"] is None
+    [table] = body["tables"]
+    assert (table["stage"], table["phase"], table["group"]) == ("LEAGUE", 1, None)
+    rows = table["rows"]
+    assert [r["position"] for r in rows] == list(range(1, len(rows) + 1))
+    for r in rows:
+        assert r["played"] == r["won"] + r["drawn"] + r["lost"]
+        assert r["goal_difference"] == r["goals_for"] - r["goals_against"]
+        assert r["points"] == 3 * r["won"] + r["drawn"] + sum(a["points"] for a in r["adjustments"])
+    arsenal = next(r for r in rows if r["team"]["name"] == "Arsenal")
+    assert arsenal["adjustments"] == [{"points": -2, "reason": "Test deduction", "source": "https://example.org/test-deduction"}]
+    points = [r["points"] for r in rows]
+    assert points == sorted(points, reverse=True)
+
+
+async def test_standings_as_of_a_date(client: httpx.AsyncClient, fixture_seeds: None) -> None:
+    sid = await season_id(client, "Premier League")
+    body = await get(client, f"/v1/seasons/{sid}/standings?as_of=2024-08-20&expand=teams")
+    [table] = body["tables"]
+    assert body["as_of"] == "2024-08-20" and table["status"] == "provisional"
+    assert all(r["played"] <= 1 for r in table["rows"])
+    arsenal = next(r for r in table["rows"] if r["team"]["name"] == "Arsenal")
+    assert arsenal["adjustments"] == []  # effective from 21 August
+
+
+async def test_group_standings(client: httpx.AsyncClient, fixture_seeds: None) -> None:
+    sid = await season_id(client, "FIFA World Cup")
+    body = await get(client, f"/v1/seasons/{sid}/standings?expand=teams")
+    [table] = body["tables"]
+    assert (table["stage"], table["phase"], table["group"]) == ("GROUP", 1, "A")
+    assert [r["team"]["name"] for r in table["rows"]] == ["Netherlands", "Senegal", "Ecuador", "Qatar"]
+    assert [r["points"] for r in table["rows"]] == [7, 6, 4, 0]
+
+
+async def test_standings_without_tables_and_unknown_season(client: httpx.AsyncClient, fixture_seeds: None) -> None:
+    sid = await season_id(client, "FA Cup")
+    assert (await get(client, f"/v1/seasons/{sid}/standings"))["tables"] == []
+    assert_error(await get(client, f"/v1/seasons/{UNKNOWN}/standings", status=404), "not_found")
