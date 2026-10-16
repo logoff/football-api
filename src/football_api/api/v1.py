@@ -3,9 +3,7 @@
 import uuid
 from collections.abc import Callable, Sequence
 from datetime import UTC, date, datetime, time, timedelta
-from functools import cache
 from typing import Annotated
-from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import Select, exists, or_, select
@@ -37,9 +35,6 @@ from football_api.api.schemas import (
 from football_api.domain.enums import (
     CompetitionFormat,
     Coverage,
-    EntityType,
-    MatchStatus,
-    SeasonStatus,
     Stage,
     TeamKind,
     VerificationReference,
@@ -48,27 +43,19 @@ from football_api.domain.enums import (
 from football_api.infra.db import session_dependency
 from football_api.infra.models import (
     Competition,
-    ExternalRef,
     Goal,
     Match,
     MatchVerification,
     Player,
     PlayerTeamSeason,
     Season,
+    StandingVerification,
     Team,
     TeamSeason,
     Venue,
 )
 
-from football_api.ingestion.seeds import (
-    CompetitionSeed,
-    PointsAdjustment,
-    StandingsSeeds,
-    load_competitions,
-    load_standings,
-    load_teams,
-)
-from football_api.standings import Rules, Settled, TableMatch, rank, split_tables
+from football_api.season_tables import season_tables
 
 router = APIRouter(prefix="/v1", responses=ERROR_RESPONSES)
 Session = Annotated[AsyncSession, Depends(session_dependency)]
@@ -164,22 +151,6 @@ async def get_season(session: Session, id: uuid.UUID) -> SeasonOut:
 # --- standings ---------------------------------------------------------------------
 
 
-@cache
-def _standings_seeds() -> tuple[dict[str, CompetitionSeed], StandingsSeeds]:
-    """Ranking rules and curated adjustments, read once from the seeds the image ships."""
-    competitions = load_competitions()
-    return {c.wikidata: c for c in competitions}, load_standings(competitions=competitions, teams=load_teams())
-
-
-async def _wikidata_ids(session: AsyncSession, entity: EntityType, ids: Sequence[uuid.UUID]) -> dict[uuid.UUID, str]:
-    rows = await session.execute(
-        select(ExternalRef.entity_id, ExternalRef.source_id).where(
-            ExternalRef.entity_type == entity, ExternalRef.source == "wikidata", ExternalRef.entity_id.in_(ids)
-        )
-    )
-    return {entity_id: qid for entity_id, qid in rows}
-
-
 AsOf = Annotated[date | None, Query(description="Tables as of this date (in the season's time zone); default: the latest results")]
 
 
@@ -191,82 +162,35 @@ async def get_standings(session: Session, id: uuid.UUID, as_of: AsOf = None, exp
     season = await session.get(Season, id)
     if season is None:
         raise not_found("season", id)
-    seeds, curated = _standings_seeds()
-    comp_qid = (await _wikidata_ids(session, EntityType.COMPETITION, [season.competition_id])).get(season.competition_id)
-    comp_seed = seeds.get(comp_qid or "")
-    src = next((s for s in comp_seed.seasons if s.label == season.label), None) if comp_seed else None
-    era = comp_seed.era(src) if comp_seed and src else None
-    if comp_seed is None or src is None or era is None:
-        return StandingsOut(season_id=season.id, as_of=as_of, tables=[])
-
-    zone = UTC if src.tz == "inline" else ZoneInfo(src.tz)
-    rows = (
-        await session.scalars(
-            select(Match).where(
-                Match.season_id == season.id, Match.stage.in_([Stage.LEAGUE, Stage.GROUP]), Match.status != MatchStatus.CANCELLED
+    tables = await season_tables(session, season, as_of)
+    checks = (
+        {}
+        if as_of is not None
+        else {
+            (v.team_id, v.stage, v.phase, v.group_name): MatchVerificationOut(status=v.status, reference=v.reference, checked_at=v.checked_at)
+            for v in await session.scalars(
+                select(StandingVerification).where(
+                    StandingVerification.season_id == season.id,
+                    StandingVerification.reference == VerificationReference.WIKIPEDIA,
+                )
             )
-        )
-    ).all()
-
-    def counted(m: Match) -> bool:
-        return as_of is None or m.kickoff_utc.astimezone(zone).date() <= as_of
-
-    matches = [
-        TableMatch(
-            m.home_team_id,
-            m.away_team_id,
-            m.home_score if counted(m) else None,
-            m.away_score if counted(m) else None,
-            m.kickoff_utc,
-            m.stage,
-            m.round_label,
-        )
-        for m in rows
-    ]
-    team_ids = sorted({t for m in matches for t in (m.home, m.away)})
-    names = {t.id: t.name for t in await session.scalars(select(Team).where(Team.id.in_(team_ids)))}
+        }
+    )
+    team_ids = {r.team for t in tables for r in t.rows}
     team_out = (
         {t.id: TeamOut.model_validate(t) for t in await session.scalars(select(Team).where(Team.id.in_(team_ids)))}
         if "teams" in expands
         else {}
     )
-    id_of_qid = {qid: tid for tid, qid in (await _wikidata_ids(session, EntityType.TEAM, team_ids)).items()}
-    adjustments = [
-        a
-        for a in curated.adjustments
-        if a.competition == comp_qid and a.season == season.label and (a.effective is None or as_of is None or a.effective <= as_of)
-    ]
-    settled = [
-        Settled(tuple(id_of_qid[q] for q in o.order))
-        for o in curated.orders
-        if o.competition == comp_qid and o.season == season.label and all(q in id_of_qid for q in o.order)
-    ]
-    rules = Rules(era, points_per_game=src.ranking == "points_per_game")
-
-    tables: list[StandingTableOut] = []
-    for table in split_tables(matches):
-        members = table.teams
-        applied: dict[uuid.UUID, list[PointsAdjustment]] = {}
-        for a in adjustments:
-            if a.team in id_of_qid and id_of_qid[a.team] in members:
-                applied.setdefault(id_of_qid[a.team], []).append(a)
-        ranked = rank(
-            members,
-            table.matches,
-            rules,
-            adjustments={t: sum(a.points for a in adj) for t, adj in applied.items()},
-            settled=settled,
-            name=lambda t: names.get(t, str(t)),
-        )
-        # Matches never played in a finished season (one stopped early) don't keep its table open.
-        over = season.status is SeasonStatus.COMPLETED and (as_of is None or (season.ends_on is not None and as_of >= season.ends_on))
-        done = over or all(m.played for m in table.matches)
-        tables.append(
+    return StandingsOut(
+        season_id=season.id,
+        as_of=as_of,
+        tables=[
             StandingTableOut(
-                stage=table.key.stage,
-                phase=table.key.phase,
-                group=table.key.group,
-                status="final" if done else "provisional",
+                stage=t.key.stage,
+                phase=t.key.phase,
+                group=t.key.group,
+                status=t.status,
                 rows=[
                     StandingRowOut(
                         position=r.position,
@@ -282,15 +206,19 @@ async def get_standings(session: Session, id: uuid.UUID, as_of: AsOf = None, exp
                         points=r.points,
                         adjustments=[
                             StandingAdjustmentOut(points=a.points, reason=a.reason, source=a.source)
-                            for a in applied.get(r.team, [])
+                            for a in t.adjustments.get(r.team, [])
                         ],
                         tied=r.tied,
+                        verification=checks.get((r.team, t.key.stage, t.key.phase, t.key.group or ""))
+                        if t.status == "final"
+                        else None,
                     )
-                    for r in ranked
+                    for r in t.rows
                 ],
             )
-        )
-    return StandingsOut(season_id=season.id, as_of=as_of, tables=tables)
+            for t in tables
+        ],
+    )
 
 
 # --- teams -------------------------------------------------------------------------

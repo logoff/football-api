@@ -1,5 +1,7 @@
 # Curated standings decisions that results alone don't give (standings spec, "Curated adjustments").
 #
+# awards: an awarded match the source records with a level score and no goals awarded, that
+#   still has a winner (the win counts, the goals stay as recorded).
 # adjustments: points added to a team's table total (negative for a deduction), from `effective`
 #   on (tables as of an earlier date leave them out). A decision later changed on appeal is a
 #   further entry, so a table on any date shows what applied then.
@@ -51,6 +53,15 @@ adjustments:
     effective: 2024-03-18
     reason: "Breach of the Profitability and Sustainability Rules (period to 2022-23); upheld on appeal"
     source: https://www.premierleague.com/en/news/3936397
+
+  # --- La Liga (Q324867) --------------------------------------------------------------------
+  - competition: Q324867
+    season: "2014-15"
+    team: Q10407 # UD Almería
+    points: -3
+    effective: 2015-05-26
+    reason: "FIFA sanction for a late payment to Aalborg BK, applied after the last round once Almería withdrew its CAS appeal"
+    source: https://www.tas-cas.org/fileadmin/user_upload/Media_Release_3919.pdf
 
   # --- Serie A (Q15804) ----------------------------------------------------------------------
   - competition: Q15804
@@ -111,11 +122,72 @@ adjustments:
     effective: 2021-12-08
     reason: "Crowd trouble at Lyon v Marseille (21 November 2021), LFP disciplinary committee"
     source: https://www.malaymail.com/news/sports/2021/12/09/lyon-docked-one-point-after-crowd-trouble-in-marseille-game/2027075
+  - competition: Q13394
+    season: "2021-22"
+    team: Q185163 # OGC Nice
+    points: -1
+    reason: "Crowd trouble at Nice v Marseille (22 August 2021), LFP disciplinary committee (a second point suspended)"
+    source: https://www.goal.com/fr/news/nice-om-le-match-a-rejouer-sur-terrain-neutre-retrait-de/1muhqj2maco0i175xu1t1tgu3i
+  - competition: Q13394
+    season: "2023-24"
+    team: Q19513 # Montpellier HSC
+    points: -1
+    effective: 2023-10-25
+    reason: "Firecracker thrown at Montpellier v Clermont (8 October 2023), LFP disciplinary committee (a second point suspended)"
+    source: https://fr.soccerway.com/actualites/football-ligue-1-montpellier-clermont-rejoue-a-huis-clos-et-retrait-d-un-point-pour-le-mhsc-atal-suspendu/6s4q0pEc
 
 orders:
+  # World Cup 1954 and 1958: level teams met again in a play-off for the last place in the
+  # knockout stage; the play-off isn't part of the group table.
+  - competition: Q19317
+    season: "1954"
+    order: [Q43310, Q483856] # Germany, Turkey
+    reason: "Group 2 play-off: West Germany 7–2 Turkey"
+    source: https://www.rsssf.org/tables/54full.html
+  - competition: Q19317
+    season: "1954"
+    order: [Q165141, Q676899] # Switzerland, Italy
+    reason: "Group 4 play-off: Switzerland 4–1 Italy"
+    source: https://www.rsssf.org/tables/54full.html
+  - competition: Q19317
+    season: "1958"
+    order: [Q190978, Q182072] # Northern Ireland, Czechoslovakia
+    reason: "Group 1 play-off: Northern Ireland 2–1 Czechoslovakia (a.e.t.)"
+    source: https://www.rsssf.org/tables/58full.html
+  - competition: Q19317
+    season: "1958"
+    order: [Q180857, Q170561] # Wales, Hungary
+    reason: "Group 3 play-off: Wales 2–1 Hungary"
+    source: https://www.rsssf.org/tables/58full.html
+  - competition: Q19317
+    season: "1958"
+    order: [Q189275, Q47762] # Soviet Union, England
+    reason: "Group 4 play-off: Soviet Union 1–0 England"
+    source: https://www.rsssf.org/tables/58full.html
+  - competition: Q19317
+    season: "1990"
+    order: [Q163547, Q47050] # Republic of Ireland, Netherlands
+    reason: "Group F: identical records, second place decided by drawing lots"
+    source: https://www.offtheball.com/The-goldfish-bowl-that-decided-the-Republic-of-Irelands-World-Cup-fate-in-1990-238967
+  # Ligue 1 2019-20 was stopped by COVID-19 and ranked by points per game, with equal values
+  # separated by head-to-head (not goal difference, the usual first tie-breaker).
+  - competition: Q13394
+    season: "2019-20"
+    order: [Q185163, Q208228] # OGC Nice, Stade de Reims
+    reason: "Both 1.46 points per game; Nice ahead on head-to-head (2–0 at home, 1–1 away), LFP final ranking of 30 April 2020"
+    source: https://www.ogcnice.com/en/article/36395/season-over-as-nice-finish-5th.html
   # Serie A decides title and relegation ties by a play-off (spareggio) since 2022-23.
   - competition: Q15804
     season: "2022-23"
     order: [Q8639, Q8615] # Hellas Verona, Spezia
     reason: "Relegation play-off on 11 June 2023 at the Mapei Stadium: Spezia 1–3 Hellas Verona"
     source: https://sport.sky.it/calcio/serie-a/partite/2022/giornata-39/spezia-verona/risultato-gol
+
+awards:
+  - competition: Q13394
+    season: "2016-17"
+    home: Q208399 # SC Bastia
+    away: Q704 # Olympique Lyonnais
+    winner: away
+    reason: "Abandoned at half-time at 0-0 after Bastia supporters attacked Lyon players; the LFP gave Lyon the win and kept the 0-0"
+    source: https://ma-api.ligue1.fr/championship-standings/1/general?season=2016

@@ -183,3 +183,32 @@ def test_play_off_order_overrides_tie_breakers_for_teams_level_on_points() -> No
     results = [m(A, C, "1-0"), m(B, C, "3-0")]
     ranked = rank([A, B, C], results, rules("goal_difference"), settled=[Settled((A, B))], name=NAMES.__getitem__)
     assert order(ranked)[:2] == ["Alpha", "Beta"] and ranked[0].tied and ranked[1].tied
+
+
+def test_awarded_match_with_a_level_score_and_a_winner() -> None:
+    """The LFP gave Lyon the win at Bastia but kept the 0-0: the win counts, the goals don't."""
+    awarded = TableMatch(A, B, 0, 0, T0, Stage.LEAGUE, None, winner=B)
+    rows = {r.team: r for r in rank([A, B], [awarded], rules("goal_difference"), name=NAMES.__getitem__)}
+    assert (rows[B].won, rows[B].points, rows[B].goals_for) == (1, 3, 0)
+    assert (rows[A].lost, rows[A].points) == (1, 0)
+
+
+def test_group_play_off_is_not_in_the_table() -> None:
+    """1958: Northern Ireland and Czechoslovakia met again in a play-off listed under the group."""
+    group = [
+        m(A, B, "1-0", day=0, stage=Stage.GROUP, label="Group 1"),
+        m(C, D, "2-2", day=0, stage=Stage.GROUP, label="Group 1"),
+        m(A, C, "0-1", day=3, stage=Stage.GROUP, label="Group 1"),
+        m(B, D, "1-1", day=3, stage=Stage.GROUP, label="Group 1"),
+        m(A, D, "1-1", day=6, stage=Stage.GROUP, label="Group 1"),
+        m(B, C, "0-0", day=6, stage=Stage.GROUP, label="Group 1"),
+        m(A, B, "2-1", day=9, stage=Stage.GROUP, label="Group 1"),  # the play-off
+    ]
+    [table] = split_tables(group)
+    assert len(table.matches) == 6
+
+
+def test_home_and_away_groups_keep_both_legs() -> None:
+    legs = [m(A, B, "1-0", stage=Stage.GROUP, label="Group A"), m(B, A, "2-0", day=7, stage=Stage.GROUP, label="Group A")]
+    [table] = split_tables(legs)
+    assert len(table.matches) == 2

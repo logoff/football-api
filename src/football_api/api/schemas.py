@@ -194,6 +194,10 @@ class StandingRowOut(BaseModel):
         description="Results alone don't separate this team from a neighbour: the order then comes from a "
         "curated decision (play-off, lots, fair play) or, failing one, team name"
     )
+    verification: MatchVerificationOut | None = Field(
+        default=None,
+        description="This row against the reference's final table; null for provisional tables and with `as_of`",
+    )
 
 
 class StandingTableOut(BaseModel):

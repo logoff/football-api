@@ -11,7 +11,10 @@ from football_api.ingestion.wikipedia import (
     GridCell,
     WikipediaClient,
     WikipediaUnavailable,
+    StandingsLine,
+    merge_standings,
     parse_match_boxes,
+    parse_standings,
     parse_subarticle_titles,
     parse_results_grid,
 )
@@ -303,3 +306,46 @@ def test_box_scores_written_with_a_minus_sign() -> None:
     """Some boxes use U+2212 (`2−0`) where the style guide asks for an en dash."""
     html = _fb("2012-07-04", '<a href="./Alpha_F.C." title="Alpha F.C.">Alpha</a>', '<a href="./Beta_F.C." title="Beta F.C.">Beta</a>', "2−0")
     assert [b.score for b in parse_match_boxes(html)] == [(2, 0)]
+
+
+def _standings_html(rows: list[tuple[str, ...]], header: str = "Pos|Team v t e|Pld|W|D|L|GF|GA|GD|Pts|Qualification") -> str:
+    head = "".join(f"<th>{h}</th>" for h in header.split("|"))
+    body = "".join("<tr>" + "".join(f"<td>{c}</td>" for c in r) + "</tr>" for r in rows)
+    return f'<table class="wikitable"><tbody><tr>{head}</tr>{body}</tbody></table>'
+
+
+def _club(title: str, note: str = "") -> str:
+    flag = '<span class="flagicon"><a href="./Made-up_Federation" title="Made-up Federation"><img alt="X"/></a></span>'
+    return f'{flag} <a href="./{title.replace(" ", "_")}" title="{title}">{title.split()[0]}</a>{note}'
+
+
+def test_standings_tables_map_columns_and_skip_flags_and_notes() -> None:
+    html = _standings_html(
+        [
+            ("1", _club("Alpha F.C.", " (C)"), "38", "28", "7", "3", "96", "34", "+62", "91<sup>[a]</sup>", "Champions League"),
+            ("2", _club("Beta F.C."), "38", "28", "5", "5", "91", "29", "+62", "89", ""),
+        ]
+    ) + _standings_html([("x", "y")], header="Rank|Player|Goals")  # not a standings table
+    [table] = parse_standings(html)
+    assert table[0] == StandingsLine(1, "Alpha F.C.", 38, 28, 7, 3, 96, 34, 91)
+    assert table[1].team == "Beta F.C." and table[1].points == 89
+
+
+def test_standings_columns_by_name_and_negative_points() -> None:
+    html = _standings_html([("20", _club("Gamma F.C."), "−4", "38", "10", "9", "19", "50", "60")], header="Pos|Team|Pts|Pld|W|D|L|F|A")
+    [[line]] = parse_standings(html)
+    assert (line.position, line.points, line.played, line.goals_for, line.goals_against) == (20, -4, 38, 50, 60)
+
+
+def test_same_table_in_two_articles_counts_once() -> None:
+    page = _standings_html([("1", _club("Alpha F.C."), "3", "3", "0", "0", "5", "0", "+5", "9")])
+    assert len(merge_standings([parse_standings(page), parse_standings(page)])) == 1
+
+
+def test_standings_without_a_position_column_use_row_order() -> None:
+    html = _standings_html(
+        [(_club("Alpha F.C."), "3", "2", "1", "0", "3", "0", "+3", "7"), (_club("Beta F.C."), "3", "1", "1", "1", "2", "2", "0", "4")],
+        header="Team v t e|Pld|W|D|L|GF|GA|GD|Pts",
+    )
+    [table] = parse_standings(html)
+    assert [(line.position, line.team) for line in table] == [(1, "Alpha F.C."), (2, "Beta F.C.")]

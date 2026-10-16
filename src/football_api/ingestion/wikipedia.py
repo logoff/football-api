@@ -262,6 +262,100 @@ def parse_subarticle_titles(html: str, title: str, *, qualifying: bool = False) 
     return out
 
 
+@dataclass(frozen=True)
+class StandingsLine:
+    """One row of a Wikipedia standings table. Compared, never stored (verify-standings D2)."""
+
+    position: int
+    team: str  # the linked article's title
+    played: int
+    won: int
+    drawn: int
+    lost: int
+    goals_for: int
+    goals_against: int
+    points: int
+
+
+StandingsTable = list[StandingsLine]
+
+# Header text → field; tables name columns slightly differently across eras.
+_STANDINGS_COLUMNS = {
+    "pos": "position", "team": "team", "pld": "played", "p": "played", "gp": "played", "mp": "played",
+    "w": "won", "d": "drawn", "l": "lost", "gf": "goals_for", "f": "goals_for", "ga": "goals_against",
+    "a": "goals_against", "pts": "points",
+}  # fmt: skip
+_INT = re.compile(r"^[−-]?\d+")
+
+
+def _header_key(cell: Tag) -> str:
+    # `Team v t e`: the navbox links after the header word don't count.
+    words = cell.get_text(" ", strip=True).split()
+    return words[0].lower().rstrip(".") if words else ""
+
+
+def parse_standings(html: str) -> list[StandingsTable]:
+    """Every standings table in an article: tables whose header names `Team`, `Pld` and `Pts`.
+    Older tables have no `Pos` column; their row order is the position."""
+    soup = BeautifulSoup(html, "html.parser")
+    for note in soup.find_all("sup"):
+        note.decompose()
+    tables: list[StandingsTable] = []
+    for table in soup.select("table"):
+        rows = [tr for tr in table.find_all("tr") if tr.find_parent("table") is table]
+        if not rows:
+            continue
+        header = [_STANDINGS_COLUMNS.get(_header_key(c)) for c in _cells(rows[0])]
+        if not {"team", "played", "points"} <= set(header):
+            continue
+        lines: StandingsTable = []
+        for tr in rows[1:]:
+            cells = _cells(tr)
+            if len(cells) < len([h for h in header if h]):
+                continue
+            values: dict[str, object] = {}
+            for field, cell in zip(header, cells, strict=False):
+                if field == "team":
+                    values["team"] = _team_title(cell, {})
+                elif field:
+                    m = _INT.match(cell.get_text(" ", strip=True).replace("−", "-"))
+                    values[field] = int(m[0].replace("−", "-")) if m else None
+            if "position" not in header:
+                values["position"] = len(lines) + 1
+            if values.get("team") is None or any(values.get(f) is None for f in ("position", "played", "points")):
+                continue
+            lines.append(
+                StandingsLine(
+                    position=cast(int, values["position"]),
+                    team=cast(str, values["team"]),
+                    played=cast(int, values["played"]),
+                    won=cast(int, values.get("won") or 0),
+                    drawn=cast(int, values.get("drawn") or 0),
+                    lost=cast(int, values.get("lost") or 0),
+                    goals_for=cast(int, values.get("goals_for") or 0),
+                    goals_against=cast(int, values.get("goals_against") or 0),
+                    points=cast(int, values["points"]),
+                )
+            )
+        if lines:
+            tables.append(lines)
+    return tables
+
+
+def merge_standings(groups: Iterable[list[StandingsTable]]) -> list[StandingsTable]:
+    """Tables by set of teams, first seen first: a group table in the season article and in its
+    group sub-article counts once."""
+    seen: set[frozenset[str]] = set()
+    out: list[StandingsTable] = []
+    for tables in groups:
+        for table in tables:
+            key = frozenset(line.team for line in table)
+            if key not in seen:
+                seen.add(key)
+                out.append(table)
+    return out
+
+
 def merge_boxes(groups: Iterable[list[MatchBox]]) -> list[MatchBox]:
     """One box per (date, home, away): the season article first, then sub-articles (design D2)."""
     seen: set[tuple[date | None, str, str]] = set()
@@ -296,6 +390,7 @@ class WikipediaClient:
         sleep: Callable[[float], Any] = asyncio.sleep,
     ) -> None:
         self._rest, self._api, self._sleep = rest.rstrip("/"), api, sleep
+        self._pages: dict[str, str] = {}  # one run reads each article once (match boxes, standings)
         self._client = httpx.AsyncClient(
             headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT, transport=transport, follow_redirects=True
         )
@@ -325,10 +420,25 @@ class WikipediaClient:
         raise AssertionError("unreachable")
 
     async def _page_html(self, title: str) -> str:
+        if title in self._pages:
+            return self._pages[title]
         resp = await self._get(f"{self._rest}/page/html/{quote(title.replace(' ', '_'), safe='')}")
         if resp.status_code != 200:
             raise WikipediaUnavailable(f"{title}: HTTP {resp.status_code}")
+        self._pages[title] = resp.text
         return resp.text
+
+    async def _season_pages(self, title: str, *, qualifying: bool = False) -> list[str]:
+        """The season article, then the sub-articles it links (groups, knockout phase, qualifying
+        stages when asked). Missing article → unavailable; a missing sub-article is skipped."""
+        html = await self._page_html(title)
+        pages = [html]
+        for sub in parse_subarticle_titles(html, page_title(html) or title, qualifying=qualifying):
+            try:
+                pages.append(await self._page_html(sub))
+            except WikipediaUnavailable:
+                continue
+        return pages
 
     async def results_grid(self, title: str) -> ResultsGrid | None:
         """The article's results grid; None when the article has none. Missing article → unavailable."""
@@ -338,14 +448,11 @@ class WikipediaClient:
         """The match boxes of a cup or tournament season: the article's own, then those of the
         sub-articles it links (groups, knockout phase, and qualifying stages when asked), each match once. Missing article → unavailable;
         a missing sub-article is skipped."""
-        html = await self._page_html(title)
-        groups = [parse_match_boxes(html)]
-        for sub in parse_subarticle_titles(html, page_title(html) or title, qualifying=qualifying):
-            try:
-                groups.append(parse_match_boxes(await self._page_html(sub)))
-            except WikipediaUnavailable:
-                continue
-        return merge_boxes(groups)
+        return merge_boxes(parse_match_boxes(page) for page in await self._season_pages(title, qualifying=qualifying))
+
+    async def standings(self, title: str, *, qualifying: bool = False) -> list[StandingsTable]:
+        """The standings tables of a season article and its sub-articles, each set of teams once."""
+        return merge_standings(parse_standings(page) for page in await self._season_pages(title, qualifying=qualifying))
 
     async def qids(self, titles: Iterable[str]) -> dict[str, str]:
         """Map article titles to Wikidata QIDs, following normalisation and redirects."""

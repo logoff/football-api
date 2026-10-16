@@ -6,7 +6,7 @@ these turn them into ordered rows. Nothing here touches the database.
 
 import re
 import uuid
-from collections import defaultdict
+from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
@@ -33,6 +33,7 @@ class TableMatch:
     kickoff_utc: datetime
     stage: Stage
     round_label: str | None
+    winner: TeamId | None = None  # an awarded match with a level score that names a winner (standings.yaml)
 
     @property
     def played(self) -> bool:
@@ -96,10 +97,29 @@ def split_tables(matches: Iterable[TableMatch]) -> list[Table]:
             else:
                 loose.append(m)
         for name in sorted(named, key=lambda n: (len(n), n)):  # A…L, then 1, 2, … 10
-            tables.append(Table(TableKey(Stage.GROUP, phase, name), named[name]))
+            tables.append(Table(TableKey(Stage.GROUP, phase, name), _without_play_offs(named[name])))
         for component in _components(loose):
-            tables.append(Table(TableKey(Stage.GROUP, phase, None), component))
+            tables.append(Table(TableKey(Stage.GROUP, phase, None), _without_play_offs(component)))
     return tables
+
+
+def _without_play_offs(matches: list[TableMatch]) -> list[TableMatch]:
+    """A group played once round: a pairing met again is a play-off, outside the table.
+
+    The 1954 and 1958 World Cups settled level groups with play-offs the source lists under the
+    group's own label. Groups played home and away, where every pairing meets twice, are untouched.
+    """
+    pairs = Counter(frozenset((m.home, m.away)) for m in matches)
+    if not pairs or sum(1 for n in pairs.values() if n == 1) <= len(pairs) / 2:
+        return matches
+    seen: set[frozenset[TeamId]] = set()
+    kept: list[TableMatch] = []
+    for m in sorted(matches, key=lambda m: m.kickoff_utc):
+        pair = frozenset((m.home, m.away))
+        if pair not in seen:
+            seen.add(pair)
+            kept.append(m)
+    return kept
 
 
 def _components(matches: list[TableMatch]) -> list[list[TableMatch]]:
@@ -189,7 +209,12 @@ def rank(
             row.played += 1
             row.goals_for += gf
             row.goals_against += ga
-            if gf > ga:
+            if m.winner is not None:
+                won = m.winner == team
+                row.won += won
+                row.lost += not won
+                row.points += points.win if won else points.loss
+            elif gf > ga:
                 row.won += 1
                 row.points += points.win
             elif gf == ga:
@@ -312,7 +337,9 @@ def _mini_metric(ctx: _Context, what: str, team: TeamId, mini: list[TableMatch])
         assert m.home_score is not None and m.away_score is not None
         home = m.home == team
         gf, ga = (m.home_score, m.away_score) if home else (m.away_score, m.home_score)
-        if what == "points":
+        if what == "points" and m.winner is not None:
+            total += points.win if m.winner == team else points.loss
+        elif what == "points":
             total += points.win if gf > ga else points.draw if gf == ga else points.loss
         elif what == "goal_difference":
             total += gf - ga

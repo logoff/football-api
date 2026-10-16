@@ -121,9 +121,23 @@ class TieOrder(_Seed):
     source: str
 
 
+class AwardedWinner(_Seed):
+    """An awarded match the source records with a level score (no goals awarded) that still has a
+    winner: the win and the loss count, the goals stay as recorded."""
+
+    competition: str
+    season: str
+    home: str = Field(description="Home team's QID")
+    away: str = Field(description="Away team's QID")
+    winner: Literal["home", "away"]
+    reason: str
+    source: str
+
+
 class StandingsSeeds(_Seed):
     adjustments: list[PointsAdjustment] = Field(default_factory=list[PointsAdjustment])
     orders: list[TieOrder] = Field(default_factory=list[TieOrder])
+    awards: list[AwardedWinner] = Field(default_factory=list[AwardedWinner])
 
     def check(self, competitions: list[CompetitionSeed], teams: list[TeamSeed]) -> "StandingsSeeds":
         """Every entry must name a seeded competition, season and team (standings design D5)."""
@@ -131,6 +145,7 @@ class StandingsSeeds(_Seed):
         qids = {t.wikidata for t in teams if t.wikidata}
         entries: list[tuple[str, str, list[str]]] = [(a.competition, a.season, [a.team]) for a in self.adjustments]
         entries += [(o.competition, o.season, o.order) for o in self.orders]
+        entries += [(w.competition, w.season, [w.home, w.away]) for w in self.awards]
         for competition, season, team_qids in entries:
             if (competition, season) not in seasons:
                 raise ValueError(f"standings.yaml: no season {season!r} of competition {competition}")
