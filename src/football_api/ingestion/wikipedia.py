@@ -6,6 +6,7 @@ the same square table (design D1). Nothing read here is stored; callers only com
 """
 
 import asyncio
+from collections import OrderedDict
 import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
@@ -21,6 +22,7 @@ USER_AGENT = f"football-api/{version('football-api')} (+https://github.com/logof
 TIMEOUT = 20.0
 MAX_RETRY_AFTER = 30.0
 TITLES_PER_QUERY = 50
+PAGE_CACHE_SIZE = 16  # pages kept per client; a season reads at most about a dozen
 _SCORE = re.compile(r"^(\d+)\s*[–−-]\s*(\d+)$")
 _BOX_SCORE = re.compile(r"^(\d+)\s*[–−-]\s*(\d+)\b")
 _BOX_PENS = re.compile(r"\(\s*(\d+)\s*[–−-]\s*(\d+)\s*p\s*\)")
@@ -390,7 +392,9 @@ class WikipediaClient:
         sleep: Callable[[float], Any] = asyncio.sleep,
     ) -> None:
         self._rest, self._api, self._sleep = rest.rstrip("/"), api, sleep
-        self._pages: dict[str, str] = {}  # one run reads each article once (match boxes, standings)
+        # Recent pages only: a season's match boxes and standings read the same articles one after
+        # the other. Keeping every page of a run (about a thousand) ran the nightly job out of memory.
+        self._pages: OrderedDict[str, str] = OrderedDict()
         self._client = httpx.AsyncClient(
             headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT, transport=transport, follow_redirects=True
         )
@@ -421,11 +425,14 @@ class WikipediaClient:
 
     async def _page_html(self, title: str) -> str:
         if title in self._pages:
+            self._pages.move_to_end(title)
             return self._pages[title]
         resp = await self._get(f"{self._rest}/page/html/{quote(title.replace(' ', '_'), safe='')}")
         if resp.status_code != 200:
             raise WikipediaUnavailable(f"{title}: HTTP {resp.status_code}")
         self._pages[title] = resp.text
+        while len(self._pages) > PAGE_CACHE_SIZE:
+            self._pages.popitem(last=False)
         return resp.text
 
     async def _season_pages(self, title: str, *, qualifying: bool = False) -> list[str]:
