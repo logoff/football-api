@@ -8,6 +8,7 @@ import httpx
 import pytest
 
 from football_api.ingestion.wikipedia import (
+    PAGE_CACHE_SIZE,
     GridCell,
     WikipediaClient,
     WikipediaUnavailable,
@@ -349,3 +350,20 @@ def test_standings_without_a_position_column_use_row_order() -> None:
     )
     [table] = parse_standings(html)
     assert [(line.position, line.team) for line in table] == [(1, "Alpha F.C."), (2, "Beta F.C.")]
+
+
+async def test_page_cache_keeps_recent_pages_only() -> None:
+    """A run reads about a thousand articles; only recent ones stay in memory."""
+    requested: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requested.append(request.url.raw_path.decode())
+        return httpx.Response(200, text="<html></html>")
+
+    async with client_with(httpx.MockTransport(handler)) as wiki:
+        await wiki.results_grid("Page 0")
+        await wiki.results_grid("Page 0")  # cached
+        for i in range(1, PAGE_CACHE_SIZE + 1):
+            await wiki.results_grid(f"Page {i}")
+        await wiki.results_grid("Page 0")  # evicted by then: fetched again
+    assert len(requested) == PAGE_CACHE_SIZE + 2
