@@ -55,27 +55,27 @@ The sync refuses to run until the API container has applied the migrations (exit
 
 19 competitions. The five domestic leagues have every season openfootball publishes, up to the one in progress, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The international competitions have every edition openfootball publishes with a date for every match, including those in progress, also checked against Wikipedia. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
 
-| Competition                | Format     | Seasons                 | Results | Verified | Goal scorers | Squads |
-| -------------------------- | ---------- | ----------------------- | ------- | -------- | ------------ | ------ |
-| Premier League             | LEAGUE     | 1992-93 to 2026-27 (35) | ✅      | ✅       | none         | none   |
-| La Liga                    | LEAGUE     | 2012-13 to 2026-27 (15) | ✅      | ✅       | none         | none   |
-| Bundesliga                 | LEAGUE     | 2010-11 to 2026-27 (17) | ✅      | ✅       | none         | none   |
-| Serie A                    | LEAGUE     | 2013-14 to 2026-27 (14) | ✅      | ✅       | none         | none   |
-| Ligue 1                    | LEAGUE     | 2014-15 to 2026-27 (13) | ✅      | ✅       | none         | none   |
-| FA Cup                     | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none   |
-| EFL Cup                    | LEAGUE_CUP | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none   |
-| Copa del Rey               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none   |
-| DFB-Pokal                  | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none   |
-| Coppa Italia               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none   |
-| Coupe de France            | CUP        | 2024-25                 | ✅      | ✅       | none         | none   |
-| UEFA Champions League      | TOURNAMENT | 2011-12 to 2025-26 (15) | ✅      | ✅       | none         | none   |
-| UEFA Europa League         | TOURNAMENT | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none   |
-| UEFA Conference League     | TOURNAMENT | 2021-22 to 2024-25 (4)  | ✅      | ✅       | none         | none   |
-| CONMEBOL Copa Libertadores | TOURNAMENT | 2012 to 2026 (15)       | ✅      | ✅       | none         | none   |
-| FIFA Club World Cup        | TOURNAMENT | 2000 to 2025 (21)       | ✅      | ✅       | most         | 2025   |
-| FIFA World Cup             | TOURNAMENT | 1930 to 2026 (23)       | ✅      | ✅       | ✅           | 2022   |
-| UEFA European Championship | TOURNAMENT | 1960 to 2024 (15)       | ✅      | ✅       | most         | 2024   |
-| CONMEBOL Copa América      | TOURNAMENT | 2011, 2021, 2024        | ✅      | ✅       | 2024         | 2024   |
+| Competition                | Format     | Seasons                 | Results | Verified | Goal scorers | Squads | Line-ups and cards |
+| -------------------------- | ---------- | ----------------------- | ------- | -------- | ------------ | ------ | ------------------ |
+| Premier League             | LEAGUE     | 1992-93 to 2026-27 (35) | ✅      | ✅       | none         | none   | 2025-26            |
+| La Liga                    | LEAGUE     | 2012-13 to 2026-27 (15) | ✅      | ✅       | none         | none   | 2025-26            |
+| Bundesliga                 | LEAGUE     | 2010-11 to 2026-27 (17) | ✅      | ✅       | none         | none   | 2025-26            |
+| Serie A                    | LEAGUE     | 2013-14 to 2026-27 (14) | ✅      | ✅       | none         | none   | 2025-26            |
+| Ligue 1                    | LEAGUE     | 2014-15 to 2026-27 (13) | ✅      | ✅       | none         | none   | 2025-26            |
+| FA Cup                     | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none   | none               |
+| EFL Cup                    | LEAGUE_CUP | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none   | none               |
+| Copa del Rey               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none   | none               |
+| DFB-Pokal                  | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none   | none               |
+| Coppa Italia               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none   | none               |
+| Coupe de France            | CUP        | 2024-25                 | ✅      | ✅       | none         | none   | none               |
+| UEFA Champions League      | TOURNAMENT | 2011-12 to 2025-26 (15) | ✅      | ✅       | none         | none   | none               |
+| UEFA Europa League         | TOURNAMENT | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none   | none               |
+| UEFA Conference League     | TOURNAMENT | 2021-22 to 2024-25 (4)  | ✅      | ✅       | none         | none   | none               |
+| CONMEBOL Copa Libertadores | TOURNAMENT | 2012 to 2026 (15)       | ✅      | ✅       | none         | none   | none               |
+| FIFA Club World Cup        | TOURNAMENT | 2000 to 2025 (21)       | ✅      | ✅       | most         | 2025   | ✅                 |
+| FIFA World Cup             | TOURNAMENT | 1930 to 2026 (23)       | ✅      | ✅       | ✅           | 2022   | ✅                 |
+| UEFA European Championship | TOURNAMENT | 1960 to 2024 (15)       | ✅      | ✅       | most         | 2024   | none               |
+| CONMEBOL Copa América      | TOURNAMENT | 2011, 2021, 2024        | ✅      | ✅       | 2024         | 2024   | none               |
 
 Euro 1984 and Euro 1992 are not included: openfootball lists some of their matches without a date. Euro 2020, played in 2021, has the season label `2021`. The Club World Cup's placement match has stage `FIFTH_PLACE`.
 
@@ -87,7 +87,17 @@ Ligue 1 2019-20 was stopped after 279 matches; its 101 unplayed fixtures are lis
 
 Matches decided off the pitch (a forfeit or a disciplinary decision) have `awarded: true` and keep the score the source records. That's usually the awarded score (Union Berlin v Bochum 2024-25, `0-2`), but for SC Bastia v Olympique Lyonnais 2016-17 it's the 0–0 at abandonment: the LFP credited Lyon with the win and no goals.
 
-The API reports this in a `coverage` field on seasons, matches, and player listings, so "no scorers" is never mistaken for "no goals".
+Line-ups, substitutions and cards come from openfootball's `-full` files, for every World Cup and Club World Cup and for the 2025-26 seasons of the five leagues (about 3,000 matches). Request them with `expand=lineups,substitutions,cards` on `/v1/matches` and `/v1/matches/{id}`; every match also has `referee` and `attendance` (null where the source doesn't give them). Where they're incomplete:
+
+- **Club World Cup 2018 and 2019:** starting line-ups only, with no substitutions or cards.
+- **World Cups before 1970:** no substitutions, because none were allowed. Cards came in at the 1970 World Cup; for earlier tournaments the source records cautions and sendings-off as yellow and red cards.
+- **Referees:** missing for the Club World Cup 2015 and 2016.
+- **Attendance:** from 2018 on for the World Cup and Club World Cup.
+- **Formation** (`4-3-3`) is worked out from how the source groups each line-up. It's not a verified tactical shape: Chelsea's 2025 Club World Cup final line-up reads as `5-3-2`. It's null when the source doesn't group the line-up.
+- **Player links:** line-up names link to players only where squads are ingested (World Cup 2022, Club World Cup 2025); elsewhere they're names only.
+- **Source errors kept as they are:** three line-ups list 10 starters (South Korea v Turkey, World Cup 1954; Palmeiras twice at the Club World Cup 2020), and the Club World Cup 2021 final splits `Hudson-Odoi` into two players.
+
+The API reports all of this in a `coverage` field on seasons, matches, and player listings (`scorers`, `players`, `lineups`, `substitutions`, `cards`), so "no scorers" is never mistaken for "no goals", and "no cards" in a season with `cards: full` means there were none.
 
 ### Verification
 

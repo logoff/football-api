@@ -43,6 +43,11 @@ _GOAL_RE = re.compile(
 )
 
 
+def is_date_line(line: str) -> bool:
+    """Whether a line starts with a date (`Sun Jul 13 15:00 UTC-4 @ …`)."""
+    return _DATE_RE.match(line) is not None
+
+
 class ParseError(Exception):
     def __init__(self, path: str, line_no: int, message: str) -> None:
         super().__init__(f"{path}:{line_no}: {message}")

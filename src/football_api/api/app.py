@@ -16,9 +16,10 @@ data, with Wikidata identifiers.
 - Timestamps are UTC (`Z`).
 - Errors use `{"error": {"code", "message", "details"}}`.
 
-**Coverage.** Goal scorers and squads exist only for FIFA World Cup 2022, UEFA Euro 2024,
-Copa América 2024 and FIFA Club World Cup 2025; every other competition has results
-only. Responses say so in a `coverage` field.
+**Coverage.** Goal scorers, squads, line-ups, substitutions and cards exist only for some
+competitions and seasons; every season and match says which in a `coverage` field. Line-ups,
+substitutions and cards (`expand=lineups,substitutions,cards`) cover every FIFA World Cup and
+FIFA Club World Cup, and the 2025-26 Premier League, La Liga, Bundesliga, Serie A and Ligue 1.
 """
 
 
@@ -29,7 +30,7 @@ def create_app() -> FastAPI:
         description=DESCRIPTION,
         openapi_tags=[
             {"name": "catalog", "description": "Competitions, seasons, teams, players, venues"},
-            {"name": "matches", "description": "Fixtures, results and goal scorers"},
+            {"name": "matches", "description": "Fixtures, results, goal scorers, line-ups and cards"},
         ],
     )
     install_error_handlers(app)

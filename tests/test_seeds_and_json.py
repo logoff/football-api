@@ -28,6 +28,18 @@ def test_real_seed_files_are_valid() -> None:
     assert not [t.name for t in teams if re.fullmatch(r"Q\d+", t.name)]  # a Wikidata ID is never a name
 
 
+def test_real_events_seeds() -> None:
+    """Every World Cup and Club World Cup, and the 2025-26 seasons of the five leagues (match-events)."""
+    with_events = {(c.name, s.label): s for c in load_competitions() for s in c.seasons if s.events}
+    assert len(with_events) == 49
+    assert sum(name == "FIFA World Cup" for name, _ in with_events) == 23
+    assert sum(name == "FIFA Club World Cup" for name, _ in with_events) == 21
+    assert {name for name, label in with_events if label == "2025-26"} == {
+        "Premier League", "La Liga", "Bundesliga", "Serie A", "Ligue 1",
+    }
+    assert all(s.events.endswith(("-full.txt", "_full.txt")) for s in with_events.values() if s.events)
+
+
 def test_json_mirror_used_only_when_current() -> None:
     text = parse_file(SOURCES / "england/2024-25/1-premierleague.txt", start_year=2024, display_path="pl")
     mirror = read_json(SOURCES / "football.json/2024-25/en.1.json")

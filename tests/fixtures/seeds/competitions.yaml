@@ -58,6 +58,7 @@
       start_year: 2025
       file: club-worldcup/more/2025_clubworldcup-full.txt
       tz: inline
+      events: club-worldcup/more/2025_clubworldcup-full.txt
       squads:
         style: more
         files:
@@ -79,6 +80,7 @@
       start_year: 2022
       file: worldcup/more/2022.txt
       tz: inline
+      events: worldcup/more/2022_full.txt
       squads:
         style: more
         files:

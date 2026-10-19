@@ -12,9 +12,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from football_api.api.errors import ERROR_RESPONSES, ApiError, not_found
 from football_api.api.pagination import DEFAULT_LIMIT, Cursor, Limit, apply_keyset, encode_cursor
 from football_api.api.schemas import (
+    CardOut,
     CompetitionOut,
     GoalOut,
-    GoalPlayerRef,
+    LineupEntryOut,
+    LineupOut,
+    LineupsOut,
     MatchCoverage,
     MatchOut,
     MatchVerificationOut,
@@ -22,12 +25,14 @@ from football_api.api.schemas import (
     PlayerCoverage,
     PlayerOut,
     PlayerPage,
+    PlayerRef,
     SeasonCoverage,
     SeasonOut,
     StandingAdjustmentOut,
     StandingRowOut,
     StandingsOut,
     StandingTableOut,
+    SubstitutionOut,
     TeamOut,
     TeamSeasonOut,
     VenueOut,
@@ -35,6 +40,8 @@ from football_api.api.schemas import (
 from football_api.domain.enums import (
     CompetitionFormat,
     Coverage,
+    LineupRole,
+    Side,
     Stage,
     TeamKind,
     VerificationReference,
@@ -42,14 +49,17 @@ from football_api.domain.enums import (
 )
 from football_api.infra.db import session_dependency
 from football_api.infra.models import (
+    Card,
     Competition,
     Goal,
+    LineupEntry,
     Match,
     MatchVerification,
     Player,
     PlayerTeamSeason,
     Season,
     StandingVerification,
+    Substitution,
     Team,
     TeamSeason,
     Venue,
@@ -125,7 +135,13 @@ def _season_out(season: Season) -> SeasonOut:
         starts_on=season.starts_on,
         ends_on=season.ends_on,
         status=season.status,
-        coverage=SeasonCoverage(scorers=season.scorers_coverage, players=season.players_coverage),
+        coverage=SeasonCoverage(
+            scorers=season.scorers_coverage,
+            players=season.players_coverage,
+            lineups=season.lineups_coverage,
+            substitutions=season.substitutions_coverage,
+            cards=season.cards_coverage,
+        ),
     )
 
 
@@ -346,12 +362,92 @@ async def get_venue(session: Session, id: uuid.UUID) -> VenueOut:
 
 # --- matches -----------------------------------------------------------------------
 
-MATCH_EXPANDS = {"teams", "venue", "scorers"}
-type MatchRow = tuple[Match, uuid.UUID, Coverage]
+MATCH_EXPANDS = {"teams", "venue", "scorers", "lineups", "substitutions", "cards"}
+type MatchRow = tuple[Match, Season]
 
 
-def _match_select() -> Select[Match, uuid.UUID, Coverage]:
-    return select(Match, Season.competition_id, Season.scorers_coverage).join(Season, Season.id == Match.season_id)
+def _match_select() -> Select[Match, Season]:
+    return select(Match, Season).join(Season, Season.id == Match.season_id)
+
+
+def formation(entries: Sequence[LineupEntry]) -> str | None:
+    """Starters per source line group after the first (the goalkeeper), joined by `-`; null for one group."""
+    lines = [e.line_index for e in entries if e.role is LineupRole.STARTER and e.line_index is not None]
+    if not lines or max(lines) < 2:
+        return None
+    return "-".join(str(lines.count(i)) for i in range(2, max(lines) + 1))
+
+
+async def _player_refs(session: AsyncSession, ids: set[uuid.UUID]) -> dict[uuid.UUID, PlayerRef]:
+    if not ids:
+        return {}
+    players = await session.scalars(select(Player).where(Player.id.in_(ids)))
+    return {p.id: PlayerRef(id=p.id, display_name=p.display_name) for p in players}
+
+
+async def _events_out(
+    session: AsyncSession, match_ids: list[uuid.UUID], expands: set[str]
+) -> tuple[dict[uuid.UUID, LineupsOut], dict[uuid.UUID, list[SubstitutionOut]], dict[uuid.UUID, list[CardOut]]]:
+    """Lineups, substitutions and cards per match, for the ones `expands` asks for."""
+    entries = list(
+        await session.scalars(
+            select(LineupEntry).where(LineupEntry.match_id.in_(match_ids)).order_by(LineupEntry.side, LineupEntry.ordinal)
+        )
+    ) if "lineups" in expands else []
+    subs = list(
+        await session.scalars(select(Substitution).where(Substitution.match_id.in_(match_ids)))
+    ) if "substitutions" in expands else []
+    cards = list(await session.scalars(select(Card).where(Card.match_id.in_(match_ids)))) if "cards" in expands else []
+    refs = await _player_refs(
+        session,
+        {e.player_id for e in entries if e.player_id}
+        | {i for s in subs for i in (s.player_off_id, s.player_on_id) if i}
+        | {c.player_id for c in cards if c.player_id},
+    )
+
+    def ref(player_id: uuid.UUID | None) -> PlayerRef | None:
+        return refs.get(player_id) if player_id else None
+
+    def when(row: Substitution | Card) -> tuple[int, int, bool, int]:
+        return row.minute, row.added_minute or 0, row.side is Side.AWAY, row.ordinal
+
+    by_side: dict[tuple[uuid.UUID, Side], list[LineupEntry]] = {}
+    for e in entries:
+        by_side.setdefault((e.match_id, e.side), []).append(e)
+
+    def lineup(rows: list[LineupEntry]) -> LineupOut:
+        return LineupOut(
+            formation=formation(rows),
+            entries=[
+                LineupEntryOut(
+                    player=ref(e.player_id), name=e.player_name, role=e.role, line=e.line_index, is_captain=e.is_captain
+                )
+                for e in rows
+            ],
+        )
+
+    lineups = {
+        match_id: LineupsOut(home=lineup(by_side.get((match_id, Side.HOME), [])), away=lineup(by_side.get((match_id, Side.AWAY), [])))
+        for match_id in match_ids
+    } if "lineups" in expands else {}
+    substitutions: dict[uuid.UUID, list[SubstitutionOut]] = {}
+    for s in sorted(subs, key=when):
+        substitutions.setdefault(s.match_id, []).append(
+            SubstitutionOut(
+                side=s.side, minute=s.minute, added_minute=s.added_minute,
+                player_off=ref(s.player_off_id), player_off_name=s.player_off_name,
+                player_on=ref(s.player_on_id), player_on_name=s.player_on_name,
+            )
+        )
+    cards_out: dict[uuid.UUID, list[CardOut]] = {}
+    for c in sorted(cards, key=when):
+        cards_out.setdefault(c.match_id, []).append(
+            CardOut(
+                side=c.side, minute=c.minute, added_minute=c.added_minute, kind=c.kind,
+                player=ref(c.player_id), name=c.player_name,
+            )
+        )
+    return lineups, substitutions, cards_out
 
 
 async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands: set[str]) -> list[MatchOut]:
@@ -382,7 +478,7 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
             .order_by(Goal.match_id, Goal.ordinal)
         )
         for goal, player_name in goal_rows:
-            player = GoalPlayerRef(id=goal.scorer_player_id, display_name=player_name) if goal.scorer_player_id and player_name else None
+            player = PlayerRef(id=goal.scorer_player_id, display_name=player_name) if goal.scorer_player_id and player_name else None
             goals.setdefault(goal.match_id, []).append(
                 GoalOut(
                     ordinal=goal.ordinal,
@@ -396,11 +492,13 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
                 )
             )
 
+    lineups, substitutions, cards = await _events_out(session, [m.id for m in matches], expands)
+
     out: list[MatchOut] = []
-    for m, competition_id, scorers_coverage in rows:
+    for m, season in rows:
         item = MatchOut(
             id=m.id,
-            competition_id=competition_id,
+            competition_id=season.competition_id,
             season_id=m.season_id,
             stage=m.stage,
             matchday=m.matchday,
@@ -418,7 +516,14 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
             home_pens=m.home_pens,
             away_pens=m.away_pens,
             awarded=m.awarded,
-            coverage=MatchCoverage(scorers=scorers_coverage),
+            referee=m.referee_name,
+            attendance=m.attendance,
+            coverage=MatchCoverage(
+                scorers=season.scorers_coverage,
+                lineups=season.lineups_coverage,
+                substitutions=season.substitutions_coverage,
+                cards=season.cards_coverage,
+            ),
             verification=verifications.get(m.id),
         )
         if "teams" in expands:
@@ -427,11 +532,19 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
             item.venue = venues.get(m.venue_id) if m.venue_id else None
         if "scorers" in expands:
             item.scorers = goals.get(m.id, [])
+        if "lineups" in expands:
+            item.lineups = lineups[m.id]
+        if "substitutions" in expands:
+            item.substitutions = substitutions.get(m.id, [])
+        if "cards" in expands:
+            item.cards = cards.get(m.id, [])
         out.append(item)
     return out
 
 
-MatchExpand = Annotated[str | None, Query(description="Comma-separated: teams, venue, scorers")]
+MatchExpand = Annotated[
+    str | None, Query(description="Comma-separated: teams, venue, scorers, lineups, substitutions, cards")
+]
 
 
 @router.get("/matches", tags=["matches"], summary="List matches")

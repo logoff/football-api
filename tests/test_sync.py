@@ -21,7 +21,7 @@ FIXTURE_SOURCES = Path(__file__).parent / "fixtures" / "sources"
 
 MANAGED_TABLES = [
     "competition", "season", "team", "team_season", "venue", "player",
-    "player_team_season", "match", "goal", "external_ref",
+    "player_team_season", "match", "goal", "lineup_entry", "substitution", "card", "external_ref",
 ]
 
 

@@ -7,7 +7,7 @@ The API stops at final scores and goal scorers. Lineups, substitutions and cards
 | Competition                                           | Seasons            | Matches | Source                                                                      |
 | ----------------------------------------------------- | ------------------ | ------- | --------------------------------------------------------------------------- |
 | FIFA World Cup                                        | 1930–2026 (all 23) | 1,068   | `worldcup/more/<year>_full.txt`                                             |
-| FIFA Club World Cup                                   | 2000–2025 (all 21) | 222     | `club-worldcup/more/<year>_clubworldcup-full.txt` (already the synced file) |
+| FIFA Club World Cup                                   | 2000–2025 (all 21) | 224     | `club-worldcup/more/<year>_clubworldcup-full.txt` (already the synced file) |
 | Premier League, La Liga, Bundesliga, Serie A, Ligue 1 | 2025-26            | 1,752   | `<country>/2025-26/*-full.txt`                                              |
 
 Checked on 2026-10-19: for every World Cup and 2025-26 league season, the `-full` file lists the same matches, scores and goals as the file we sync now, so we can take events from it without changing any match or its Wikipedia verification. No other in-scope competition or season has event data.

@@ -31,21 +31,25 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from football_api.domain.enums import Coverage, EntityType, MatchStatus, SeasonStatus, Stage, TeamKind
+from football_api.domain.enums import Coverage, EntityType, MatchStatus, SeasonStatus, Side, Stage, TeamKind
 from football_api.infra.db import get_engine, get_sessionmaker
 from football_api.infra.models import (
+    Card,
     Competition,
     ExternalRef,
     Goal,
+    LineupEntry,
     Match,
     Player,
     PlayerTeamSeason,
     Season,
+    Substitution,
     Team,
     TeamSeason,
     Venue,
 )
 from football_api.infra.settings import get_settings
+from football_api.ingestion.openfootball.events import MatchEvents, SideEvents, parse_events_file
 from football_api.ingestion.openfootball.json_reader import is_current, read_json
 from football_api.ingestion.openfootball.names import fold, short_name_matches, split_capitalised
 from football_api.ingestion.openfootball.squads import SquadPlayer, parse_more_squads, parse_per_team_squad
@@ -353,7 +357,7 @@ def occurrences(matches: list[ParsedMatch], team_of: dict[str, uuid.UUID]) -> li
     return out
 
 
-async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, path: str, occurrence: int) -> None:
+async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, path: str, occurrence: int) -> Match:
     home_id = await resolve_team(session, path, m.line_no, m.home)
     away_id = await resolve_team(session, path, m.line_no, m.away)
     stage, matchday = normalize_stage(m.round_label)
@@ -433,6 +437,116 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
     ctx.seen.add(match.id)
     if m.goals_listed:
         await sync_goals(session, ctx, match, m)
+    return match
+
+
+# --- events (match-events) ------------------------------------------------------------
+
+type MatchKey = tuple[date, uuid.UUID, uuid.UUID]  # (day as listed, home team, away team)
+
+
+async def link_events(
+    session: AsyncSession, path: str, events_file: list[tuple[ParsedMatch, MatchEvents]], synced: dict[MatchKey, list[Match]]
+) -> dict[uuid.UUID, MatchEvents]:
+    """Each events-file match → the one synced match of the same day and teams (design D2)."""
+    linked: dict[uuid.UUID, MatchEvents] = {}
+    for pm, events in events_file:
+        home_id = await resolve_team(session, path, pm.line_no, pm.home)
+        away_id = await resolve_team(session, path, pm.line_no, pm.away)
+        candidates = synced.get((pm.day, home_id, away_id), [])
+        if len(candidates) != 1:
+            found = "no synced match" if not candidates else f"{len(candidates)} synced matches"
+            raise SyncError(f"{path}:{pm.line_no}: {pm.home} v {pm.away} on {pm.day} links to {found}")
+        linked[candidates[0].id] = events
+    return linked
+
+
+def event_name(raw: str) -> str:
+    """Events files mark surnames in capitals, as squad files do: `Lionel MESSI` → `Lionel Messi`."""
+    return split_capitalised(raw).display
+
+
+async def sync_event_rows[R: (LineupEntry, Substitution, Card)](
+    session: AsyncSession, model: type[R], match_ids: list[uuid.UUID], rows: dict[tuple[uuid.UUID, Side], list[dict[str, object]]]
+) -> None:
+    """Upsert `model` rows by (match, side, ordinal) in source order; delete ordinals the source no longer has."""
+    current = {
+        (r.match_id, r.side, r.ordinal): r for r in await session.scalars(select(model).where(model.match_id.in_(match_ids)))
+    }
+    for (match_id, side), values in rows.items():
+        for ordinal, fields in enumerate(values, 1):
+            row = current.pop((match_id, side, ordinal), None)
+            if row is None:
+                row = model(match_id=match_id, side=side, ordinal=ordinal)
+                session.add(row)
+            for name, value in fields.items():
+                setattr(row, name, value)
+    if current:
+        await session.execute(delete(model).where(model.id.in_([r.id for r in current.values()])))
+
+
+async def sync_events(session: AsyncSession, ctx: SeasonContext, synced: dict[MatchKey, list[Match]]) -> None:
+    """Lineups, substitutions, cards, referee and attendance from the season's events file."""
+    matches = [m for group in synced.values() for m in group]
+    linked: dict[uuid.UUID, MatchEvents] = {}
+    if ctx.src.events:
+        events_file = parse_events_file(
+            ctx.sources / ctx.src.events, start_year=ctx.src.start_year, display_path=ctx.src.events
+        )
+        linked = await link_events(session, ctx.src.events, events_file, synced)
+
+    lineups: dict[tuple[uuid.UUID, Side], list[dict[str, object]]] = {}
+    substitutions: dict[tuple[uuid.UUID, Side], list[dict[str, object]]] = {}
+    cards: dict[tuple[uuid.UUID, Side], list[dict[str, object]]] = {}
+    for match in matches:
+        events = linked.get(match.id, MatchEvents())
+        match.referee_name = event_name(events.referee) if events.referee else None
+        match.attendance = events.attendance
+        for side, team_id, side_events in (
+            (Side.HOME, match.home_team_id, events.home),
+            (Side.AWAY, match.away_team_id, events.away),
+        ):
+            squad = ctx.squads.get(team_id, [])
+
+            def player(raw: str) -> uuid.UUID | None:
+                found = resolve_scorer(raw, squad)
+                return found.id if found else None
+
+            se = side_events or SideEvents()
+            key = (match.id, side)
+            lineups[key] = [
+                {
+                    "player_id": player(e.name), "player_name": event_name(e.name), "role": e.role,
+                    "line_index": e.line_index, "is_captain": e.is_captain,
+                }
+                for e in se.entries
+            ]
+            substitutions[key] = [
+                {
+                    "minute": s.minute, "added_minute": s.added_minute,
+                    "player_off_id": player(s.player_off), "player_off_name": event_name(s.player_off),
+                    "player_on_id": player(s.player_on), "player_on_name": event_name(s.player_on),
+                }
+                for s in se.substitutions
+            ]
+            cards[key] = [
+                {
+                    "minute": c.minute, "added_minute": c.added_minute,
+                    "player_id": player(c.name), "player_name": event_name(c.name), "kind": c.kind,
+                }
+                for c in se.cards
+            ]
+    match_ids = [m.id for m in matches]
+    await sync_event_rows(session, LineupEntry, match_ids, lineups)
+    await sync_event_rows(session, Substitution, match_ids, substitutions)
+    await sync_event_rows(session, Card, match_ids, cards)
+
+    def coverage(rows: dict[tuple[uuid.UUID, Side], list[dict[str, object]]]) -> Coverage:
+        return Coverage.FULL if any(rows.values()) else Coverage.NONE
+
+    ctx.season.lineups_coverage = coverage(lineups)
+    ctx.season.substitutions_coverage = coverage(substitutions)
+    ctx.season.cards_coverage = coverage(cards)
 
 
 def read_matches(seed: CompetitionSeed, s: SeasonSource, sources: Path) -> tuple[list[ParsedMatch], str]:
@@ -482,8 +596,13 @@ async def sync_season(session: AsyncSession, seed: CompetitionSeed, src: SeasonS
     squads_style = src.squads.style if src.squads else None
     ctx = SeasonContext(seed, src, season, sources, scorer_names_capitalised=squads_style == "more", squads=defaultdict(list))
     await sync_squads(session, ctx)
+    synced: dict[MatchKey, list[Match]] = defaultdict(list)
     for m, occurrence in zip(matches, occurrences(matches, team_of), strict=True):
-        await sync_match(session, ctx, m, path, occurrence)
+        match = await sync_match(session, ctx, m, path, occurrence)
+        same_day = synced[(m.day, match.home_team_id, match.away_team_id)]
+        if match not in same_day:  # a postponed game listed twice is one match
+            same_day.append(match)
+    await sync_events(session, ctx, synced)
 
     # Matches the source no longer lists go, with their references; goals and statuses cascade.
     stale = list(await session.scalars(select(Match.id).where(Match.season_id == season.id, Match.id.not_in(ctx.seen))))
