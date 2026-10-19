@@ -36,6 +36,7 @@
   wikidata: Q19568
   openfootball:
     - "AFC Bournemouth"
+    - "Bournemouth"
 
 - name: "Al Ahly"
   kind: CLUB
@@ -43,6 +44,13 @@
   wikidata: Q223566
   openfootball:
     - "Al Ahly FC (EGY)"
+
+- name: "Al Ain"
+  kind: CLUB
+  country: "AE"
+  wikidata: Q812720
+  openfootball:
+    - "Al Ain (UAE)"
 
 - name: "Argentina"
   kind: NATIONAL
@@ -125,6 +133,14 @@
   wikidata: Q19453
   openfootball:
     - "Brighton & Hove Albion FC"
+
+- name: "Burnley"
+  kind: CLUB
+  country: "GB-ENG"
+  wikidata: Q19458
+  openfootball:
+    - "Burnley"
+    - "Burnley FC"
 
 - name: "CA Bucaramanga"
   kind: CLUB
@@ -444,6 +460,7 @@
   openfootball:
     - "Liverpool FC"
     - "Liverpool FC (ENG)"
+    - "Liverpool"
 
 - name: "Manchester City"
   kind: CLUB
@@ -593,6 +610,13 @@
   wikidata: Q38568
   openfootball:
     - "São Paulo FC (BRA)"
+
+- name: "Team Wellington"
+  kind: CLUB
+  country: "NZ"
+  wikidata: Q542455
+  openfootball:
+    - "Team Wellington FC (NZL)"
 
 - name: "Tottenham Hotspur"
   kind: CLUB

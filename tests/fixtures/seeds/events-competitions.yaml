@@ -1,0 +1,25 @@
+# Seasons only the match-events tests sync, next to tests/fixtures/seeds/competitions.yaml.
+- name: Premier League
+  country: GB-ENG
+  team_kind: CLUB
+  scope: DOMESTIC
+  format: LEAGUE
+  wikidata: Q9448
+  seasons:
+    - label: 2025-26
+      start_year: 2025
+      file: england/2025-26/1-premierleague.txt
+      tz: Europe/London
+      json: football.json/2025-26/en.1.json
+      events: england/2025-26/1-premierleague-full.txt
+- name: FIFA Club World Cup
+  team_kind: CLUB
+  scope: INTERCONTINENTAL
+  format: TOURNAMENT
+  wikidata: Q223366
+  seasons:
+    - label: '2018'
+      start_year: 2018
+      file: club-worldcup/more/2018_clubworldcup-full.txt
+      tz: inline
+      events: club-worldcup/more/2018_clubworldcup-full.txt

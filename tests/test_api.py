@@ -127,11 +127,11 @@ async def test_seasons(client: httpx.AsyncClient) -> None:
     pl = await competition_id(client, "Premier League")
     [season] = (await get(client, f"/v1/seasons?competition_id={pl}"))["data"]
     assert (season["label"], season["competition_id"]) == ("2024-25", pl)
-    assert season["coverage"] == {"scorers": "none", "players": "none"}
+    assert season["coverage"] == {"scorers": "none", "players": "none", "lineups": "none", "substitutions": "none", "cards": "none"}
     assert await get(client, f"/v1/seasons/{season['id']}") == season
 
     wc = await get(client, f"/v1/seasons/{await season_id(client, 'FIFA World Cup')}")
-    assert (wc["starts_on"], wc["status"], wc["coverage"]) == ("2022-11-20", "COMPLETED", {"scorers": "full", "players": "full"})
+    assert (wc["starts_on"], wc["status"], wc["coverage"]) == ("2022-11-20", "COMPLETED", {"scorers": "full", "players": "full", "lineups": "full", "substitutions": "full", "cards": "full"})
 
 
 async def test_teams(client: httpx.AsyncClient) -> None:
@@ -197,7 +197,7 @@ async def test_match_expand_and_penalties(client: httpx.AsyncClient) -> None:
         3, 3, "PENALTIES", 4, 2,
     )
     assert final["venue"]["name"] == "Lusail Stadium"
-    assert final["coverage"] == {"scorers": "full"}
+    assert final["coverage"] == {"scorers": "full", "lineups": "full", "substitutions": "full", "cards": "full"}
     assert [(g["name"], g["minute"], g["is_penalty"], g["side"]) for g in final["scorers"]] == [
         ("Lionel Messi", 23, True, "HOME"),
         ("Lionel Messi", 108, False, "HOME"),
@@ -210,14 +210,62 @@ async def test_match_expand_and_penalties(client: httpx.AsyncClient) -> None:
 
     plain = await get(client, f"/v1/matches/{final['id']}")
     assert plain["home_team"] is None and plain["scorers"] is None
-    assert_error(await get(client, f"/v1/matches/{final['id']}?expand=lineups", 422), "invalid_expand")
+    assert_error(await get(client, f"/v1/matches/{final['id']}?expand=bench", 422), "invalid_expand")
+
+
+async def test_match_events(client: httpx.AsyncClient) -> None:
+    """match-events spec: lineups, substitutions, cards, referee and attendance on the match."""
+    cwc = await season_id(client, "FIFA Club World Cup")
+    url = f"/v1/matches?season_id={cwc}&stage=FINAL"
+    [final] = (await get(client, f"{url}&expand=lineups,substitutions,cards"))["data"]
+    assert (final["referee"], final["attendance"]) == ("Alireza Faghani", 81118)
+    assert final["coverage"] == {"scorers": "full", "lineups": "full", "substitutions": "full", "cards": "full"}
+
+    chelsea, psg = final["lineups"]["home"], final["lineups"]["away"]
+    assert (chelsea["formation"], psg["formation"]) == ("5-3-2", "4-3-3")
+    james = next(e for e in chelsea["entries"] if e["name"] == "Reece James")
+    assert (james["role"], james["line"], james["is_captain"]) == ("STARTER", 2, True)
+    assert james["player"]["display_name"] == "Reece James"
+    assert [e["role"] for e in chelsea["entries"]] == ["STARTER"] * 11 + ["SUBSTITUTE"] * 4
+
+    assert {"side": "AWAY", "minute": 85, "added_minute": None, "kind": "RED", "name": "Joao Neves"} == {
+        k: v for k, v in next(c for c in final["cards"] if c["kind"] == "RED").items() if k != "player"
+    }
+    minutes = [(c["minute"], c["added_minute"] or 0) for c in final["cards"]]
+    assert minutes == sorted(minutes)
+    subs = final["substitutions"]
+    assert [(s["minute"], s["side"]) for s in subs][:2] == [(58, "AWAY"), (61, "HOME")]
+    assert (subs[1]["player_off_name"], subs[1]["player_on_name"]) == ("Enzo Fernandez", "Andrey Santos")
+    assert subs[1]["player_off"]["display_name"] == "Enzo Fernandez"
+
+    [plain] = (await get(client, url))["data"]
+    assert plain["lineups"] is None and plain["substitutions"] is None and plain["cards"] is None
+    assert plain["referee"] == "Alireza Faghani"
+
+
+async def test_match_without_events(client: httpx.AsyncClient) -> None:
+    pl_season = await season_id(client, "Premier League")
+    [match] = (await get(client, f"/v1/matches?season_id={pl_season}&limit=1&expand=lineups,substitutions,cards"))["data"]
+    assert match["lineups"] == {"home": {"formation": None, "entries": []}, "away": {"formation": None, "entries": []}}
+    assert match["substitutions"] == match["cards"] == []
+    assert (match["referee"], match["attendance"]) == (None, None)
+
+
+async def test_openapi_documents_match_events(client: httpx.AsyncClient) -> None:
+    spec = await get(client, "/openapi.json")
+    schemas = spec["components"]["schemas"]
+    assert {"referee", "attendance", "lineups", "substitutions", "cards"} <= set(schemas["MatchOut"]["properties"])
+    assert set(schemas["MatchCoverage"]["properties"]) == {"scorers", "lineups", "substitutions", "cards"}
+    assert {"lineups", "substitutions", "cards"} <= set(schemas["SeasonCoverage"]["properties"])
+    assert "source groups" in schemas["LineupOut"]["properties"]["formation"]["description"]
+    assert "Club World Cup" in schemas["SeasonCoverage"]["properties"]["lineups"]["description"]
 
 
 async def test_partial_coverage_is_exposed_honestly(client: httpx.AsyncClient) -> None:
     pl_season = await season_id(client, "Premier League")
     [match] = (await get(client, f"/v1/matches?season_id={pl_season}&limit=1&expand=scorers"))["data"]
     assert match["scorers"] == []
-    assert match["coverage"] == {"scorers": "none"}
+    assert match["coverage"] == {"scorers": "none", "lineups": "none", "substitutions": "none", "cards": "none"}
 
 
 async def test_venues(client: httpx.AsyncClient) -> None:

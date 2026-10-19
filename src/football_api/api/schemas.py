@@ -7,10 +7,12 @@ from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
 
 from football_api.domain.enums import (
+    CardKind,
     CompetitionFormat,
     CompetitionScope,
     Coverage,
     DecidedBy,
+    LineupRole,
     MatchStatus,
     SeasonStatus,
     Side,
@@ -42,9 +44,23 @@ class CompetitionOut(_Out):
     )
 
 
+_EVENTS_SOURCES = (
+    "Sources with events: every FIFA World Cup (1930–2026) and FIFA Club World Cup (2000–2025), and the 2025-26 "
+    "Premier League, La Liga, Bundesliga, Serie A and Ligue 1"
+)
+
+
 class SeasonCoverage(BaseModel):
     scorers: Coverage = Field(description="`full` when the source lists goal scorers for this season")
     players: Coverage = Field(description="`full` when the source publishes squad lists for this season")
+    lineups: Coverage = Field(description=f"`full` when the source lists the line-ups of this season's matches. {_EVENTS_SOURCES}")
+    substitutions: Coverage = Field(
+        description="`full` when the source lists substitutions. `none` for Club World Cup 2018 and 2019, whose "
+        "source lists starters only, and for World Cups before 1970, which allowed no substitutions"
+    )
+    cards: Coverage = Field(
+        description="`full` when the source lists cards. A match without cards in a `full` season had none"
+    )
 
 
 class SeasonOut(_Out):
@@ -90,7 +106,7 @@ class VenueOut(_Out):
     country: str | None
 
 
-class GoalPlayerRef(BaseModel):
+class PlayerRef(BaseModel):
     id: uuid.UUID
     display_name: str
 
@@ -98,7 +114,7 @@ class GoalPlayerRef(BaseModel):
 class GoalOut(BaseModel):
     ordinal: int
     side: Side
-    player: GoalPlayerRef | None = Field(description="Resolved squad player; null when the source name is ambiguous")
+    player: PlayerRef | None = Field(description="Resolved squad player; null when the source name is ambiguous")
     name: str = Field(description="Scorer name as shown (player's display name, or the source text)")
     minute: int | None
     added_minute: int | None = Field(description="Added time, e.g. 5 for `90+5'`")
@@ -106,8 +122,55 @@ class GoalOut(BaseModel):
     is_own_goal: bool
 
 
+_EVENT_PLAYER = "Squad player the source name resolves to; null without squads or when the name is ambiguous"
+
+
+class LineupEntryOut(BaseModel):
+    player: PlayerRef | None = Field(description=_EVENT_PLAYER)
+    name: str = Field(description="Player name as the source gives it", examples=["Reece James"])
+    role: LineupRole = Field(description="`STARTER`, or `SUBSTITUTE` for a player who came on; unused substitutes aren't listed")
+    line: int | None = Field(description="1-based line group the source lists a starter in (goalkeeper first); null for substitutes")
+    is_captain: bool
+
+
+class LineupOut(BaseModel):
+    formation: str | None = Field(
+        description="Starters per source line group after the goalkeeper, e.g. `4-3-3`. It reflects how the source "
+        "groups the line-up, not a verified tactical shape; null when the source doesn't group it",
+        examples=["4-3-3"],
+    )
+    entries: list[LineupEntryOut] = Field(description="Starters in source order, then the substitutes who came on")
+
+
+class LineupsOut(BaseModel):
+    home: LineupOut
+    away: LineupOut
+
+
+class SubstitutionOut(BaseModel):
+    side: Side
+    minute: int
+    added_minute: int | None = Field(description="Added time, e.g. 5 for `90+5'`")
+    player_off: PlayerRef | None = Field(description=_EVENT_PLAYER)
+    player_off_name: str
+    player_on: PlayerRef | None = Field(description=_EVENT_PLAYER)
+    player_on_name: str
+
+
+class CardOut(BaseModel):
+    side: Side
+    minute: int
+    added_minute: int | None = Field(description="Added time, e.g. 2 for `90+2'`")
+    kind: CardKind = Field(description="`SECOND_YELLOW` is the sending-off; the first yellow is its own `YELLOW` card")
+    player: PlayerRef | None = Field(description=_EVENT_PLAYER)
+    name: str
+
+
 class MatchCoverage(BaseModel):
     scorers: Coverage
+    lineups: Coverage = Field(description="The season's `lineups` coverage")
+    substitutions: Coverage = Field(description="The season's `substitutions` coverage")
+    cards: Coverage = Field(description="The season's `cards` coverage")
 
 
 class MatchVerificationOut(BaseModel):
@@ -145,6 +208,8 @@ class MatchOut(BaseModel):
         description="Decided off the pitch (forfeit or disciplinary decision), as the source marks it; the score is "
         "the one the source records, which can be the score when play stopped"
     )
+    referee: str | None = Field(description="Referee's name, when the source gives it", examples=["Alireza Faghani"])
+    attendance: int | None = Field(description="Spectators, when the source gives it", examples=[81118])
     coverage: MatchCoverage
     verification: MatchVerificationOut | None = Field(
         description="Score check against an independent open reference; null when the match isn't verified. "
@@ -154,6 +219,13 @@ class MatchOut(BaseModel):
     away_team: TeamOut | None = Field(default=None, description="Present with `expand=teams`")
     venue: VenueOut | None = Field(default=None, description="Present with `expand=venue`")
     scorers: list[GoalOut] | None = Field(default=None, description="Present with `expand=scorers`")
+    lineups: LineupsOut | None = Field(default=None, description="Present with `expand=lineups`")
+    substitutions: list[SubstitutionOut] | None = Field(
+        default=None, description="Present with `expand=substitutions`; ordered by minute, then source order"
+    )
+    cards: list[CardOut] | None = Field(
+        default=None, description="Present with `expand=cards`; ordered by minute, then source order"
+    )
 
 
 class Page[T](BaseModel):

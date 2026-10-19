@@ -26,11 +26,13 @@ from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from football_api.domain.enums import (
+    CardKind,
     CompetitionFormat,
     CompetitionScope,
     Coverage,
     DecidedBy,
     EntityType,
+    LineupRole,
     MatchStatus,
     SeasonStatus,
     Side,
@@ -87,6 +89,11 @@ class Season(Base):
     status: Mapped[SeasonStatus] = mapped_column(_enum(SeasonStatus, "season_status"))
     scorers_coverage: Mapped[Coverage] = mapped_column(_enum(Coverage, "coverage"))
     players_coverage: Mapped[Coverage] = mapped_column(_enum(Coverage, "coverage"))
+    lineups_coverage: Mapped[Coverage] = mapped_column(_enum(Coverage, "coverage"), server_default=Coverage.NONE.value)
+    substitutions_coverage: Mapped[Coverage] = mapped_column(
+        _enum(Coverage, "coverage"), server_default=Coverage.NONE.value
+    )
+    cards_coverage: Mapped[Coverage] = mapped_column(_enum(Coverage, "coverage"), server_default=Coverage.NONE.value)
 
 
 class Team(Base):
@@ -170,6 +177,8 @@ class Match(Base):
     occurrence: Mapped[int] = mapped_column(SmallInteger, server_default=text("1"))
     # Decided off the pitch (forfeit or disciplinary decision); the score is whatever the source records.
     awarded: Mapped[bool] = mapped_column(server_default=text("false"))
+    referee_name: Mapped[str | None] = mapped_column(String(128))
+    attendance: Mapped[int | None]
 
 
 class Goal(Base):
@@ -186,6 +195,55 @@ class Goal(Base):
     added_minute: Mapped[int | None] = mapped_column(SmallInteger)
     is_own_goal: Mapped[bool] = mapped_column(default=False)
     is_penalty: Mapped[bool] = mapped_column(default=False)
+
+
+class LineupEntry(Base):
+    """A player who appeared for a side: a starter, or a substitute who came on (match-events)."""
+
+    __tablename__ = "lineup_entry"
+    __table_args__ = (UniqueConstraint("match_id", "side", "ordinal"),)
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    match_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("match.id", ondelete="CASCADE"))
+    side: Mapped[Side] = mapped_column(_enum(Side, "side"))
+    ordinal: Mapped[int] = mapped_column(SmallInteger)
+    player_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("player.id"))
+    player_name: Mapped[str] = mapped_column(String(128))
+    role: Mapped[LineupRole] = mapped_column(_enum(LineupRole, "lineup_role"))
+    # 1-based source line group of a starter (`GK - DEF - MID - FWD`); null for substitutes.
+    line_index: Mapped[int | None] = mapped_column(SmallInteger)
+    is_captain: Mapped[bool] = mapped_column(default=False)
+
+
+class Substitution(Base):
+    __tablename__ = "substitution"
+    __table_args__ = (UniqueConstraint("match_id", "side", "ordinal"),)
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    match_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("match.id", ondelete="CASCADE"))
+    side: Mapped[Side] = mapped_column(_enum(Side, "side"))
+    ordinal: Mapped[int] = mapped_column(SmallInteger)
+    minute: Mapped[int] = mapped_column(SmallInteger)
+    added_minute: Mapped[int | None] = mapped_column(SmallInteger)
+    player_off_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("player.id"))
+    player_off_name: Mapped[str] = mapped_column(String(128))
+    player_on_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("player.id"))
+    player_on_name: Mapped[str] = mapped_column(String(128))
+
+
+class Card(Base):
+    __tablename__ = "card"
+    __table_args__ = (UniqueConstraint("match_id", "side", "ordinal"),)
+
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    match_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("match.id", ondelete="CASCADE"))
+    side: Mapped[Side] = mapped_column(_enum(Side, "side"))
+    ordinal: Mapped[int] = mapped_column(SmallInteger)
+    minute: Mapped[int] = mapped_column(SmallInteger)
+    added_minute: Mapped[int | None] = mapped_column(SmallInteger)
+    player_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("player.id"))
+    player_name: Mapped[str] = mapped_column(String(128))
+    kind: Mapped[CardKind] = mapped_column(_enum(CardKind, "card_kind"))
 
 
 class StandingVerification(Base):

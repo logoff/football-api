@@ -166,7 +166,7 @@ The system SHALL embed lineups (with per-side formation), substitutions and card
 #### Scenario: Not expanded
 
 - **WHEN** a client GETs `/v1/matches/{id}` without `expand`
-- **THEN** the response contains no `lineups`, `substitutions` or `cards` keys
+- **THEN** its `lineups`, `substitutions` and `cards` are null, like every other unexpanded field
 
 ### Requirement: Event coverage
 

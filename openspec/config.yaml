@@ -35,9 +35,12 @@ context: |
 
   Data depth: entities + schedule + final scores (incl. extra time and
   penalty shootouts). Goal scorers and squads: full for WC, Euro,
-  Copa América, Club World Cup; none elsewhere. Lineups, substitutions
-  and cards: Club World Cup 2025 only (change add-match-events).
-  Coverage is reported per resource via a `coverage` field.
+  Copa América, Club World Cup; none elsewhere. Lineups, substitutions,
+  cards, referee and attendance (change add-match-events): every World
+  Cup and Club World Cup, and the 2025-26 seasons of the five leagues,
+  from openfootball `-full` files named per season as `events:`.
+  Coverage is reported per resource via a `coverage` field (per season:
+  scorers, players, lineups, substitutions, cards).
 
   Competition schema uses two orthogonal fields: team_kind (CLUB |
   NATIONAL) and scope (DOMESTIC | CONTINENTAL | INTERCONTINENTAL).

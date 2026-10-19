@@ -58,6 +58,9 @@ class SeasonSource(_Seed):
     file: str
     tz: str = Field(description="IANA zone of the file's kickoff times, or `inline`")
     json_file: str | None = Field(default=None, alias="json")
+    events: str | None = Field(
+        default=None, description="openfootball `-full` text file with the season's lineups, substitutions and cards"
+    )
     squads: SquadSource | None = None
     wikipedia: str | None = Field(
         default=None, description="English Wikipedia article whose results grid verifies this season"

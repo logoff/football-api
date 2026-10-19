@@ -44,6 +44,17 @@ class Side(StrEnum):
     AWAY = "AWAY"
 
 
+class LineupRole(StrEnum):
+    STARTER = "STARTER"
+    SUBSTITUTE = "SUBSTITUTE"  # came on during the match; the unused bench isn't recorded
+
+
+class CardKind(StrEnum):
+    YELLOW = "YELLOW"
+    SECOND_YELLOW = "SECOND_YELLOW"  # the sending-off; the first yellow is its own card
+    RED = "RED"
+
+
 class EntityType(StrEnum):
     COMPETITION = "competition"
     SEASON = "season"

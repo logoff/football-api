@@ -1,0 +1,36 @@
+= Club World Cup 2018
+
+# Dates    Wed Dec 12 - Sat Dec 22 2018 (10d)
+# Teams    7
+#   Al Ain (UAE)
+#   Team Wellington FC (NZL)
+#   Kashima Antlers (JPN)
+#   Guadalajara (MEX)
+#   ES Tunis (TUN)
+#   River Plate (ARG)
+#   Real Madrid (ESP)
+# Matches  8
+# Venues   2 (in 2 cities)
+#   Zayed Sports City Stadium, Abu Dhabi (UAE)
+#   Hazza Bin Zayed Stadium, Al Ain (UAE)
+
+▪ 1st Round
+Wed Dec 12 19:30 UTC+4 @ Hazza Bin Zayed Stadium, Al Ain, Att: 15279
+  Al Ain (UAE) v Team Wellington FC (NZL)  3-3 a.e.t., 4-3 pen.
+     (Tsukasa SHIOTANI 45', 120+6', Tongo DOUMBIA 49', Marcus BERG 85', Ibrahim DIAKY 120+1', HUSSEIN ELSHAHAT 120+5', CAIO 120+8';
+      Mario BARCIA 11', Aaron CLAPHAM 15', Mario ILICH 44', 120+5', Ross ALLEN 120+2', Hamish WATSON 120+7')
+
+Penalties: 1-0 Ibrahim DIAKY, 1-1 Ross ALLEN,
+           2-1 HUSSEIN ELSHAHAT, 2-2 Mario ILICH,
+           3-2 Tsukasa SHIOTANI, 3-3 Hamish WATSON,
+           4-3 CAIO
+
+Al Ain: Tongo DOUMBIA, ISMAIL AHMED [c], CAIO, AHMED BARMAN, MOHAMED ABDULRAHMAN,
+      KHALID EISA, MOHANAD SALEM, MOHAMED AHMAD, Tsukasa SHIOTANI, HUSSEIN ELSHAHAT,
+      JAMAL MAROOF
+Team Wellington FC: Scott BASALAJ, Justin GULLEY [c], Scott HILLIAR, Mario ILICH, Taylor SCHRIJVERS,
+      Henry CAMERON, Mario BARCIA, Andy BEVIN, Jack-Henry SINCLAIR, Aaron CLAPHAM,
+      Hamish WATSON
+
+Refs: Ryuji Sato (JPN), Toru SAGARA (JPN), Hiroshi Yamauchi (JPN)
+

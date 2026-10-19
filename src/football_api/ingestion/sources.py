@@ -15,7 +15,7 @@ def repos_for(competitions: list[CompetitionSeed]) -> list[str]:
     repos: set[str] = set()
     for comp in competitions:
         for season in comp.seasons:
-            paths = [season.file, *([season.json_file] if season.json_file else [])]
+            paths = [season.file, *(p for p in (season.json_file, season.events) if p)]
             if season.squads:
                 paths += season.squads.files
             repos |= {p.split("/", 1)[0] for p in paths}
