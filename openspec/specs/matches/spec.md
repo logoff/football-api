@@ -17,6 +17,7 @@ The system SHALL store each match with:
 - a kickoff timestamp in UTC, and an optional `original_kickoff_utc` set when the kickoff is first observed to change
 - a status: `SCHEDULED`, `COMPLETED`, `CANCELLED`, `POSTPONED`
 - home and away scores at the end of play, including extra time (nullable until `COMPLETED`); for an awarded match, the score the source records
+- the referee's name and the attendance, both nullable (see `match-events`)
 - `awarded`: `true` when the result was decided off the pitch (forfeit or disciplinary decision), as the source marks it; otherwise `false`
 - `decided_by`: `REGULAR`, `EXTRA_TIME`, or `PENALTIES` (nullable until `COMPLETED`)
 - home and away penalty-shootout scores (null unless `decided_by` is `PENALTIES`)
@@ -37,6 +38,11 @@ The system SHALL store each match with:
 
 - **WHEN** a client GETs `/v1/matches/{id}?expand=teams,venue,scorers`
 - **THEN** the response embeds the home/away team objects, the venue object (when present), and the array of goal records
+
+#### Scenario: Coverage on a match
+
+- **WHEN** a client GETs any match
+- **THEN** its `coverage` has `scorers`, `lineups`, `substitutions` and `cards`, each `full` or `none`, with its season's values
 
 #### Scenario: Match decided on penalties
 
