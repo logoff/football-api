@@ -2,34 +2,49 @@
 
 ## Why
 
-v0.1 (`init-football-api-v0.1`) stops at final scores and goal scorers. Lineups, substitutions and cards are the next layer clients expect from a football API, and one in-scope source already publishes them completely: `openfootball/club-worldcup/more/2025_clubworldcup-full.txt` carries lineups, substitutions, cards, captain, referee and attendance for all 63 matches of the FIFA Club World Cup 2025. Starting there proves the event model on real, complete data before widening to other competitions.
+The API stops at final scores and goal scorers. Lineups, substitutions and cards are the next layer clients expect from a football API. openfootball already publishes them, in `-full` files that sit next to the files we sync, for about 3,000 matches we already hold:
 
-**Depends on:** `init-football-api-v0.1` (match, player, squad, and goal model; reconciliation rules; API conventions).
+| Competition                                           | Seasons            | Matches | Source                                                                      |
+| ----------------------------------------------------- | ------------------ | ------- | --------------------------------------------------------------------------- |
+| FIFA World Cup                                        | 1930–2026 (all 23) | 1,068   | `worldcup/more/<year>_full.txt`                                             |
+| FIFA Club World Cup                                   | 2000–2025 (all 21) | 222     | `club-worldcup/more/<year>_clubworldcup-full.txt` (already the synced file) |
+| Premier League, La Liga, Bundesliga, Serie A, Ligue 1 | 2025-26            | 1,752   | `<country>/2025-26/*-full.txt`                                              |
+
+Checked on 2026-10-19: for every World Cup and 2025-26 league season, the `-full` file lists the same matches, scores and goals as the file we sync now, so we can take events from it without changing any match or its Wikipedia verification. No other in-scope competition or season has event data.
 
 ## What Changes
 
-- Ingest, for **FIFA Club World Cup 2025 only**:
-  - **Lineups** — starting XI and substitutes who came on, with captain flag and the source's line grouping (`GK - DEF - MID - FWD`), from which a formation string (e.g. `4-3-3`) is derived.
-  - **Substitutions** — minute, player off, player on, side; including chained substitutions (`(14' ZIZO (79' MOHAMED AFSHA))`).
-  - **Cards** — `YELLOW`, `SECOND_YELLOW`, `RED`, with minute and player.
-  - **Referee name** and **attendance** on the match.
-- Expose them on the existing match resource via `GET /v1/matches/{id}?expand=lineups,substitutions,cards`, plus `referee` and `attendance` fields on the match.
-- Add `coverage.events` to every match: `full` for Club World Cup 2025, `none` elsewhere.
-- Event minutes carry added time separately (`90+5'` → minute 90, added 5).
+- **Events from a separate source file per season.** A new optional `events:` field on a season in `seeds/competitions.yaml` names its `-full` file. Matches, scores and goals still come from `file:` (or its JSON mirror), so nothing that's synced and verified today changes.
+- **One parser for two text notations:**
+  - *inline* (World Cup, Club World Cup): cards as tags on the player, `Reece JAMES [Y 81']`, `[R 85']`, `[Y 20'] [Y/R 78']`;
+  - *card lines* (2025-26 leagues): cards listed after each lineup, `Yellow: Milos KERKEZ 43', …`, `Yellow-Red: …`, `Red: …`.
+    Both share the lineup notation: line groups separated by `-`, `[c]` for the captain, substitutions in brackets, chained ones nested (`EMAM ASHOUR (14' ZIZO (79' MOHAMED AFSHA))`).
+- **Stored per match:** lineups (starters and the substitutes who came on, captain, source line group), substitutions, cards (`YELLOW`, `SECOND_YELLOW`, `RED`), the referee's name and the attendance.
+- **API:** `GET /v1/matches` and `/v1/matches/{id}` accept `expand=lineups,substitutions,cards`; `referee` and `attendance` are always present (nullable). Lineups carry a per-side `formation` derived from the source's line groups.
+- **Coverage per part, per season**, like `scorers` today: `coverage.lineups`, `coverage.substitutions` and `coverage.cards` on matches and seasons, each `full` or `none`, worked out from what the season's events file contains. Club World Cup 2018 and 2019, for example, list starting line-ups but no substitutions or cards.
+- Player names link to a squad player where the season has squads (World Cup 2022, Club World Cup 2025). Everywhere else they're stored as names, as goal scorers are today.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `match-events`: lineups, substitutions, cards, referee and attendance for a match — how they are ingested, identified, and exposed through the match resource, and how per-match event coverage is reported.
+- `match-events`: lineups, substitutions, cards, referee and attendance: how they're parsed from both notations, linked to matches and players, exposed, and how per-season coverage is reported.
 
 ### Modified Capabilities
 
-None. `matches` is introduced by `init-football-api-v0.1`, which is not yet archived; this change only adds fields and expand values alongside it and does not alter its requirements.
+- `matches`: the match record gains `referee` and `attendance`, its `coverage` gains `lineups`, `substitutions` and `cards`, and `expand` gains the three event values.
+- `ingestion`: seasons can name an events file; the idempotency rules gain natural keys for lineup entries, substitutions and cards; matches removed from the source take their events with them.
 
 ## Impact
 
-- **Schema:** new tables `lineup_entry`, `substitution`, `card`; new nullable columns `match.referee_name`, `match.attendance`. Additive Alembic migration.
-- **Ingestion:** new parser for the `-full` file's lineup/event block; reuses v0.1 squad resolution and name normalisation.
-- **API:** new `expand` values and fields on `/v1/matches/{id}` and `/v1/matches`; no breaking changes.
-- **Out of scope:** events for any other competition (WC 2022 / Euro `-full` files not yet verified), xG, shots, pitch positions, referees as an entity, per-event external IDs.
+- **Schema:** new tables `lineup_entry`, `substitution`, `card`; new nullable columns `match.referee_name`, `match.attendance`; new season columns `lineups_coverage`, `substitutions_coverage`, `cards_coverage`. One additive Alembic migration.
+- **Seeds:** `events:` on the 23 World Cup, 21 Club World Cup and five 2025-26 league seasons.
+- **Ingestion:** a lineup-block parser, and a step in `sync_season` that links each events-file match to its synced match.
+- **API:** new fields and `expand` values; no breaking changes.
+- **Out of scope:**
+  - Squads for the other World Cup and Club World Cup editions. openfootball has them (`<year>_squads.txt`), so a follow-up change can add them and lineups will start linking to players.
+  - Venues and inline UTC offsets from the `-full` files.
+  - Unused substitutes (the bench). Only the JSON mirrors list it, and only for England and Germany.
+  - Verifying events against Wikipedia.
+  - Assistant referees, referees as an entity, xG, shots, pitch positions.
+  - The 2026-27 league season: openfootball has no `-full` file for it yet. When one appears, adding `events:` to the seed is enough.
