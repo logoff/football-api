@@ -10,6 +10,7 @@ import logging
 import uuid
 from collections import Counter
 from datetime import UTC, date, datetime, timedelta
+from functools import cache
 from typing import Protocol
 
 from sqlalchemy import delete, select
@@ -20,7 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from football_api.domain.enums import CompetitionFormat, DecidedBy, EntityType, Stage, VerificationReference, VerificationStatus
 from football_api.infra.db import get_sessionmaker
 from football_api.infra.models import ExternalRef, Match, MatchVerification, Season, StandingVerification, Team
-from football_api.ingestion.seeds import CompetitionSeed, SeasonSource
+from football_api.ingestion.seeds import CompetitionSeed, SeasonSource, load_teams
 from football_api.ingestion.wikipedia import MatchBox, ResultsGrid, StandingsLine, StandingsTable, WikipediaUnavailable
 from football_api.season_tables import season_tables, wikidata_ids
 
@@ -261,6 +262,18 @@ def _flip(score: tuple[int, int] | None) -> tuple[int, int] | None:
     return (score[1], score[0]) if score else None
 
 
+@cache
+def _seeded_qid_of_reference() -> dict[str, str]:
+    """Wikidata items references use for a seeded team that has its own (the Dutch East Indies of
+    1938, which Wikipedia links as Indonesia) → that team's item."""
+    return {ref: t.wikidata for t in load_teams() if t.wikidata for ref in t.reference_wikidata}
+
+
+def _as_seeded(title_qids: dict[str, str]) -> dict[str, str]:
+    seeded = _seeded_qid_of_reference()
+    return {title: seeded.get(qid, qid) for title, qid in title_qids.items()}
+
+
 async def verify_seasons(
     targets: list[tuple[CompetitionSeed, SeasonSource]], reference: ResultsReference, *, now: datetime | None = None
 ) -> None:
@@ -294,14 +307,14 @@ async def _verify_matches(
             if not boxes:
                 log.warning("%s: no match boxes in %r; statuses unchanged", label, src.wikipedia)
                 return
-            title_qids = await reference.qids(sorted({t for b in boxes for t in (b.home, b.away)}))
+            title_qids = _as_seeded(await reference.qids(sorted({t for b in boxes for t in (b.home, b.away)})))
             grid = None
         else:
             grid = await reference.results_grid(src.wikipedia)
             if grid is None:
                 log.warning("%s: no results grid in %r; statuses unchanged", label, src.wikipedia)
                 return
-            title_qids = await reference.qids(grid.teams)
+            title_qids = _as_seeded(await reference.qids(grid.teams))
             boxes = []
     except WikipediaUnavailable as exc:
         log.warning("%s: reference unavailable (%s); statuses unchanged", label, exc)
@@ -355,7 +368,7 @@ async def verify_standings(
             return
         try:
             wiki = await reference.standings(src.wikipedia, qualifying=await _stores_qualifying(seed, src))
-            title_qids = await reference.qids(sorted({line.team for table in wiki for line in table}))
+            title_qids = _as_seeded(await reference.qids(sorted({line.team for table in wiki for line in table})))
         except WikipediaUnavailable as exc:
             log.warning("%s: standings reference unavailable (%s); no standings statuses", label, exc)
             return

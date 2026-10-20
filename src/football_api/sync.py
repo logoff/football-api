@@ -54,7 +54,14 @@ from football_api.ingestion.openfootball.json_reader import is_current, read_jso
 from football_api.ingestion.openfootball.names import fold, short_name_matches, split_capitalised
 from football_api.ingestion.openfootball.squads import SquadPlayer, parse_more_squads, parse_per_team_squad
 from football_api.ingestion.openfootball.text_parser import ParsedMatch, normalize_stage, parse_file
-from football_api.ingestion.seeds import CompetitionSeed, SeasonSource, TeamSeed, load_competitions, load_teams
+from football_api.ingestion.seeds import (
+    CompetitionSeed,
+    SeasonSource,
+    TeamSeed,
+    load_competitions,
+    load_teams,
+    parse_scoped_key,
+)
 from football_api.ingestion.sources import ensure_sources
 from football_api.ingestion.wikidata import WikidataUnavailable, verify_qids
 from football_api.ingestion.wikipedia import WikipediaClient
@@ -138,7 +145,7 @@ async def find_team(session: AsyncSession, seed: TeamSeed) -> Team | None:
 
     Entries carry no key of our own, so editing a name never creates a second team.
     """
-    refs = [(OPENFOOTBALL, alias) for alias in seed.openfootball]
+    refs = [(OPENFOOTBALL, alias) for alias in seed.spelling_keys]
     if seed.wikidata:
         refs.append((WIKIDATA, seed.wikidata))
     known = {team_id for source, source_id in refs if (team_id := await lookup_ref(session, EntityType.TEAM, source, source_id))}
@@ -157,7 +164,7 @@ async def release_moved_aliases(session: AsyncSession, seeds: list[TeamSeed]) ->
         if seed.wikidata and (team_id := await lookup_ref(session, EntityType.TEAM, WIKIDATA, seed.wikidata)):
             owner_by_team[team_id] = i
     for i, seed in enumerate(seeds):
-        for alias in seed.openfootball:
+        for alias in seed.spelling_keys:
             team_id = await lookup_ref(session, EntityType.TEAM, OPENFOOTBALL, alias)
             if team_id is not None and owner_by_team.get(team_id, i) != i:
                 log.info("teams.yaml: alias %r moves from %s to %r", alias, team_id, seed.name)
@@ -179,8 +186,17 @@ async def sync_teams(session: AsyncSession, seeds: list[TeamSeed]) -> None:
             session.add(team)
         team.name, team.country, team.kind = seed.name, seed.country, seed.kind
         await session.flush()
-        for alias in seed.openfootball:
+        for alias in seed.spelling_keys:
             await ensure_ref(session, EntityType.TEAM, team.id, OPENFOOTBALL, alias)
+        # A spelling removed from the entry (or made year-scoped) no longer names the team.
+        await session.execute(
+            delete(ExternalRef).where(
+                ExternalRef.entity_type == EntityType.TEAM,
+                ExternalRef.entity_id == team.id,
+                ExternalRef.source == OPENFOOTBALL,
+                ExternalRef.source_id.not_in(seed.spelling_keys),
+            )
+        )
         if seed.wikidata:
             # A corrected QID replaces the old one rather than sitting next to it.
             await session.execute(
@@ -225,11 +241,24 @@ class SeasonContext:
     seen: set[uuid.UUID] = field(default_factory=lambda: set[uuid.UUID]())  # matches this sync matched or created
 
 
-async def resolve_team(session: AsyncSession, path: str, line_no: int, name: str) -> uuid.UUID:
+async def resolve_team(session: AsyncSession, path: str, line_no: int, name: str, year: int) -> uuid.UUID:
+    """The team a source spelling names in a season starting in `year`: a plain spelling, or
+    the one year-scoped spelling of that name whose years cover the season."""
     team_id = await lookup_ref(session, EntityType.TEAM, OPENFOOTBALL, name)
-    if team_id is None:
-        raise UnknownTeamError(path, line_no, name)
-    return team_id
+    if team_id is not None:
+        return team_id
+    rows = await session.execute(
+        select(ExternalRef.source_id, ExternalRef.entity_id).where(
+            ExternalRef.entity_type == EntityType.TEAM,
+            ExternalRef.source == OPENFOOTBALL,
+            ExternalRef.source_id.startswith(f"{name} @", autoescape=True),
+        )
+    )
+    for key, entity_id in rows:
+        parsed = parse_scoped_key(key)
+        if parsed and parsed[0] == name and (parsed[1] is None or year >= parsed[1]) and (parsed[2] is None or year <= parsed[2]):
+            return entity_id
+    raise UnknownTeamError(path, line_no, name)
 
 
 def kickoff_utc(m: ParsedMatch, tz: str, path: str) -> datetime:
@@ -292,8 +321,21 @@ async def sync_squads(session: AsyncSession, ctx: SeasonContext) -> None:
     existing: dict[tuple[uuid.UUID, str], Player] = {(team_id, p.display_name): p for team_id, p in existing_rows}
 
     for sp in players:
-        team_id = await resolve_team(session, squad_src.files[0], 0, sp.team)
+        team_id = await resolve_team(session, squad_src.files[0], 0, sp.team, ctx.src.start_year)
+        key = f"{ctx.src.file}#{sp.team}#{sp.name.display}"
         player = existing.get((team_id, sp.name.display))
+        if player is None and (listed := await lookup_ref(session, EntityType.PLAYER, OPENFOOTBALL, key)):
+            # The same squad listing, now resolving to another team (a spelling scoped by years in
+            # teams.yaml): the player follows it, keeping its UUID.
+            player = await session.get(Player, listed)
+            if player is not None:
+                await session.execute(
+                    delete(PlayerTeamSeason).where(
+                        PlayerTeamSeason.player_id == player.id, PlayerTeamSeason.season_id == ctx.season.id
+                    )
+                )
+                session.add(PlayerTeamSeason(player_id=player.id, team_id=team_id, season_id=ctx.season.id))
+                existing[(team_id, sp.name.display)] = player
         if player is None:
             player = Player(display_name=sp.name.display)
             session.add(player)
@@ -307,9 +349,7 @@ async def sync_squads(session: AsyncSession, ctx: SeasonContext) -> None:
         pts = await session.get(PlayerTeamSeason, (player.id, team_id, ctx.season.id))
         if pts is not None:
             pts.shirt_number = sp.shirt_number
-        await ensure_ref(
-            session, EntityType.PLAYER, player.id, OPENFOOTBALL, f"{ctx.src.file}#{sp.team}#{sp.name.display}"
-        )
+        await ensure_ref(session, EntityType.PLAYER, player.id, OPENFOOTBALL, key)
         ctx.squads.setdefault(team_id, []).append((player, sp.name.display))
     await session.flush()
 
@@ -363,8 +403,8 @@ def occurrences(matches: list[ParsedMatch], team_of: dict[str, uuid.UUID]) -> li
 
 
 async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, path: str, occurrence: int) -> Match:
-    home_id = await resolve_team(session, path, m.line_no, m.home)
-    away_id = await resolve_team(session, path, m.line_no, m.away)
+    home_id = await resolve_team(session, path, m.line_no, m.home, ctx.src.start_year)
+    away_id = await resolve_team(session, path, m.line_no, m.away, ctx.src.start_year)
     stage, matchday = normalize_stage(m.round_label)
     kickoff = kickoff_utc(m, ctx.src.tz, path)
     key = f"{path}#{stage.value}#{m.home}#{m.away}" + (f"#{occurrence}" if occurrence > 1 else "")
@@ -451,13 +491,17 @@ type MatchKey = tuple[date, uuid.UUID, uuid.UUID]  # (day as listed, home team, 
 
 
 async def link_events(
-    session: AsyncSession, path: str, events_file: list[tuple[ParsedMatch, MatchEvents]], synced: dict[MatchKey, list[Match]]
+    session: AsyncSession,
+    path: str,
+    events_file: list[tuple[ParsedMatch, MatchEvents]],
+    synced: dict[MatchKey, list[Match]],
+    year: int,
 ) -> dict[uuid.UUID, MatchEvents]:
     """Each events-file match → the one synced match of the same day and teams (design D2)."""
     linked: dict[uuid.UUID, MatchEvents] = {}
     for pm, events in events_file:
-        home_id = await resolve_team(session, path, pm.line_no, pm.home)
-        away_id = await resolve_team(session, path, pm.line_no, pm.away)
+        home_id = await resolve_team(session, path, pm.line_no, pm.home, year)
+        away_id = await resolve_team(session, path, pm.line_no, pm.away, year)
         candidates = synced.get((pm.day, home_id, away_id), [])
         if len(candidates) != 1:
             found = "no synced match" if not candidates else f"{len(candidates)} synced matches"
@@ -498,7 +542,7 @@ async def sync_events(session: AsyncSession, ctx: SeasonContext, synced: dict[Ma
         events_file = parse_events_file(
             ctx.sources / ctx.src.events, start_year=ctx.src.start_year, display_path=ctx.src.events
         )
-        linked = await link_events(session, ctx.src.events, events_file, synced)
+        linked = await link_events(session, ctx.src.events, events_file, synced, ctx.src.start_year)
 
     lineups: dict[tuple[uuid.UUID, Side], list[dict[str, object]]] = {}
     substitutions: dict[tuple[uuid.UUID, Side], list[dict[str, object]]] = {}
@@ -588,8 +632,8 @@ async def sync_season(session: AsyncSession, seed: CompetitionSeed, src: SeasonS
 
     team_of: dict[str, uuid.UUID] = {}
     for m in matches:
-        team_of[m.home] = await resolve_team(session, path, m.line_no, m.home)
-        team_of[m.away] = await resolve_team(session, path, m.line_no, m.away)
+        team_of[m.home] = await resolve_team(session, path, m.line_no, m.home, src.start_year)
+        team_of[m.away] = await resolve_team(session, path, m.line_no, m.away, src.start_year)
     for team_id in set(team_of.values()):
         if await session.get(TeamSeason, (team_id, season.id)) is None:
             session.add(TeamSeason(team_id=team_id, season_id=season.id))

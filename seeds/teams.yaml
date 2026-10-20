@@ -3556,6 +3556,8 @@
   wikidata: Q2535606
   openfootball:
     - "Dutch East Indies"
+  # Wikipedia links the 1938 side as Indonesia, which FIFA credits with the appearance.
+  reference_wikidata: [Q657451]
 
 - name: "DUX Logroño"
   kind: CLUB
@@ -7445,6 +7447,8 @@
   wikidata: Q1131732
   openfootball:
     - "Serbia and Montenegro"
+    # FR Yugoslavia (1992–2003) at the 1998 World Cup and Euro 2000.
+    - {name: "Yugoslavia", from: 1993}
 
 - name: "Servette"
   kind: CLUB
@@ -9516,7 +9520,8 @@
   country: null
   wikidata: Q188363
   openfootball:
-    - "Yugoslavia"
+    # From 1993 the name means FR Yugoslavia, the later Serbia and Montenegro.
+    - {name: "Yugoslavia", until: 1992}
 
 - name: "Zamora"
   kind: CLUB

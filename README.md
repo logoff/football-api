@@ -148,7 +148,7 @@ Known gaps:
 
 - `seeds/competitions.yaml`: the competitions, their source files, and each file's hand-verified time zone.
 - `seeds/standings.yaml`: point deductions and off-the-table orders for standings, each with a source.
-- `seeds/teams.yaml`: canonical teams, each with its Wikidata QID and every openfootball spelling. A season whose file uses a team name not listed here fails to sync. `tools/propose_teams.py` drafts entries for new sources; review them before committing.
+- `seeds/teams.yaml`: canonical teams, each with its Wikidata QID and every openfootball spelling. A season whose file uses a team name not listed here fails to sync. A spelling can apply only from or until a year (`{name: "Yugoslavia", until: 1992}`), for a name that meant different teams over time. `reference_wikidata` lists other Wikidata items verification references use for the same side (the Dutch East Indies of 1938, linked as Indonesia). `tools/propose_teams.py` drafts entries for new sources; review them before committing.
 - `just sync` is idempotent: running it again with unchanged sources leaves the database byte-for-byte identical, UUIDs included.
 - Design and specs: `openspec/changes/init-football-api-v0.1/`.
 
