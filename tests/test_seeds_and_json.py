@@ -175,3 +175,35 @@ def test_eras_must_be_in_order() -> None:
     ]
     with pytest.raises(ValidationError, match="increasing"):
         CompetitionSeed.model_validate(base)
+
+
+def _teams_file(tmp_path: Path, body: str) -> Path:
+    path = tmp_path / "teams.yaml"
+    path.write_text(body, encoding="utf-8")
+    return path
+
+
+def _team(name: str, qid: str, spellings: str, extra: str = "") -> str:
+    return f"- name: {name}\n  kind: NATIONAL\n  country: null\n  wikidata: {qid}\n  openfootball:\n{spellings}{extra}"
+
+
+@pytest.mark.parametrize(
+    ("body", "error"),
+    [
+        (
+            _team("A", "Q1", "    - {name: X, until: 1992}\n") + _team("B", "Q2", "    - {name: X, from: 1990}\n"),
+            "years overlap",
+        ),
+        (_team("A", "Q1", "    - X\n") + _team("B", "Q2", "    - {name: X, from: 1993}\n"), "both plain"),
+        (_team("A", "Q1", "    - X\n", "  reference_wikidata: [Q2]\n") + _team("B", "Q2", "    - Y\n"), "own item"),
+    ],
+)
+def test_team_spellings_and_reference_items_are_checked(tmp_path: Path, body: str, error: str) -> None:
+    with pytest.raises(ValueError, match=error):
+        load_teams(_teams_file(tmp_path, body))
+
+
+def test_year_scoped_spellings_that_meet_load() -> None:
+    teams = {t.name: t for t in load_teams()}
+    assert teams["Yugoslavia"].spelling_keys == ["Yugoslavia @-1992"]
+    assert "Yugoslavia @1993-" in teams["Serbia and Montenegro"].spelling_keys

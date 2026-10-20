@@ -10,9 +10,9 @@ from sqlalchemy import func, select, text
 
 from football_api.domain.enums import Coverage, DecidedBy, MatchStatus, Stage, VerificationReference, VerificationStatus
 from football_api.infra.db import get_sessionmaker
-from football_api.infra.models import Competition, ExternalRef, Goal, Match, MatchVerification, Player, Season, Team, TeamSeason
+from football_api.infra.models import Competition, ExternalRef, Goal, Match, MatchVerification, Player, PlayerTeamSeason, Season, Team, TeamSeason
 from football_api.ingestion.openfootball.squads import parse_more_squads, parse_per_team_squad
-from football_api.ingestion.seeds import CompetitionSeed, TeamSeed
+from football_api.ingestion.seeds import CompetitionSeed, ScopedSpelling, TeamSeed
 from football_api.sync import UnknownTeamError, run_sync
 
 pytestmark = pytest.mark.db
@@ -411,3 +411,37 @@ async def test_corrected_qid_replaces_the_old_one(
         assert arsenal is not None
         qids = set(await session.scalars(select(ExternalRef.source_id).where(ExternalRef.entity_id == arsenal.id, ExternalRef.source == "wikidata")))
     assert qids == {"Q999999999"}
+
+
+async def test_year_scoped_spelling_moves_matches_to_the_team_of_those_years(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    """`Yugoslavia` named the 1920–1992 team until 1992 and FR Yugoslavia from 1993."""
+    wc = [c for c in fixture_competitions if c.name == "FIFA World Cup"]
+    await sync(wc, fixture_teams)
+    async with get_sessionmaker()() as session:
+        before = set(await session.scalars(select(Match.id)))
+        players_before = set(await session.scalars(select(Player.id)))
+        old = await session.scalar(select(Team).where(Team.name == "Netherlands"))
+        assert old is not None
+
+    netherlands = next(t for t in fixture_teams if t.name == "Netherlands")
+    scoped = [
+        netherlands.model_copy(update={"openfootball": [ScopedSpelling.model_validate({"name": "Netherlands", "until": 2021})]}),
+        TeamSeed.model_validate(
+            {"name": "Netherlands (from 2022)", "kind": "NATIONAL", "country": "NL", "wikidata": "Q999999998",
+             "openfootball": [{"name": "Netherlands", "from": 2022}]}
+        ),
+    ]  # fmt: skip
+    teams = [t for t in fixture_teams if t is not netherlands] + scoped
+    await sync(wc, teams)
+    async with get_sessionmaker()() as session:
+        new = await session.scalar(select(Team).where(Team.name == "Netherlands (from 2022)"))
+        assert new is not None
+        assert await session.scalar(select(func.count()).select_from(Match).where(Match.home_team_id == new.id)) or 0
+        assert not await session.scalar(select(func.count()).select_from(Match).where(Match.home_team_id == old.id))
+        assert set(await session.scalars(select(Match.id))) == before  # the matches kept their UUIDs
+        assert set(await session.scalars(select(Player.id))) == players_before  # so did the squad players
+        assert not await session.scalar(select(func.count()).select_from(PlayerTeamSeason).where(PlayerTeamSeason.team_id == old.id))
+        refs = set(await session.scalars(select(ExternalRef.source_id).where(ExternalRef.entity_id == old.id, ExternalRef.source == "openfootball")))
+    assert refs == {"Netherlands @-2021"}  # the plain spelling no longer names the old team

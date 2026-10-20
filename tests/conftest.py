@@ -113,13 +113,15 @@ async def client(synced_db: str) -> AsyncIterator[httpx.AsyncClient]:
 @pytest.fixture
 def fixture_seeds(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     """Standings read the seeds the app ships; point them at the test subset."""
-    from football_api import season_tables
+    from football_api import season_tables, verification
     from football_api.infra.settings import get_settings
 
     monkeypatch.setenv("SEEDS_DIR", str(FIXTURES / "seeds"))
     get_settings.cache_clear()
     season_tables.standings_seeds.cache_clear()
+    verification._seeded_qid_of_reference.cache_clear()  # pyright: ignore[reportPrivateUsage]
     yield
     monkeypatch.undo()
     get_settings.cache_clear()
     season_tables.standings_seeds.cache_clear()
+    verification._seeded_qid_of_reference.cache_clear()  # pyright: ignore[reportPrivateUsage]

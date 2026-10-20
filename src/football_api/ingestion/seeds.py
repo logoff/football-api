@@ -1,5 +1,6 @@
 """Typed loaders for the hand-curated seed files under `seeds/`."""
 
+import re
 from datetime import date
 from pathlib import Path
 from typing import Literal
@@ -94,12 +95,45 @@ class CompetitionSeed(_Seed):
         return eras[-1] if eras else None
 
 
+class ScopedSpelling(_Seed):
+    """An openfootball spelling that names this team only in seasons starting in [from, until]:
+    `Yugoslavia` is the 1920–1992 team until 1992 and FR Yugoslavia from 1993."""
+
+    name: str
+    start: int | None = Field(default=None, alias="from")
+    until: int | None = None
+
+    @property
+    def key(self) -> str:
+        """The spelling's external reference: `Yugoslavia @1993-`, `Yugoslavia @-1992`."""
+        return f"{self.name} @{self.start or ''}-{self.until or ''}"
+
+    def covers(self, year: int) -> bool:
+        return (self.start is None or year >= self.start) and (self.until is None or year <= self.until)
+
+
+def parse_scoped_key(key: str) -> tuple[str, int | None, int | None] | None:
+    """`Yugoslavia @1993-` → ("Yugoslavia", 1993, None); None for a plain spelling."""
+    m = re.fullmatch(r"(.+) @(\d*)-(\d*)", key)
+    return (m[1], int(m[2]) if m[2] else None, int(m[3]) if m[3] else None) if m else None
+
+
 class TeamSeed(_Seed):
     name: str
     kind: TeamKind
     country: str | None
     wikidata: str | None = None
-    openfootball: list[str] = Field(min_length=1)
+    openfootball: list[str | ScopedSpelling] = Field(min_length=1)
+    reference_wikidata: list[str] = Field(
+        default_factory=list[str],
+        description="Other Wikidata items that verification references use for this same side "
+        "(the Dutch East Indies of 1938 as Indonesia); never used for identity",
+    )
+
+    @property
+    def spelling_keys(self) -> list[str]:
+        """The external-reference key of each spelling: the name itself, or a scoped key."""
+        return [s if isinstance(s, str) else s.key for s in self.openfootball]
 
 
 class PointsAdjustment(_Seed):
@@ -182,10 +216,26 @@ def load_teams(path: Path | None = None) -> list[TeamSeed]:
             if team.wikidata in seen_qids:
                 raise ValueError(f"Wikidata {team.wikidata} listed under both {seen_qids[team.wikidata]} and {team.name}")
             seen_qids[team.wikidata] = team.name
-        for alias in team.openfootball:
+        for alias in team.spelling_keys:
             if alias in seen_aliases:
                 raise ValueError(f"openfootball alias {alias!r} listed under both {seen_aliases[alias]} and {team.name}")
             seen_aliases[alias] = team.name
+    scoped: dict[str, list[tuple[ScopedSpelling, str]]] = {}
+    for team in teams:
+        for spelling in team.openfootball:
+            if isinstance(spelling, ScopedSpelling):
+                scoped.setdefault(spelling.name, []).append((spelling, team.name))
+    for name, ranges in scoped.items():
+        if name in seen_aliases:
+            raise ValueError(f"openfootball alias {name!r} is both plain ({seen_aliases[name]}) and year-scoped")
+        for i, (a, team_a) in enumerate(ranges):
+            for b, team_b in ranges[i + 1 :]:
+                if (a.until is None or b.start is None or a.until >= b.start) and (b.until is None or a.start is None or b.until >= a.start):
+                    raise ValueError(f"openfootball alias {name!r}: years overlap for {team_a} and {team_b}")
+    for team in teams:
+        for qid in team.reference_wikidata:
+            if qid in seen_qids:
+                raise ValueError(f"{team.name}: reference Wikidata {qid} is {seen_qids[qid]}'s own item")
     return teams
 
 
