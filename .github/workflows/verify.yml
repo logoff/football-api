@@ -1,0 +1,82 @@
+# Full sync of every competition from fresh openfootball sources into an empty database, then
+# verification against Wikipedia. The summary lists every disagreement; on a pull request it
+# also lists what is new and gone since main's latest run. Fails only when a season fails to
+# sync: disagreements change with the sources, so they are reported, not enforced.
+name: Full sync and verification
+
+on:
+  pull_request:
+    paths: ["src/**", "seeds/**", "migrations/**", "tools/verify_report.py", ".github/workflows/verify.yml"]
+  push:
+    branches: [main]
+    paths: ["src/**", "seeds/**", "migrations/**"]
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    services:
+      postgres:
+        image: postgres:18.4
+        env:
+          POSTGRES_USER: football
+          POSTGRES_PASSWORD: football
+          POSTGRES_DB: football
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U football -d football"
+          --health-interval 2s --health-timeout 3s --health-retries 30
+    env:
+      DATABASE_URL: postgresql+asyncpg://football:football@127.0.0.1:5432/football
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10.3.0
+        with:
+          enable-cache: true
+      - uses: extractions/setup-just@v4
+      - run: just install
+      - run: uv run alembic upgrade head
+      - name: Sync and verify
+        # The log streams to the run page (about 20 minutes of season-by-season lines) and is
+        # kept in sync.log for the report.
+        run: |
+          set +e -o pipefail
+          uv run python -m football_api.sync --verify 2>&1 | tee sync.log
+          status=$?
+          [ "$status" -eq 0 ] || echo "SYNC_EXIT=$status" >> "$GITHUB_ENV"
+      - name: Baseline from main
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run=$(gh run list -R "$GITHUB_REPOSITORY" -w verify.yml -b main -s success -L 1 --json databaseId -q '.[0].databaseId')
+          [ -n "$run" ] && gh run download "$run" -R "$GITHUB_REPOSITORY" -n verification-report -D baseline || echo "no baseline yet"
+      - name: Report
+        run: |
+          uv run python tools/verify_report.py sync.log --baseline baseline/report.json --json report.json --markdown summary.md
+          cat summary.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: verification-report
+          path: |
+            report.json
+            summary.md
+            sync.log
+      - name: Sync exit code
+        if: env.SYNC_EXIT != ''
+        run: |
+          echo "sync exited with $SYNC_EXIT"
+          exit 1

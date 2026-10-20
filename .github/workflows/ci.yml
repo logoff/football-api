@@ -41,6 +41,12 @@ jobs:
       - uses: extractions/setup-just@v4
       - run: just install
       - run: just typecheck
+      # Migrations: apply on a fresh database, models match them, and the latest one reverses.
+      - run: |
+          uv run alembic upgrade head
+          uv run alembic check
+          uv run alembic downgrade -1
+          uv run alembic upgrade head
       - run: just test
 
   publish:
