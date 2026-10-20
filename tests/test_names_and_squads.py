@@ -59,3 +59,22 @@ def test_per_team_squads_keep_names_unsplit() -> None:
     assert len(players) == 26
     raya = players[0]
     assert (raya.name, raya.shirt_number, raya.position, raya.birth_year) == (PersonName("David Raya"), 1, "GK", 1995)
+
+
+def test_more_squads_without_shirt_numbers() -> None:
+    """World Cup squads before 1954 list no shirt numbers."""
+    text = "= World Cup 1930\n\n== USA     # 16 Players\n\n   Jimmy DOUGLAS,                 GK,  b. 1898/01/12\n"
+    [player] = parse_more_squads(text)
+    assert (player.team, player.name.display, player.shirt_number, player.position, player.birth_year) == ("USA", "Jimmy Douglas", None, "GK", 1898)
+
+
+def test_names_that_differ_only_in_spacing_resolve_when_unique() -> None:
+    from football_api.infra.models import Player
+    from football_api.sync import resolve_scorer
+
+    park, lee = Player(display_name="Park Ji Sung"), Player(display_name="Lee Young Pyo")
+    squad = [(park, "Park Ji Sung"), (lee, "Lee Young Pyo")]
+    assert resolve_scorer("Park Jisung", squad) is park
+    assert resolve_scorer("Lee Youngpyo", squad) is lee
+    twins = [(Player(display_name="Kim Nam Il"), "Kim Nam Il"), (Player(display_name="Kim Namil"), "Kim Namil")]
+    assert resolve_scorer("Kimnam Il", twins) is None  # two candidates: no guess
