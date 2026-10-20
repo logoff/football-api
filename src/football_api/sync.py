@@ -321,7 +321,12 @@ def resolve_scorer(name: str, candidates: list[tuple[Player, str]]) -> Player | 
     if exact:
         return None
     partial = [p for p, display in candidates if short_name_matches(name, display)]
-    return partial[0] if len(partial) == 1 else None
+    if partial:
+        return partial[0] if len(partial) == 1 else None
+    # Files of one source split some names differently: `Park Jisung` and `PARK Ji Sung`.
+    joined = fold(name).replace(" ", "")
+    spaced = [p for p, display in candidates if fold(display).replace(" ", "") == joined]
+    return spaced[0] if len(spaced) == 1 else None
 
 
 async def sync_goals(session: AsyncSession, ctx: SeasonContext, match: Match, parsed: ParsedMatch) -> None:

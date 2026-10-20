@@ -1161,120 +1161,180 @@
       tz: inline
       events: club-worldcup/more/2000_clubworldcup-full.txt
       wikipedia: "2000 FIFA Club World Championship"
+      squads:
+        style: more
+        files: [club-worldcup/more/2000_clubworldcup-squads.txt]
     - label: "2005"
       start_year: 2005
       file: club-worldcup/more/2005_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2005_clubworldcup-full.txt
       wikipedia: "2005 FIFA Club World Championship"
+      squads:
+        style: more
+        files: [club-worldcup/more/2005_clubworldcup-squads.txt]
     - label: "2006"
       start_year: 2006
       file: club-worldcup/more/2006_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2006_clubworldcup-full.txt
       wikipedia: "2006 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2006_clubworldcup-squads.txt]
     - label: "2007"
       start_year: 2007
       file: club-worldcup/more/2007_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2007_clubworldcup-full.txt
       wikipedia: "2007 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2007_clubworldcup-squads.txt]
     - label: "2008"
       start_year: 2008
       file: club-worldcup/more/2008_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2008_clubworldcup-full.txt
       wikipedia: "2008 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2008_clubworldcup-squads.txt]
     - label: "2009"
       start_year: 2009
       file: club-worldcup/more/2009_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2009_clubworldcup-full.txt
       wikipedia: "2009 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2009_clubworldcup-squads.txt]
     - label: "2010"
       start_year: 2010
       file: club-worldcup/more/2010_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2010_clubworldcup-full.txt
       wikipedia: "2010 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2010_clubworldcup-squads.txt]
     - label: "2011"
       start_year: 2011
       file: club-worldcup/more/2011_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2011_clubworldcup-full.txt
       wikipedia: "2011 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2011_clubworldcup-squads.txt]
     - label: "2012"
       start_year: 2012
       file: club-worldcup/more/2012_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2012_clubworldcup-full.txt
       wikipedia: "2012 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2012_clubworldcup-squads.txt]
     - label: "2013"
       start_year: 2013
       file: club-worldcup/more/2013_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2013_clubworldcup-full.txt
       wikipedia: "2013 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2013_clubworldcup-squads.txt]
     - label: "2014"
       start_year: 2014
       file: club-worldcup/more/2014_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2014_clubworldcup-full.txt
       wikipedia: "2014 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2014_clubworldcup-squads.txt]
     - label: "2015"
       start_year: 2015
       file: club-worldcup/more/2015_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2015_clubworldcup-full.txt
       wikipedia: "2015 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2015_clubworldcup-squads.txt]
     - label: "2016"
       start_year: 2016
       file: club-worldcup/more/2016_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2016_clubworldcup-full.txt
       wikipedia: "2016 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2016_clubworldcup-squads.txt]
     - label: "2017"
       start_year: 2017
       file: club-worldcup/more/2017_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2017_clubworldcup-full.txt
       wikipedia: "2017 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2017_clubworldcup-squads.txt]
     - label: "2018"
       start_year: 2018
       file: club-worldcup/more/2018_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2018_clubworldcup-full.txt
       wikipedia: "2018 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2018_clubworldcup-squads.txt]
     - label: "2019"
       start_year: 2019
       file: club-worldcup/more/2019_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2019_clubworldcup-full.txt
       wikipedia: "2019 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2019_clubworldcup-squads.txt]
     - label: "2020"
       start_year: 2020
       file: club-worldcup/more/2020_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2020_clubworldcup-full.txt
       wikipedia: "2020 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2020_clubworldcup-squads.txt]
     - label: "2021"
       start_year: 2021
       file: club-worldcup/more/2021_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2021_clubworldcup-full.txt
       wikipedia: "2021 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2021_clubworldcup-squads.txt]
     - label: "2022"
       start_year: 2022
       file: club-worldcup/more/2022_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2022_clubworldcup-full.txt
       wikipedia: "2022 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2022_clubworldcup-squads.txt]
     - label: "2023"
       start_year: 2023
       file: club-worldcup/more/2023_clubworldcup-full.txt
       tz: inline
       events: club-worldcup/more/2023_clubworldcup-full.txt
       wikipedia: "2023 FIFA Club World Cup"
+      squads:
+        style: more
+        files: [club-worldcup/more/2023_clubworldcup-squads.txt]
     - label: "2025"
       start_year: 2025
       file: club-worldcup/more/2025_clubworldcup-full.txt
@@ -1324,126 +1384,189 @@
       tz: inline
       events: worldcup/more/1930_full.txt
       wikipedia: "1930 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1930_squads.txt]
     - label: "1934"
       start_year: 1934
       file: worldcup/more/1934.txt
       tz: inline
       events: worldcup/more/1934_full.txt
       wikipedia: "1934 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1934_squads.txt]
     - label: "1938"
       start_year: 1938
       file: worldcup/more/1938.txt
       tz: inline
       events: worldcup/more/1938_full.txt
       wikipedia: "1938 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1938_squads.txt]
     - label: "1950"
       start_year: 1950
       file: worldcup/more/1950.txt
       tz: inline
       events: worldcup/more/1950_full.txt
       wikipedia: "1950 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1950_squads.txt]
     - label: "1954"
       start_year: 1954
       file: worldcup/more/1954.txt
       tz: inline
       events: worldcup/more/1954_full.txt
       wikipedia: "1954 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1954_squads.txt]
     - label: "1958"
       start_year: 1958
       file: worldcup/more/1958.txt
       tz: inline
       events: worldcup/more/1958_full.txt
       wikipedia: "1958 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1958_squads.txt]
     - label: "1962"
       start_year: 1962
       file: worldcup/more/1962.txt
       tz: inline
       events: worldcup/more/1962_full.txt
       wikipedia: "1962 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1962_squads.txt]
     - label: "1966"
       start_year: 1966
       file: worldcup/more/1966.txt
       tz: inline
       events: worldcup/more/1966_full.txt
       wikipedia: "1966 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1966_squads.txt]
     - label: "1970"
       start_year: 1970
       file: worldcup/more/1970.txt
       tz: inline
       events: worldcup/more/1970_full.txt
       wikipedia: "1970 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1970_squads.txt]
     - label: "1974"
       start_year: 1974
       file: worldcup/more/1974.txt
       tz: inline
       events: worldcup/more/1974_full.txt
       wikipedia: "1974 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1974_squads.txt]
     - label: "1978"
       start_year: 1978
       file: worldcup/more/1978.txt
       tz: inline
       events: worldcup/more/1978_full.txt
       wikipedia: "1978 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1978_squads.txt]
     - label: "1982"
       start_year: 1982
       file: worldcup/more/1982.txt
       tz: inline
       events: worldcup/more/1982_full.txt
       wikipedia: "1982 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1982_squads.txt]
     - label: "1986"
       start_year: 1986
       file: worldcup/more/1986.txt
       tz: inline
       events: worldcup/more/1986_full.txt
       wikipedia: "1986 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1986_squads.txt]
     - label: "1990"
       start_year: 1990
       file: worldcup/more/1990.txt
       tz: inline
       events: worldcup/more/1990_full.txt
       wikipedia: "1990 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1990_squads.txt]
     - label: "1994"
       start_year: 1994
       file: worldcup/more/1994.txt
       tz: inline
       events: worldcup/more/1994_full.txt
       wikipedia: "1994 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1994_squads.txt]
     - label: "1998"
       start_year: 1998
       file: worldcup/more/1998.txt
       tz: inline
       events: worldcup/more/1998_full.txt
       wikipedia: "1998 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/1998_squads.txt]
     - label: "2002"
       start_year: 2002
       file: worldcup/more/2002.txt
       tz: inline
       events: worldcup/more/2002_full.txt
       wikipedia: "2002 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/2002_squads.txt]
     - label: "2006"
       start_year: 2006
       file: worldcup/more/2006.txt
       tz: inline
       events: worldcup/more/2006_full.txt
       wikipedia: "2006 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/2006_squads.txt]
     - label: "2010"
       start_year: 2010
       file: worldcup/more/2010.txt
       tz: inline
       events: worldcup/more/2010_full.txt
       wikipedia: "2010 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/2010_squads.txt]
     - label: "2014"
       start_year: 2014
       file: worldcup/more/2014.txt
       tz: inline
       events: worldcup/more/2014_full.txt
       wikipedia: "2014 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/2014_squads.txt]
     - label: "2018"
       start_year: 2018
       file: worldcup/more/2018.txt
       tz: inline
       events: worldcup/more/2018_full.txt
       wikipedia: "2018 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/2018_squads.txt]
     - label: "2022"
       start_year: 2022
       file: worldcup/more/2022.txt
@@ -1459,6 +1582,9 @@
       tz: inline
       events: worldcup/more/2026_full.txt
       wikipedia: "2026 FIFA World Cup"
+      squads:
+        style: more
+        files: [worldcup/more/2026_squads.txt]
 
 - name: UEFA European Championship
   team_kind: NATIONAL
@@ -1551,6 +1677,9 @@
       file: euro/2021--europe/euro.txt
       tz: Etc/GMT-2
       wikipedia: "UEFA Euro 2020"
+      squads:
+        style: per-team
+        files: [euro/2021--europe/squads/*.txt]
     - label: "2024"
       start_year: 2024
       file: euro/2024--germany/euro.txt
@@ -1582,6 +1711,9 @@
       file: copa-america/2021--brazil/copa.txt
       tz: inline
       wikipedia: "2021 Copa América"
+      squads:
+        style: per-team
+        files: [copa-america/2021--brazil/squads/*.txt]
     - label: "2024"
       start_year: 2024
       file: copa-america/2024--usa/copa.txt

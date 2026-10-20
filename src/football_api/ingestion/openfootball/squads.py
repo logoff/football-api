@@ -20,7 +20,8 @@ from football_api.ingestion.openfootball.names import PersonName, split_capitali
 
 _MORE_TEAM_RE = re.compile(r"^==\s+(?P<team>.+?)\s*(?:#.*)?$")
 _MORE_PLAYER_RE = re.compile(
-    r"^\s*(?P<num>\d+)?\s*,\s*(?P<name>[^,]+?)\s*(?:\((?P<nat>[A-Z]{3})\))?\s*,\s*(?P<pos>[A-Z]{2})\s*,"
+    # The shirt number and its comma are absent before 1954 (`Jimmy DOUGLAS, GK, b. 1898/01/12`).
+    r"^\s*(?:(?P<num>\d+)\s*,)?\s*(?P<name>[^,]+?)\s*(?:\((?P<nat>[A-Z]{3})\))?\s*,\s*(?P<pos>[A-Z]{2})\s*,"
     r"\s*b\.\s*(?P<y>\d{4})(?:/(?P<m>\d{2})/(?P<d>\d{2}))?"
 )
 _PER_TEAM_HEADER_RE = re.compile(r"^=\s+(?P<team>.+?)\s+-\s+.+$")
