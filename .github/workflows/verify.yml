@@ -40,7 +40,6 @@ jobs:
           --health-interval 2s --health-timeout 3s --health-retries 30
     env:
       DATABASE_URL: postgresql+asyncpg://football:football@127.0.0.1:5432/football
-      SOURCES_DIR: ${{ runner.temp }}/sources
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10.3.0
