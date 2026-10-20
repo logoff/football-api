@@ -177,10 +177,10 @@ A player has:
 
 External identifiers for a player are stored exclusively in `external_ref`.
 
-For v0.1, player coverage is:
+Player coverage is:
 
-- **complete** for WC 2022, Euro 2024, Copa América 2024 and Club World Cup 2025 — Open Football publishes full squad lists.
-- **none** for all other club competitions — Open Football publishes no squads for them.
+- **complete** for every FIFA World Cup (1930–2026) and FIFA Club World Cup (2000–2025), and for Euro 2021 and 2024 and Copa América 2021 and 2024: Open Football publishes full squad lists for them.
+- **none** for the other seasons, including every domestic league and cup: Open Football publishes no squads for them.
 
 #### Scenario: Listing players for a team-season
 
@@ -213,6 +213,12 @@ For v0.1, player coverage is:
 - **WHEN** a client GETs `/v1/players?team_id={manchester-united}&season_id={premier-league-2024-25}`
 - **THEN** the API responds 200 with an empty list
 - **AND** the response includes a `coverage` field indicating `players: "none"`
+
+#### Scenario: Squad list without shirt numbers
+
+- **GIVEN** the 1930 World Cup squad line `Jimmy DOUGLAS, GK, b. 1898/01/12`, with no shirt number
+- **WHEN** the squads are ingested
+- **THEN** a player `Jimmy Douglas` exists for the United States in 1930, with goalkeeper as position and no shirt number
 
 ### Requirement: Venue catalog
 
