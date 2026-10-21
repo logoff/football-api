@@ -40,6 +40,7 @@ from football_api.domain.enums import (
     Side,
     Stage,
     TeamKind,
+    VerificationAspect,
     VerificationReference,
     VerificationStatus,
 )
@@ -302,13 +303,15 @@ class SeasonCheck(Base):
 
 
 class MatchVerification(Base):
-    """A match's status against one verification reference. Never holds the reference's data."""
+    """A match's status against one verification reference, for its result or its events. Never
+    holds the reference's data."""
 
     __tablename__ = "match_verification"
-    __table_args__ = (UniqueConstraint("match_id", "reference"),)
+    __table_args__ = (UniqueConstraint("match_id", "reference", "aspect"),)
 
     id: Mapped[uuid.UUID] = _uuid_pk()
     match_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("match.id", ondelete="CASCADE"))
     reference: Mapped[VerificationReference] = mapped_column(_enum(VerificationReference, "verification_reference"))
+    aspect: Mapped[VerificationAspect] = mapped_column(_enum(VerificationAspect, "verification_aspect"))
     status: Mapped[VerificationStatus] = mapped_column(_enum(VerificationStatus, "verification_status"))
     checked_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))

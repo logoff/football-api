@@ -91,3 +91,22 @@ INFO Copa del Rey 2024-25: verified against wikipedia: VERIFIED=120 MISMATCH=0 U
     assert report.tables["CONMEBOL Copa Libertadores"]["VERIFIED"] == 32
     assert set(report.disagreements) == {"CONMEBOL Copa Libertadores 2015: MISMATCH Boca Juniors v CA River Plate"}
 
+
+
+EVENTS_LOG = """\
+INFO FIFA World Cup 2010: verified against wikipedia: VERIFIED=64 MISMATCH=0 UNCONFIRMED=0 SOURCE_BEHIND=0 unpaired=0
+INFO FIFA World Cup 2010: events verified against wikipedia: VERIFIED=63 MISMATCH=1 UNCONFIRMED=0 SOURCE_BEHIND=0
+WARNING FIFA World Cup 2010: MISMATCH events Serbia v Ghana: stored vs wikipedia: Serbia: Aleksandar Lukovic: cards Y 73' vs Y 54', 2Y 74'
+INFO FIFA World Cup 2014: events verified against wikipedia: VERIFIED=64 MISMATCH=0 UNCONFIRMED=0 SOURCE_BEHIND=0 unchanged
+"""
+
+
+def test_events_totals_and_disagreements() -> None:
+    """verify-match-events D5: an events summary line per season and one line per disagreement."""
+    report = vr.parse_log(EVENTS_LOG.splitlines())
+    assert report.seasons == 1  # counted from the results line only
+    assert report.events["FIFA World Cup"]["VERIFIED"] == 127
+    assert report.disagreements == {
+        "FIFA World Cup 2010: MISMATCH events Serbia v Ghana": "vs wikipedia: Serbia: Aleksandar Lukovic: cards Y 73' vs Y 54', 2Y 74'"
+    }
+    assert "| FIFA World Cup | 127 | 1 | 0 | 0 |" in vr.markdown(report, None)

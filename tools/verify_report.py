@@ -21,8 +21,10 @@ from typing import cast
 
 # `<competition> <season>: verified against wikipedia: VERIFIED=… unpaired=…`
 _MATCHES = re.compile(r"^INFO (?P<label>.+?): verified against wikipedia: (?P<counts>.*)$")
+_EVENTS = re.compile(r"^INFO (?P<label>.+?): events verified against wikipedia: (?P<counts>.*)$")
 _TABLES = re.compile(r"^INFO (?P<label>.+?): standings checked against wikipedia: (?P<counts>.*)$")
-# `<competition> <season>: MISMATCH <home> v <away>: stored …` and `…: MISMATCH table <team>: stored …`
+# `<competition> <season>: MISMATCH <home> v <away>: stored …`, `…: MISMATCH table <team>: stored …`
+# and `…: MISMATCH events <home> v <away>: stored …`
 _DISAGREEMENT = re.compile(r"^WARNING (?P<key>(?P<label>.+?): (?:MISMATCH|SOURCE_BEHIND) .+?): stored (?P<detail>.*)$")
 _FAILED = re.compile(r"^ERROR (?P<label>.+?): FAILED: (?P<error>.*)$")
 _SEASON = re.compile(r"^(?P<competition>.+) (?P<season>\d{4}(?:-\d{2})?)$")
@@ -32,6 +34,7 @@ _SEASON = re.compile(r"^(?P<competition>.+) (?P<season>\d{4}(?:-\d{2})?)$")
 class Report:
     matches: dict[str, Counter[str]] = field(default_factory=lambda: defaultdict(Counter))
     tables: dict[str, Counter[str]] = field(default_factory=lambda: defaultdict(Counter))
+    events: dict[str, Counter[str]] = field(default_factory=lambda: defaultdict(Counter))
     disagreements: dict[str, str] = field(default_factory=dict[str, str])
     failed: dict[str, str] = field(default_factory=dict[str, str])
     seasons: int = 0
@@ -41,6 +44,7 @@ class Report:
             "seasons": self.seasons,
             "matches": {c: dict(v) for c, v in sorted(self.matches.items())},
             "tables": {c: dict(v) for c, v in sorted(self.tables.items())},
+            "events": {c: dict(v) for c, v in sorted(self.events.items())},
             "disagreements": dict(sorted(self.disagreements.items())),
             "failed": dict(sorted(self.failed.items())),
         }
@@ -59,6 +63,9 @@ def parse_log(lines: list[str]) -> Report:
             report.seasons += 1
             for key, value in re.findall(r"(\w+)=(\d+)", m["counts"]):
                 report.matches[competition_of(m["label"])][key] += int(value)
+        elif m := _EVENTS.match(line):
+            for key, value in re.findall(r"(\w+)=(\d+)", m["counts"]):
+                report.events[competition_of(m["label"])][key] += int(value)
         elif m := _TABLES.match(line):
             for key, value in re.findall(r"(\w+)=(\d+)", m["counts"]):
                 report.tables[competition_of(m["label"])][key] += int(value)
@@ -89,6 +96,12 @@ def markdown(report: Report, baseline: dict[str, object] | None) -> str:
             f"| {t['VERIFIED']} | {t['MISMATCH']} | {t['UNCONFIRMED']} |"
         )
     out.append("")
+    if report.events:
+        out += ["| Competition | Events verified | Events mismatch | No reference line-ups | Only reference line-ups |"]
+        out += ["| --- | --: | --: | --: | --: |"]
+        for comp, e in sorted(report.events.items()):
+            out.append(f"| {comp} | {e['VERIFIED']} | {e['MISMATCH']} | {e['UNCONFIRMED']} | {e['SOURCE_BEHIND']} |")
+        out.append("")
     mismatches = {k: v for k, v in report.disagreements.items() if ": MISMATCH " in k}
     if baseline is not None:
         before = {k for k in baseline_disagreements(baseline) if ": MISMATCH " in k}

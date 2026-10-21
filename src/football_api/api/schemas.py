@@ -215,6 +215,11 @@ class MatchOut(BaseModel):
         description="Score check against an independent open reference; null when the match isn't verified. "
         "Only the outcome is shown, never the reference's own values"
     )
+    events_verification: MatchVerificationOut | None = Field(
+        description="Line-ups, substitutions and cards checked against the same reference's line-up table: "
+        "`UNCONFIRMED` when it has no table for the match, `SOURCE_BEHIND` when only it has line-ups; "
+        "null when the match isn't checked"
+    )
     home_team: TeamOut | None = Field(default=None, description="Present with `expand=teams`")
     away_team: TeamOut | None = Field(default=None, description="Present with `expand=teams`")
     venue: VenueOut | None = Field(default=None, description="Present with `expand=venue`")

@@ -6,11 +6,12 @@ the same square table (design D1). Nothing read here is stored; callers only com
 """
 
 import asyncio
+import json
 from collections import OrderedDict
 import re
 from collections.abc import Callable, Generator, Iterable
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 from datetime import date
 from importlib.metadata import version
 from typing import Any, cast
@@ -18,6 +19,9 @@ from urllib.parse import quote, unquote
 
 import httpx
 from bs4 import BeautifulSoup, Tag
+from bs4.element import NavigableString
+
+from football_api.domain.enums import CardKind
 
 USER_AGENT = f"football-api/{version('football-api')} (+https://github.com/logoff/football-api)"
 TIMEOUT = 20.0
@@ -94,6 +98,25 @@ def _grid(table: Tag) -> ResultsGrid | None:
     return ResultsGrid(teams=away_titles, cells=grid)
 
 
+Minute = tuple[int, int | None]  # minute, added minute
+
+
+@dataclass(frozen=True)
+class LineupRow:
+    """One player of a line-up table (verify-match-events D1). Compared, never stored."""
+
+    name: str
+    number: int | None  # the shirt number; tables before 1950 have none
+    starter: bool
+    on: Minute | None = None  # came on (`{{subon}}`); a substitute without it stayed on the bench
+    off: Minute | None = None  # went off (`{{suboff}}`)
+    cards: tuple[tuple[CardKind, Minute | None], ...] = ()
+
+    @property
+    def played(self) -> bool:
+        return self.starter or self.on is not None
+
+
 @dataclass(frozen=True)
 class MatchBox:
     """One match of a cup article: a "Football box collapsible" or a "Football box"."""
@@ -104,6 +127,8 @@ class MatchBox:
     score: tuple[int, int] | None  # full time including extra time; None for w/o, void, bye, unplayed
     shootout: tuple[int, int] | None = None
     awarded: bool = False
+    # The line-up table after the box, home side first; None when there is none.
+    lineups: tuple[tuple[LineupRow, ...], tuple[LineupRow, ...]] | None = field(default=None, compare=False)
 
 
 _MONTHS = {m: i for i, m in enumerate(
@@ -211,8 +236,129 @@ def _football_box(box: Tag, linked: Linked) -> MatchBox | None:
     return MatchBox(_box_day(box), home, away, score, shootout, awarded)
 
 
+_MINUTE = re.compile(r"^\s*(\d+)(?:\s*\+\s*(\d+))?")
+_CAPTAIN = re.compile(r"\(\s*c\s*\)", re.I)
+_CARD_TEMPLATES = {"yel", "sent off", "sentoff", "sent-off"}
+_SUB_TEMPLATES = {"suboff", "subon"}
+
+
+def _minute(wikitext: str | None) -> Minute | None:
+    m = _MINUTE.match(wikitext or "")
+    return (int(m[1]), int(m[2]) if m[2] else None) if m else None
+
+
+def _obj(value: object) -> dict[str, Any]:
+    return cast(dict[str, Any], value) if isinstance(value, dict) else {}
+
+
+def _templates(row: Tag) -> list[tuple[str, dict[str, str], str | None]]:
+    """The templates rendered in a row, from Parsoid's `data-mw`: (name, parameters, `about` id)."""
+    out: list[tuple[str, dict[str, str], str | None]] = []
+    for el in row.select("[data-mw]"):
+        try:
+            mw = _obj(json.loads(str(el["data-mw"])))
+        except ValueError:
+            continue
+        parts = cast(list[object], mw.get("parts")) if isinstance(mw.get("parts"), list) else []
+        for part in parts:
+            template = _obj(_obj(part).get("template"))
+            if not template:
+                continue
+            name = str(_obj(template.get("target")).get("wt", "")).strip().lower()
+            params = {key: str(_obj(value).get("wt", "")) for key, value in _obj(template.get("params")).items()}
+            about = el.get("about")
+            out.append((name, params, about if isinstance(about, str) else None))
+    return out
+
+
+def _row_cards(templates: list[tuple[str, dict[str, str], str | None]]) -> list[tuple[CardKind, Minute | None]]:
+    """`{{yel|15}}` is a booking. `{{sent off|N|…}}` is a dismissal after N yellow cards, their
+    minutes first and the dismissal's last: `{{sent off|0|80}}` a red card, `{{sent off|2|54|74}}`
+    a second yellow at 74 after a booking at 54, `{{sent off|1|30|80}}` a booking and a red."""
+    cards: list[tuple[CardKind, Minute | None]] = []
+    for name, params, _ in templates:
+        if name == "yel":
+            cards.append((CardKind.YELLOW, _minute(params.get("1"))))
+        elif name in _CARD_TEMPLATES:
+            yellows = params.get("1", "0").strip()
+            if yellows == "2":
+                cards += [(CardKind.YELLOW, _minute(params.get("2"))), (CardKind.SECOND_YELLOW, _minute(params.get("3")))]
+            elif yellows == "1":
+                cards += [(CardKind.YELLOW, _minute(params.get("2"))), (CardKind.RED, _minute(params.get("3")))]
+            else:
+                cards.append((CardKind.RED, _minute(params.get("2"))))
+    return cards
+
+
+def _text_outside(cell: Tag, abouts: set[str]) -> str:
+    """A cell's text without the output of the given templates (a booking's `15'`)."""
+    parts: list[str] = []
+    for text in cell.find_all(string=True):
+        assert isinstance(text, NavigableString)
+        if not any(isinstance(p.get("about"), str) and p.get("about") in abouts for p in text.parents if p is not cell):
+            parts.append(str(text))
+    return " ".join(" ".join(parts).split())
+
+
+def _side_lineup(table: Tag) -> tuple[LineupRow, ...]:
+    """A side table: `position | number | player | cards | substitution` rows (no number before
+    1950), then a `Substitutions:` header and the substitutes, then `Manager:`."""
+    rows: list[LineupRow] = []
+    starters = True
+    body = table.find("tbody", recursive=False)
+    for tr in (body or table).find_all("tr", recursive=False):
+        heading = tr.get_text(" ", strip=True).lower()
+        if heading.startswith(("substitut", "subs")):
+            starters = False
+            continue
+        if heading.startswith(("manager", "coach", "head coach")):
+            break
+        cells: list[Tag] = list(tr.find_all("td", recursive=False))
+        if len(cells) < 2:
+            continue
+        templates = _templates(tr)
+        abouts = {a for n, _, a in templates if a and (n in _CARD_TEMPLATES or n in _SUB_TEMPLATES)}
+        number: int | None = None
+        name = ""
+        for cell in cells[1:]:
+            text = _text_outside(cell, abouts)
+            if text.isdigit() and number is None and not name:
+                number = int(text)
+            elif text:
+                name = _CAPTAIN.sub("", text).strip()
+                break
+        if not re.search(r"[^\W\d_]", name):  # `—`: a card for someone not on the pitch
+            continue
+        subs = {n: _minute(p.get("1")) for n, p, _ in templates if n in _SUB_TEMPLATES}
+        rows.append(LineupRow(name, number, starters, subs.get("subon"), subs.get("suboff"), tuple(_row_cards(templates))))
+    return tuple(rows)
+
+
+def _is_gk_row(cell: Tag) -> bool:
+    return cell.get_text(strip=True) == "GK"
+
+
+def _lineups_after(node: Tag, stop: Tag | None) -> tuple[tuple[LineupRow, ...], tuple[LineupRow, ...]] | None:
+    """The line-up table that follows a match box, before the next box: the first table holding two
+    side tables with a `GK` row."""
+    table = node
+    while (table := table.find_next("table")) is not None:
+        if stop is not None and (table is stop or stop in table.parents):
+            return None
+        if node in table.parents:
+            continue
+        if table.find_parent(class_="footballbox") is not None:
+            return None
+        # The innermost tables holding a `GK` row: some pages wrap a side table in another one.
+        sides = [t for t in table.find_all("table") if any(_is_gk_row(td) and td.find_parent("table") is t for td in t.find_all("td"))]
+        if len(sides) >= 2:
+            home, away = _side_lineup(sides[0]), _side_lineup(sides[1])
+            return (home, away) if home and away else None
+    return None
+
+
 def parse_match_boxes(html: str) -> list[MatchBox]:
-    """Every match box in a cup article, in page order."""
+    """Every match box in a cup article, in page order, with the line-up table that follows it."""
     soup = BeautifulSoup(html, "html.parser")
     for note in soup.find_all("sup"):
         note.decompose()
@@ -225,9 +371,11 @@ def parse_match_boxes(html: str) -> list[MatchBox]:
             if title:
                 linked.setdefault((_cell_name(cell), _cell_flag(cell)), set()).add(title)
     boxes: list[MatchBox] = []
-    for node in nodes:
+    for i, node in enumerate(nodes):
         box = _collapsible_box(node, linked) if node.name == "table" else _football_box(node, linked)
         if box is not None:
+            if node.name == "div":
+                box = replace(box, lineups=_lineups_after(node, nodes[i + 1] if i + 1 < len(nodes) else None))
             boxes.append(box)
     return boxes
 
@@ -255,6 +403,8 @@ def parse_subarticle_titles(html: str, title: str, *, qualifying: bool = False) 
     for link in soup.select("a[href]"):
         href = link.get("href")
         if not isinstance(href, str) or not href.startswith("./"):
+            continue
+        if "redlink=1" in href:  # an article that doesn't exist
             continue
         target = unquote(href[2:].split("#", 1)[0]).replace("_", " ")
         suffix = target[len(title) :]
@@ -359,16 +509,28 @@ def merge_standings(groups: Iterable[list[StandingsTable]]) -> list[StandingsTab
     return out
 
 
+def _detail(box: MatchBox) -> int:
+    """How much a box's line-up table records: -1 without one, else its cards and substitutions."""
+    if box.lineups is None:
+        return -1
+    return sum(len(r.cards) + (r.on is not None) + (r.off is not None) for side in box.lineups for r in side)
+
+
 def merge_boxes(groups: Iterable[list[MatchBox]]) -> list[MatchBox]:
-    """One box per (date, home, away): the season article first, then sub-articles (design D2)."""
-    seen: set[tuple[date | None, str, str]] = set()
+    """One box per (date, home, away): the season article first, then sub-articles (design D2).
+    The line-ups come from the copy that records the most (verify-match-events D1): a knockout
+    stage article can repeat the final's line-ups without its cards, which the final's own
+    article has."""
+    seen: dict[tuple[date | None, str, str], int] = {}
     out: list[MatchBox] = []
     for boxes in groups:
         for box in boxes:
             key = (box.day, box.home, box.away)
             if key not in seen:
-                seen.add(key)
+                seen[key] = len(out)
                 out.append(box)
+            elif _detail(box) > _detail(out[seen[key]]):
+                out[seen[key]] = replace(out[seen[key]], lineups=box.lineups)
     return out
 
 

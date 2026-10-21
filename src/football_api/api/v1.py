@@ -44,6 +44,7 @@ from football_api.domain.enums import (
     Side,
     Stage,
     TeamKind,
+    VerificationAspect,
     VerificationReference,
     VerificationStatus,
 )
@@ -456,7 +457,7 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
     venues: dict[uuid.UUID, VenueOut] = {}
     goals: dict[uuid.UUID, list[GoalOut]] = {}
     verifications = {
-        v.match_id: MatchVerificationOut(status=v.status, reference=v.reference, checked_at=v.checked_at)
+        (v.match_id, v.aspect): MatchVerificationOut(status=v.status, reference=v.reference, checked_at=v.checked_at)
         for v in await session.scalars(
             select(MatchVerification).where(
                 MatchVerification.match_id.in_([m.id for m in matches]),
@@ -524,7 +525,8 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
                 substitutions=season.substitutions_coverage,
                 cards=season.cards_coverage,
             ),
-            verification=verifications.get(m.id),
+            verification=verifications.get((m.id, VerificationAspect.RESULT)),
+            events_verification=verifications.get((m.id, VerificationAspect.EVENTS)),
         )
         if "teams" in expands:
             item.home_team, item.away_team = teams.get(m.home_team_id), teams.get(m.away_team_id)
@@ -559,6 +561,9 @@ async def list_matches(
     verification: Annotated[
         VerificationStatus | None, Query(description="Only matches with this verification status")
     ] = None,
+    events_verification: Annotated[
+        VerificationStatus | None, Query(description="Only matches with this events verification status")
+    ] = None,
     expand: MatchExpand = None,
     limit: Limit = DEFAULT_LIMIT,
     cursor: Cursor = None,
@@ -577,14 +582,16 @@ async def list_matches(
         stmt = stmt.where(Match.kickoff_utc >= datetime.combine(from_, time(0), tzinfo=UTC))
     if to:
         stmt = stmt.where(Match.kickoff_utc < datetime.combine(to + timedelta(days=1), time(0), tzinfo=UTC))
-    if verification:
-        stmt = stmt.where(
-            exists().where(
-                MatchVerification.match_id == Match.id,
-                MatchVerification.reference == VerificationReference.WIKIPEDIA,
-                MatchVerification.status == verification,
+    for aspect, status in ((VerificationAspect.RESULT, verification), (VerificationAspect.EVENTS, events_verification)):
+        if status:
+            stmt = stmt.where(
+                exists().where(
+                    MatchVerification.match_id == Match.id,
+                    MatchVerification.reference == VerificationReference.WIKIPEDIA,
+                    MatchVerification.aspect == aspect,
+                    MatchVerification.status == status,
+                )
             )
-        )
     rows: Sequence[MatchRow] = (
         await session.execute(apply_keyset(stmt, [Match.kickoff_utc, Match.id], limit, cursor))
     ).all()

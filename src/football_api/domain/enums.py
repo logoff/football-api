@@ -96,3 +96,10 @@ class VerificationStatus(StrEnum):
 
 class VerificationReference(StrEnum):
     WIKIPEDIA = "wikipedia"
+
+
+class VerificationAspect(StrEnum):
+    """What of a match a status is about (verify-match-events D4)."""
+
+    RESULT = "RESULT"  # the score and shootout
+    EVENTS = "EVENTS"  # line-ups, substitutions and cards
