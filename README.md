@@ -112,7 +112,9 @@ Each verified match gets a `verification` object in the API (`null` elsewhere), 
 | `UNCONFIRMED`   | openfootball has a result that Wikipedia doesn't have yet |
 | `SOURCE_BEHIND` | Wikipedia has a result that openfootball doesn't have yet |
 
-Statuses are recomputed on every `--verify` run, and each disagreement is logged with both scores. An awarded match recorded with a level score isn't compared, since the source names no winner.
+Statuses are recomputed whenever a `--verify` run checks a season again, and each disagreement is logged with both scores. An awarded match recorded with a level score isn't compared, since the source names no winner.
+
+A season is checked again only when something it depends on changed: its data was re-synced, one of the Wikipedia pages it was compared with has a new revision, or its last check is more than a week old (at most a seventh of the seasons per run, oldest first). The weekly check catches what a revision can't show, such as an edit to a template the article includes. A season that isn't checked again keeps its statuses, and the log repeats them, marked `unchanged`, with each disagreement's stored score. `verification.checked_at` is the time of the last actual comparison. The revision IDs of the pages read are kept to decide this; they're never served.
 
 ### Standings
 
@@ -162,10 +164,11 @@ just sync-competition Q324867 --verify                       # the same, after l
 ```
 
 - `--competition QID`: only this competition (its Wikidata QID, as in `seeds/competitions.yaml`). Repeatable. Default: all of them.
-- `--verify`: after syncing, check the scores of every season that names a reference (see [Verification](#verification)).
+- `--verify`: after syncing, check the scores of the seasons that name a reference and are due (see [Verification](#verification)).
+- `--full`: re-sync and re-verify every season, even those whose inputs haven't changed.
 - `--no-refresh`: use the existing source checkouts without fetching.
 
-Each season is synced in its own transaction, so a broken file costs only that season, and the log has one line per season. The sync never runs migrations: the API container applies them on start.
+Each season is synced in its own transaction, so a broken file costs only that season, and the log has one line per season. A season is skipped, and logged as `unchanged`, when nothing it reads has changed since its last successful sync: its source files, its entry in `seeds/competitions.yaml`, `seeds/teams.yaml`, and the code. Any code change makes the next run a full one. The sync never runs migrations: the API container applies them on start.
 
 | Exit code | Meaning                                                                     |
 | --------- | --------------------------------------------------------------------------- |

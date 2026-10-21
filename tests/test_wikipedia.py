@@ -140,6 +140,49 @@ async def test_qids_follow_normalisation_and_redirects_in_batches_of_50() -> Non
     assert len(qids) == 61
 
 
+async def test_pages_record_their_revision_cached_or_not() -> None:
+    fetched: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        fetched.append(request.url.path)
+        revision = "111" if request.url.path.endswith("/A") else "222"
+        return httpx.Response(200, text="<html></html>", headers={"content-revision-id": revision})
+
+    async with client_with(httpx.MockTransport(handler)) as wiki:
+        await wiki.results_grid("A")
+        with wiki.record_pages() as first:
+            await wiki.results_grid("A")  # cached: no request, still recorded
+            await wiki.results_grid("B")
+        await wiki.results_grid("C")  # outside any block: not recorded
+    assert first == {"A": 111, "B": 222}
+    assert len(fetched) == 3
+
+
+async def test_revisions_follow_redirects_and_skip_missing_pages_in_batches() -> None:
+    batches: list[list[str]] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        titles = request.url.params["titles"].split("|")
+        batches.append(titles)
+        assert request.url.params["prop"] == "info" and request.url.params["redirects"] == "1"
+        pages: list[dict[str, object]] = [{"title": t, "lastrevid": 1000 + i} for i, t in enumerate(titles) if t.startswith("Season")]
+        query: dict[str, object] = {"pages": pages}
+        if "Old title" in titles:
+            query["redirects"] = [{"from": "Old title", "to": "New title"}]
+            pages.append({"title": "New title", "lastrevid": 42})
+        if "Gone" in titles:
+            pages.append({"title": "Gone", "missing": True})
+        return httpx.Response(200, json={"query": query})
+
+    titles = ["Old title", "Gone", *(f"Season {i:03}" for i in range(60))]
+    async with client_with(httpx.MockTransport(handler)) as wiki:
+        revisions = await wiki.revisions(titles)
+    assert [len(b) for b in batches] == [50, 12]
+    assert revisions["Old title"] == 42
+    assert "Gone" not in revisions
+    assert len(revisions) == 61
+
+
 @pytest.mark.network
 async def test_live_la_liga_2024_25_grid() -> None:
     async with WikipediaClient(rest="https://en.wikipedia.org/api/rest_v1", api="https://en.wikipedia.org/w/api.php") as wiki:

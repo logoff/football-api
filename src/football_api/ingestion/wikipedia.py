@@ -8,7 +8,8 @@ the same square table (design D1). Nothing read here is stored; callers only com
 import asyncio
 from collections import OrderedDict
 import re
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Generator, Iterable
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import date
 from importlib.metadata import version
@@ -394,7 +395,8 @@ class WikipediaClient:
         self._rest, self._api, self._sleep = rest.rstrip("/"), api, sleep
         # Recent pages only: a season's match boxes and standings read the same articles one after
         # the other. Keeping every page of a run (about a thousand) ran the nightly job out of memory.
-        self._pages: OrderedDict[str, str] = OrderedDict()
+        self._pages: OrderedDict[str, tuple[str, int | None]] = OrderedDict()  # title → (html, revision)
+        self._recording: dict[str, int] | None = None
         self._client = httpx.AsyncClient(
             headers={"User-Agent": USER_AGENT}, timeout=TIMEOUT, transport=transport, follow_redirects=True
         )
@@ -423,17 +425,32 @@ class WikipediaClient:
             return resp
         raise AssertionError("unreachable")
 
+    @contextmanager
+    def record_pages(self) -> Generator[dict[str, int]]:
+        """Collect the title and revision ID of every page read inside the block, cached or not."""
+        self._recording = {}
+        try:
+            yield self._recording
+        finally:
+            self._recording = None
+
     async def _page_html(self, title: str) -> str:
         if title in self._pages:
             self._pages.move_to_end(title)
-            return self._pages[title]
-        resp = await self._get(f"{self._rest}/page/html/{quote(title.replace(' ', '_'), safe='')}")
-        if resp.status_code != 200:
-            raise WikipediaUnavailable(f"{title}: HTTP {resp.status_code}")
-        self._pages[title] = resp.text
-        while len(self._pages) > PAGE_CACHE_SIZE:
-            self._pages.popitem(last=False)
-        return resp.text
+            html, revision = self._pages[title]
+        else:
+            resp = await self._get(f"{self._rest}/page/html/{quote(title.replace(' ', '_'), safe='')}")
+            if resp.status_code != 200:
+                raise WikipediaUnavailable(f"{title}: HTTP {resp.status_code}")
+            # The REST API names the revision it rendered, the action API's `lastrevid`.
+            header = resp.headers.get("content-revision-id", "")
+            html, revision = resp.text, int(header) if header.isdigit() else None
+            self._pages[title] = (html, revision)
+            while len(self._pages) > PAGE_CACHE_SIZE:
+                self._pages.popitem(last=False)
+        if self._recording is not None and revision is not None:
+            self._recording[title] = revision
+        return html
 
     async def _season_pages(self, title: str, *, qualifying: bool = False) -> list[str]:
         """The season article, then the sub-articles it links (groups, knockout phase, qualifying
@@ -461,36 +478,50 @@ class WikipediaClient:
         """The standings tables of a season article and its sub-articles, each set of teams once."""
         return merge_standings(parse_standings(page) for page in await self._season_pages(title, qualifying=qualifying))
 
-    async def qids(self, titles: Iterable[str]) -> dict[str, str]:
-        """Map article titles to Wikidata QIDs, following normalisation and redirects."""
+    async def _query(self, titles: Iterable[str], prop: dict[str, str]) -> list[tuple[str, dict[str, Any]]]:
+        """Each requested title with the page it ends at after normalisation and redirects, in
+        batches; titles with no page are left out."""
         wanted = sorted(set(titles))
-        found: dict[str, str] = {}
+        found: list[tuple[str, dict[str, Any]]] = []
         for i in range(0, len(wanted), TITLES_PER_QUERY):
             batch = wanted[i : i + TITLES_PER_QUERY]
             resp = await self._get(
                 self._api,
-                {
-                    "action": "query", "format": "json", "formatversion": "2", "redirects": "1",
-                    "prop": "pageprops", "ppprop": "wikibase_item", "titles": "|".join(batch),
-                },
+                {"action": "query", "format": "json", "formatversion": "2", "redirects": "1", "titles": "|".join(batch), **prop},
             )
             if resp.status_code != 200:
-                raise WikipediaUnavailable(f"pageprops: HTTP {resp.status_code}")
+                raise WikipediaUnavailable(f"{prop['prop']}: HTTP {resp.status_code}")
             query = cast(dict[str, Any], resp.json().get("query", {}))
             hops: dict[str, str] = {}
             for key in ("normalized", "redirects"):
                 for hop in cast(list[dict[str, str]], query.get(key, [])):
                     hops[hop["from"]] = hop["to"]
-            qid_of = {
-                cast(str, page["title"]): cast(str, page["pageprops"]["wikibase_item"])
+            page_of = {
+                cast(str, page["title"]): page
                 for page in cast(list[dict[str, Any]], query.get("pages", []))
-                if "wikibase_item" in cast(dict[str, Any], page.get("pageprops", {}))
+                if not page.get("missing") and not page.get("invalid")
             }
             for title in batch:
                 final, seen = title, {title}
                 while final in hops and hops[final] not in seen:
                     final = hops[final]
                     seen.add(final)
-                if final in qid_of:
-                    found[title] = qid_of[final]
+                if final in page_of:
+                    found.append((title, page_of[final]))
         return found
+
+    async def qids(self, titles: Iterable[str]) -> dict[str, str]:
+        """Map article titles to Wikidata QIDs, following normalisation and redirects."""
+        return {
+            title: cast(str, page["pageprops"]["wikibase_item"])
+            for title, page in await self._query(titles, {"prop": "pageprops", "ppprop": "wikibase_item"})
+            if "wikibase_item" in cast(dict[str, Any], page.get("pageprops", {}))
+        }
+
+    async def revisions(self, titles: Iterable[str]) -> dict[str, int]:
+        """The current revision ID of each title that exists, following normalisation and redirects."""
+        return {
+            title: cast(int, page["lastrevid"])
+            for title, page in await self._query(titles, {"prop": "info"})
+            if "lastrevid" in page
+        }
