@@ -102,6 +102,7 @@ class StoredCheck:
     reference_revisions: dict[str, int] | None
     reference_fingerprint: str | None
     verified_at: datetime | None
+    unpaired: int | None = None
 
 
 async def stored_checks(session: AsyncSession) -> dict[SeasonKey, StoredCheck]:
@@ -122,6 +123,7 @@ async def stored_checks(session: AsyncSession) -> dict[SeasonKey, StoredCheck]:
             check.reference_revisions if check else None,
             check.reference_fingerprint if check else None,
             check.verified_at if check else None,
+            check.unpaired if check else None,
         )
         for qid, label, sid, n, check in rows
     }
@@ -137,9 +139,11 @@ async def record_sync(session: AsyncSession, season: uuid.UUID, fingerprint: str
     )
 
 
-async def record_verification(session: AsyncSession, season: uuid.UUID, revisions: dict[str, int], now: datetime) -> None:
+async def record_verification(
+    session: AsyncSession, season: uuid.UUID, revisions: dict[str, int], unpaired: int | None, now: datetime
+) -> None:
     """Store the pages a complete verification read, against the data it checked."""
-    stmt = insert(SeasonCheck).values(season_id=season, reference_revisions=revisions, verified_at=now)
+    stmt = insert(SeasonCheck).values(season_id=season, reference_revisions=revisions, unpaired=unpaired, verified_at=now)
     await session.execute(
         stmt.on_conflict_do_update(
             index_elements=[SeasonCheck.season_id],
@@ -147,6 +151,7 @@ async def record_verification(session: AsyncSession, season: uuid.UUID, revision
             set_={
                 "reference_revisions": stmt.excluded.reference_revisions,
                 "reference_fingerprint": SeasonCheck.source_fingerprint,
+                "unpaired": stmt.excluded.unpaired,
                 "verified_at": stmt.excluded.verified_at,
             },
         )

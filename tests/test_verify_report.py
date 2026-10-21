@@ -82,10 +82,12 @@ def test_unchanged_season_lines_count_like_verified_ones() -> None:
 INFO CONMEBOL Copa Libertadores 2015: verified against wikipedia: VERIFIED=124 MISMATCH=1 UNCONFIRMED=0 SOURCE_BEHIND=0 unchanged
 WARNING CONMEBOL Copa Libertadores 2015: MISMATCH Boca Juniors v CA River Plate: stored 0–3, wikipedia unchanged since 2026-10-21
 INFO CONMEBOL Copa Libertadores 2015: standings checked against wikipedia: VERIFIED=32 MISMATCH=0 UNCONFIRMED=0 unchanged
+INFO Copa del Rey 2024-25: verified against wikipedia: VERIFIED=120 MISMATCH=0 UNCONFIRMED=0 SOURCE_BEHIND=0 unpaired=7 unchanged
 """
     report = vr.parse_log(log.splitlines())
-    assert report.seasons == 1
+    assert report.seasons == 2
     assert report.matches["CONMEBOL Copa Libertadores"]["MISMATCH"] == 1
+    assert report.matches["Copa del Rey"]["unpaired"] == 7
     assert report.tables["CONMEBOL Copa Libertadores"]["VERIFIED"] == 32
     assert set(report.disagreements) == {"CONMEBOL Copa Libertadores 2015: MISMATCH Boca Juniors v CA River Plate"}
 

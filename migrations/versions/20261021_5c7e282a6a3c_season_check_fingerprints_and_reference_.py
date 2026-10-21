@@ -27,6 +27,7 @@ def upgrade() -> None:
     sa.Column('synced_at', sa.DateTime(timezone=True), nullable=True),
     sa.Column('reference_revisions', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('reference_fingerprint', sa.String(length=64), nullable=True),
+    sa.Column('unpaired', sa.Integer(), nullable=True),
     sa.Column('verified_at', sa.DateTime(timezone=True), nullable=True),
     sa.ForeignKeyConstraint(['season_id'], ['season.id'], name=op.f('fk_season_check_season_id_season'), ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('season_id', name=op.f('pk_season_check'))

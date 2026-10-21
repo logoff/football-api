@@ -297,6 +297,7 @@ class SeasonCheck(Base):
     synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     reference_revisions: Mapped[dict[str, int] | None] = mapped_column(JSONB)
     reference_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    unpaired: Mapped[int | None]  # stored matches no reference match box paired with (cups and tournaments)
     verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 

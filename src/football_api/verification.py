@@ -309,7 +309,7 @@ async def verify_seasons(
             await _report_unchanged(seed, label, last)
             continue
         with reference.record_pages() as pages:
-            complete = await _verify_matches(seed, src, label, reference, now)
+            complete, unpaired = await _verify_matches(seed, src, label, reference, now)
             if _has_standings(seed):
                 try:
                     complete = await verify_standings(seed, src, label, reference, now) and complete
@@ -319,7 +319,7 @@ async def verify_seasons(
         if complete:  # an incomplete verification stores nothing, so the season is due next run
             async with get_sessionmaker()() as session, session.begin():
                 if (sid := await season_id(session, seed, src)) is not None:
-                    await record_verification(session, sid, dict(pages), now)
+                    await record_verification(session, sid, dict(pages), unpaired, now)
 
 
 async def _due(
@@ -397,7 +397,10 @@ async def _report_unchanged(seed: CompetitionSeed, label: str, last: StoredCheck
                     label, status.value, names[match.home_team_id], names[match.away_team_id], _fmt(stored, stored_pens), since,
                 )
         log.info(
-            "%s: verified against wikipedia: %s unchanged", label, " ".join(f"{s.value}={counts[s]}" for s in VerificationStatus)
+            "%s: verified against wikipedia: %s%s unchanged",
+            label,
+            " ".join(f"{s.value}={counts[s]}" for s in VerificationStatus),
+            f" unpaired={last.unpaired}" if last.unpaired is not None else "",
         )
         if not _has_standings(seed):
             return
@@ -430,8 +433,9 @@ async def _report_unchanged(seed: CompetitionSeed, label: str, last: StoredCheck
 
 async def _verify_matches(
     seed: CompetitionSeed, src: SeasonSource, label: str, reference: ResultsReference, now: datetime
-) -> bool:
-    """Verify the season's matches; whether the comparison completed."""
+) -> tuple[bool, int | None]:
+    """Verify the season's matches: whether the comparison completed, and the number of stored
+    matches no match box paired with (None for a results grid)."""
     assert src.wikipedia is not None
     cup = seed.format in (CompetitionFormat.CUP, CompetitionFormat.LEAGUE_CUP, CompetitionFormat.TOURNAMENT)
     try:
@@ -439,25 +443,25 @@ async def _verify_matches(
             boxes = await reference.match_boxes(src.wikipedia, qualifying=await _stores_qualifying(seed, src))
             if not boxes:
                 log.warning("%s: no match boxes in %r; statuses unchanged", label, src.wikipedia)
-                return False
+                return False, None
             title_qids = _as_seeded(await reference.qids(sorted({t for b in boxes for t in (b.home, b.away)})))
             grid = None
         else:
             grid = await reference.results_grid(src.wikipedia)
             if grid is None:
                 log.warning("%s: no results grid in %r; statuses unchanged", label, src.wikipedia)
-                return False
+                return False, None
             title_qids = _as_seeded(await reference.qids(grid.teams))
             boxes = []
     except WikipediaUnavailable as exc:
         log.warning("%s: reference unavailable (%s); statuses unchanged", label, exc)
-        return False
+        return False, None
     unpaired = None
     async with get_sessionmaker()() as session, session.begin():
         sid = await season_id(session, seed, src)
         if sid is None:
             log.warning("%s: season not in the database; nothing to verify", label)
-            return False
+            return False, None
         if grid is not None:
             counts = await apply_grid(session, label, sid, grid, title_qids, now)
         else:
@@ -468,7 +472,7 @@ async def _verify_matches(
         " ".join(f"{s.value}={counts[s]}" for s in VerificationStatus),
         f" unpaired={unpaired}" if unpaired is not None else "",
     )
-    return True
+    return True, unpaired
 
 
 # --- standings (verify-standings design) ----------------------------------------------

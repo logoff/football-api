@@ -70,14 +70,15 @@ Every code change, including API-only ones, makes the next run a full run. That'
 
 One row per season, internal and not exposed in the API:
 
-| Column                  | Type                                      | Meaning                                                                            |
-| ----------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------- |
-| `season_id`             | UUID, PK, FK → `season` ON DELETE CASCADE |                                                                                    |
-| `source_fingerprint`    | text                                      | D1, at the last successful sync                                                    |
-| `synced_at`             | timestamptz                               | time of that sync                                                                  |
-| `reference_revisions`   | JSONB, nullable                           | `{title: revision_id}` of every Wikipedia page the last complete verification read |
-| `reference_fingerprint` | text, nullable                            | the `source_fingerprint` that verification checked                                 |
-| `verified_at`           | timestamptz, nullable                     | time of the last complete verification                                             |
+| Column                  | Type                                      | Meaning                                                                                                                  |
+| ----------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `season_id`             | UUID, PK, FK → `season` ON DELETE CASCADE |                                                                                                                          |
+| `source_fingerprint`    | text                                      | D1, at the last successful sync                                                                                          |
+| `synced_at`             | timestamptz                               | time of that sync                                                                                                        |
+| `reference_revisions`   | JSONB, nullable                           | `{title: revision_id}` of every Wikipedia page the last complete verification read                                       |
+| `reference_fingerprint` | text, nullable                            | the `source_fingerprint` that verification checked                                                                       |
+| `unpaired`              | integer, nullable                         | stored matches no match box paired with, at that verification (cups and tournaments), for the report of a skipped season |
+| `verified_at`           | timestamptz, nullable                     | time of the last complete verification                                                                                   |
 
 Revision IDs and titles are metadata about the reference, not reference content, so the "never stored" requirement is amended to allow them (spec delta).
 
@@ -108,7 +109,7 @@ A verification that can't complete (reference unavailable, no grid or boxes) sto
 
 A season whose sync is skipped logs `<competition> <season>: unchanged, <n> matches`.
 
-A season whose verification is skipped logs the same summary line as today, computed from its stored statuses, with `unchanged` at the end:
+A season whose verification is skipped logs the same summary line as today, computed from its stored statuses and its stored `unpaired` count, with `unchanged` at the end:
 
 ```text
 INFO Premier League 2015-16: verified against wikipedia: VERIFIED=380 MISMATCH=0 UNCONFIRMED=0 SOURCE_BEHIND=0 unchanged
@@ -136,6 +137,14 @@ The GitHub workflow starts from an empty database, so it has no stored fingerpri
 | After a deploy               | every season                | every season                                     | ~25 min, as today |
 
 The rotation is most of the verification cost. Its period is one constant; a longer period makes routine nights cheaper but takes longer to notice a template-only edit.
+
+## Integration run
+
+On an empty local database, with every competition and the same openfootball checkout throughout:
+
+1. `--verify`: 227 seasons synced and verified in 11 min 20 s (18 min 40 s on a first try with a slower Wikipedia). One mismatch, Boca v River 2015.
+1. `--verify` again: 8.9 s. All 227 seasons were logged as unchanged, 0 were due for verification, and `tools/verify_report.py` gave the same totals, table counts and disagreements as the first run, Boca v River included.
+1. One source file changed (Serie A 2015-16) and one stored revision edited (Ligue 1 2019-20), then `--verify`: 14 s. Only Serie A 2015-16 was re-synced, and exactly those two seasons were verified again.
 
 ## Risks / Trade-offs
 
