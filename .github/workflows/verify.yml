@@ -1,12 +1,12 @@
 # Full sync of every competition from fresh openfootball sources into an empty database, then
-# verification against Wikipedia. The summary lists every disagreement; on a pull request it
-# also lists what is new and gone since main's latest run. Fails only when a season fails to
-# sync: disagreements change with the sources, so they are reported, not enforced.
+# verification against Wikipedia. It takes about 20 minutes, so it doesn't run on pull requests:
+# it runs nightly, after a merge to main, and by hand. The summary lists every disagreement; a
+# manual run on another branch also lists what is new and gone since main's latest run. Fails
+# only when a season fails to sync: disagreements change with the sources, so they are
+# reported, not enforced.
 name: Full sync and verification
 
 on:
-  pull_request:
-    paths: ["src/**", "seeds/**", "migrations/**", "tools/verify_report.py", ".github/workflows/verify.yml"]
   push:
     branches: [main]
     paths: ["src/**", "seeds/**", "migrations/**"]
@@ -57,7 +57,7 @@ jobs:
           status=$?
           [ "$status" -eq 0 ] || echo "SYNC_EXIT=$status" >> "$GITHUB_ENV"
       - name: Baseline from main
-        if: github.event_name == 'pull_request'
+        if: github.ref != 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
