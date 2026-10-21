@@ -56,7 +56,7 @@ The differences seen were of three kinds:
 
 A match box's line-up table is the first table after it, before the next match box, that holds two side tables with a `GK` row. The parser returns, per side, the starters and the substitutes who came on (name, linked article title, number when there is one), the cards and the substitution minutes.
 
-A box can appear twice: in the season article without a table, and in a sub-article with one. `merge_boxes` keeps the first box per match, which is the season article's. It changes to keep the first box's score but take the line-up table from whichever copy has one.
+A box can appear twice: in the season article without a table, and in a sub-article with one. `merge_boxes` keeps the first box per match, which is the season article's. It changes to keep the first box's score but take the line-up table from the copy that records the most cards and substitutions: the 2010 knockout stage article repeats the final's line-ups without cards, which the final's own article has.
 
 ### D2. Events status
 
@@ -74,20 +74,25 @@ A match with no paired box, or in a league, gets no events status. The compariso
 
 1. starters, as sets of paired players;
 1. substitutes who came on, as sets;
-1. substitutions, as (player off, player on, minute);
-1. cards, as (player, kind, minute), from 1970 on. Wikipedia's `{{sent off|2|a|b}}` counts as a `YELLOW` at `a` and a `SECOND_YELLOW` at `b`. `{{sent off|0|b}}` counts as a `RED` at `b`.
+1. substitutions, as when each player went off and came on, only when the table records any substitution for the match;
+1. cards, as (player, kind, minute), from 1970 on, only when the table records any card for the match. Wikipedia's `{{sent off|2|a|b}}` counts as a `YELLOW` at `a` and a `SECOND_YELLOW` at `b`. `{{sent off|0|b}}` counts as a `RED` at `b`.
 
-Minutes agree when they differ by at most one. The added minute is compared only when both sources have one.
+Minutes agree when they differ by at most one. The added minute is compared only when both sources have one, and extra time written as added time (`90+8'`) agrees with the plain minute (`98'`).
+
+Some tables list the players with no templates at all (the 2006 knockout article, some 1970s tables without `{{subon}}`). Treating them as "no cards" would flag every booking, so a table that records none says nothing about cards or substitutions.
 
 ### D3. Player pairing
 
 Within one side of one match:
 
-1. names normalised to lowercase ASCII words (accents folded, punctuation dropped, `(c)` removed) are equal, or equal once spaces are removed;
-1. otherwise, a unique shared word;
-1. otherwise, the same shirt number, when the stored player has one from the squad and the table has one.
+1. names normalised to lowercase ASCII words (accents folded, letters like `ı`, `ł` and `ø` mapped, punctuation dropped, `(c)` removed) are equal once spaces are removed, with German umlauts also tried as `ae`, `oe`, `ue` (`Hügi`, `HUEGI`);
+1. otherwise, a unique shared word, ignoring particles such as `al`, `de` and `van`;
+1. otherwise, the same shirt number, when the stored player has one from the squad and the table has one;
+1. otherwise, the closest spelling: each word of the shorter name against its closest word in the other, averaged, at least 0.7, and each player the other's closest with no tie.
 
-A player left unpaired on either side is a difference. That makes a spelling variant a `MISMATCH`, which is what you want to hear about: one side should be corrected, or the pair added to the names already handled in `ingestion/openfootball/names.py`.
+A player left unpaired on either side is a difference.
+
+The last rule came from the integration run. Without it, about 270 starters per side stayed unpaired, nearly all transliterations sharing a common first name (`Yury ZHIRKOV` / `Yuri Zhirkov`, `AHMED HEGAZY` / `Ahmed Hegazi`, `Jose JOVEL` / `José Francisco Jovel`). With it, the rest are nicknames (`PAULO CESAR` / `Caju`) and genuinely different names, which the shirt numbers mostly resolve.
 
 **Alternative:** pairing by Wikidata QID, from the player's linked article. Rejected for now: stored players have no QIDs, and adding them is its own change.
 
@@ -99,29 +104,43 @@ A player left unpaired on either side is a difference. That makes a spelling var
 
 ### D5. Report lines
 
-One line per events `MISMATCH` or `SOURCE_BEHIND`:
+One line per events `MISMATCH` or `SOURCE_BEHIND`, listing every difference by team and player:
 
 ```
-WARNING FIFA World Cup 2010: MISMATCH events Serbia v Ghana: stored Luković Y 73', wikipedia Luković Y 54' 2Y 74'
+WARNING FIFA World Cup 2010: MISMATCH events Serbia v Ghana: stored vs wikipedia: Serbia: Aleksandar Luković: cards Y 73' vs Y 54', 2Y 74'
 ```
 
-For a skipped season, the line ends with `wikipedia unchanged since YYYY-MM-DD`, as for scores. The summary line gains the counts `events_VERIFIED=…` and so on. `tools/verify_report.py`'s disagreement pattern already matches the line; the key includes `events`, so result and events disagreements can't collide.
+For a skipped season, the line reads `…: stored events, wikipedia unchanged since YYYY-MM-DD`, as for scores. Each season with events statuses logs its own summary line, `…: events verified against wikipedia: VERIFIED=… MISMATCH=… UNCONFIRMED=… SOURCE_BEHIND=…`, so the results summary and the reports that read it are unchanged. `tools/verify_report.py`'s disagreement pattern already matches the line; the key includes `events`, so result and events disagreements can't collide.
 
 ### D6. API
 
 `events_verification` sits next to `verification` on match responses, with the same shape (`status`, `reference`, `checked_at`), and `null` when there is no status. `/v1/matches?events_verification=MISMATCH` filters on it.
 
-## Open question
+### D7. Kuma
 
-**Kuma.** The nightly report takes the monitor down for any `MISMATCH` not in `known-mismatches.txt`. With 150 to 200 events mismatches at first, the monitor would stay down until they're triaged. The options are:
+The nightly report takes the monitor down for any `MISMATCH` not in `known-mismatches.txt`. With a couple of hundred events mismatches at first, the monitor would stay down until they're triaged. So the infra report counts events mismatches in its message but doesn't alert on them until a flag (`ALERT_EVENTS`) is turned on, after a first triage. Result mismatches alert as before.
 
-1. **Recommended:** the report counts events mismatches but doesn't alert on them until a flag is turned on, after a first triage. The flag goes in the infra repo.
-1. Add every first-run events mismatch to the known list on day one, and alert from then on.
-1. Alert from day one.
+The alternatives were listing every first-run events mismatch as known on day one, which hides them from review, or alerting from day one, which leaves the monitor down for weeks.
 
-## Expected first run
+## Integration run
 
-A full run re-verifies everything (the code changed), as after any deploy. Parsing adds seconds. Expect 150 to 200 events `MISMATCH`es, fewer once 1966-style cautions are excluded by the 1970 rule.
+On an empty database with fresh sources, `--verify`, all 227 seasons:
+
+| Run                         |        Time | Result                                                   |
+| --------------------------- | ----------: | -------------------------------------------------------- |
+| Full                        | 10 min 41 s | results unchanged (Boca v River the only mismatch)       |
+| Second run, nothing changed |         9 s | same totals, the same 273 disagreements, nothing fetched |
+
+Events statuses:
+
+| Competition         | Verified | Mismatch | No table (`UNCONFIRMED`) |
+| ------------------- | -------: | -------: | -----------------------: |
+| FIFA World Cup      |      919 |      149 |                        0 |
+| FIFA Club World Cup |       70 |       12 |                      141 |
+
+The 161 events mismatches hold 124 card differences, 116 substitution minutes, 49 players only in Wikipedia's line-up (mostly the substitutes of two Club World Cup finals that openfootball doesn't record) and 25 pairs of names that don't match (`Szerfke` / `Scherfke`, `Sommers` / `Zomers`, nicknames).
+
+A first run also gave `SOURCE_BEHIND` to every Euro, Copa América and Copa Libertadores match with a Wikipedia table. Those seasons record no line-ups at all, so a season whose `lineups` coverage is `none` now gets no events statuses, and loses any it had.
 
 ## Risks / Trade-offs
 

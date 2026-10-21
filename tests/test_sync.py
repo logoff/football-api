@@ -10,7 +10,7 @@ import logging
 import pytest
 from sqlalchemy import func, select, text
 
-from football_api.domain.enums import Coverage, DecidedBy, MatchStatus, Stage, VerificationReference, VerificationStatus
+from football_api.domain.enums import Coverage, DecidedBy, MatchStatus, Stage, VerificationAspect, VerificationReference, VerificationStatus
 from football_api.infra.db import get_sessionmaker
 from football_api.infra.models import Competition, ExternalRef, Goal, Match, MatchVerification, Player, PlayerTeamSeason, Season, SeasonCheck, Team, TeamSeason
 from football_api.ingestion.openfootball.squads import parse_more_squads, parse_per_team_squad
@@ -360,7 +360,7 @@ async def test_match_removed_from_source_is_deleted(
     async with get_sessionmaker()() as session, session.begin():
         session.add(
             MatchVerification(
-                match_id=final_id, reference=VerificationReference.WIKIPEDIA,
+                match_id=final_id, reference=VerificationReference.WIKIPEDIA, aspect=VerificationAspect.RESULT,
                 status=VerificationStatus.VERIFIED, checked_at=datetime.now(UTC),
             )
         )

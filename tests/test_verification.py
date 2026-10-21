@@ -10,11 +10,12 @@ from pathlib import Path
 import pytest
 from sqlalchemy import func, inspect, select, update
 
-from football_api.domain.enums import MatchStatus, SeasonStatus, VerificationStatus
+from football_api.domain.enums import CardKind, Coverage, LineupRole, MatchStatus, SeasonStatus, VerificationAspect, VerificationStatus
 from football_api.infra.db import get_engine, get_sessionmaker
 from football_api.infra.models import Match, MatchVerification, Season, SeasonCheck, StandingVerification, Team
+from football_api.ingestion.openfootball.events import SideEvents, parse_events_file
 from football_api.ingestion.seeds import CompetitionSeed, TeamSeed
-from football_api.ingestion.wikipedia import GridCell, MatchBox, ResultsGrid, StandingsLine, StandingsTable, WikipediaUnavailable
+from football_api.ingestion.wikipedia import GridCell, LineupRow, MatchBox, ResultsGrid, StandingsLine, StandingsTable, WikipediaUnavailable
 from football_api.sync import run_sync
 from football_api import verification
 from football_api.season_check import stored_checks
@@ -109,6 +110,7 @@ async def statuses() -> dict[tuple[str, str], tuple[VerificationStatus, datetime
             .join(Match, Match.id == MatchVerification.match_id)
             .join(home, home.c.id == Match.home_team_id)
             .join(away, away.c.id == Match.away_team_id)
+            .where(MatchVerification.aspect == VerificationAspect.RESULT)
         )
         return {(h, a): (s, t) for h, a, s, t in rows}
 
@@ -317,7 +319,7 @@ async def test_no_reference_values_are_stored(
     await verify(competitions, fixture_teams, ref)
     async with get_engine().connect() as conn:
         columns = await conn.run_sync(lambda c: [col["name"] for col in inspect(c).get_columns("match_verification")])
-    assert sorted(columns) == ["checked_at", "id", "match_id", "reference", "status"]
+    assert sorted(columns) == ["aspect", "checked_at", "id", "match_id", "reference", "status"]
     assert (await stored_matches())[0] == (h, a, s)  # the stored score is untouched
     assert (await statuses())[(h, a)][0] is VerificationStatus.MISMATCH
     assert datetime.now(UTC) >= (await statuses())[(h, a)][1]
@@ -435,7 +437,7 @@ async def test_cup_unpaired_match_is_counted(
     assert "unpaired=1" in caplog.text
 
 
-async def cup_statuses() -> dict[tuple[str, str, date], VerificationStatus]:
+async def cup_statuses(aspect: VerificationAspect = VerificationAspect.RESULT) -> dict[tuple[str, str, date], VerificationStatus]:
     async with get_sessionmaker()() as session:
         home, away = Team.__table__.alias("home"), Team.__table__.alias("away")
         rows = await session.execute(
@@ -443,6 +445,7 @@ async def cup_statuses() -> dict[tuple[str, str, date], VerificationStatus]:
             .join(Match, Match.id == MatchVerification.match_id)
             .join(home, home.c.id == Match.home_team_id)
             .join(away, away.c.id == Match.away_team_id)
+            .where(MatchVerification.aspect == aspect)
         )
         return {(h, a, k.date()): s for h, a, k, s in rows}
 
@@ -668,3 +671,119 @@ async def test_unchanged_season_reports_its_stored_table_mismatch(
     assert "FIFA World Cup 2022: MISMATCH table Senegal: stored pos 2, P3 W2 D0 L1 5-4 6 pts, wikipedia unchanged since 2026-10-20" in caplog.text
     assert "FIFA World Cup 2022: standings checked against wikipedia: VERIFIED=3 MISMATCH=1 UNCONFIRMED=0 unchanged" in caplog.text
 
+
+
+# --- events (verify-match-events) ----------------------------------------------------
+
+FINAL = date(2022, 12, 18)
+
+
+def _table(side: SideEvents) -> tuple[LineupRow, ...]:
+    """A line-up table that agrees with one side's stored events."""
+    off = {s.player_off: (s.minute, s.added_minute) for s in side.substitutions}
+    on = {s.player_on: (s.minute, s.added_minute) for s in side.substitutions}
+    cards: dict[str, list[tuple[CardKind, tuple[int, int | None] | None]]] = {}
+    for c in side.cards:
+        cards.setdefault(c.name, []).append((c.kind, (c.minute, c.added_minute)))
+    return tuple(
+        LineupRow(e.name.title(), None, e.role is LineupRole.STARTER, on.get(e.name), off.get(e.name), tuple(cards.get(e.name, [])))
+        for e in side.entries
+    )
+
+
+@pytest.fixture
+async def world_cup_final(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> tuple[CompetitionSeed, FakeReference, tuple[tuple[LineupRow, ...], tuple[LineupRow, ...]]]:
+    """The synced 2022 World Cup, and a reference box for its final with line-ups matching the stored events."""
+    wc = next(c for c in fixture_competitions if c.name == "FIFA World Cup")
+    wc = wc.model_copy(update={"seasons": [wc.seasons[0].model_copy(update={"wikipedia": "2022 FIFA World Cup"})]})
+    report = await run_sync(competitions=[wc], teams=fixture_teams, refresh_sources=False)
+    assert not report.failed
+    src = wc.seasons[0]
+    assert src.events
+    [events] = [ev for m, ev in parse_events_file(fresh_db / src.events, start_year=2022, display_path=src.events) if m.day == FINAL]
+    assert events.home and events.away
+    ref = FakeReference()
+    ref.qid_of = {t.name: t.wikidata for t in fixture_teams if t.wikidata}
+    return wc, ref, (_table(events.home), _table(events.away))
+
+
+async def test_events_agree(world_cup_final: tuple[CompetitionSeed, FakeReference, tuple[tuple[LineupRow, ...], tuple[LineupRow, ...]]], caplog: pytest.LogCaptureFixture) -> None:
+    wc, ref, lineups = world_cup_final
+    ref.boxes = [MatchBox(FINAL, "Argentina", "France", (3, 3), (4, 2), lineups=lineups)]
+    with caplog.at_level(logging.INFO, logger="football_api.verification"):
+        await verify_seasons([(wc, wc.seasons[0])], ref)
+    assert await cup_statuses(VerificationAspect.EVENTS) == {("Argentina", "France", FINAL): VerificationStatus.VERIFIED}
+    assert await cup_statuses() == {("Argentina", "France", FINAL): VerificationStatus.VERIFIED}
+    assert "FIFA World Cup 2022: events verified against wikipedia: VERIFIED=1 MISMATCH=0 UNCONFIRMED=0 SOURCE_BEHIND=0" in caplog.text
+
+
+async def test_events_disagree_and_are_logged(
+    world_cup_final: tuple[CompetitionSeed, FakeReference, tuple[tuple[LineupRow, ...], tuple[LineupRow, ...]]], caplog: pytest.LogCaptureFixture
+) -> None:
+    wc, ref, (home, away) = world_cup_final
+    # Wikipedia books Rabiot ten minutes later, and has a booking for Giroud's substitute that we don't.
+    away = tuple(replace(r, cards=((CardKind.YELLOW, (65, None)),)) if r.name == "Adrien Rabiot" else r for r in away)
+    away = tuple(replace(r, cards=()) if r.name == "Marcus Thuram" else r for r in away)
+    ref.boxes = [MatchBox(FINAL, "Argentina", "France", (3, 3), (4, 2), lineups=(home, away))]
+    await verify_seasons([(wc, wc.seasons[0])], ref)
+    assert await cup_statuses(VerificationAspect.EVENTS) == {("Argentina", "France", FINAL): VerificationStatus.MISMATCH}
+    assert (
+        "FIFA World Cup 2022: MISMATCH events Argentina v France: stored vs wikipedia: "
+        "France: Adrien Rabiot: cards Y 55' vs Y 65'; France: Marcus Thuram: cards Y 87' vs none"
+    ) in caplog.text
+    assert await cup_statuses() == {("Argentina", "France", FINAL): VerificationStatus.VERIFIED}  # the result is its own aspect
+
+    async with get_sessionmaker()() as session:
+        last = (await stored_checks(session))[(wc.wikidata, "2022")]
+    caplog.clear()
+    with caplog.at_level(logging.INFO, logger="football_api.verification"):
+        await verification._report_unchanged(wc, "FIFA World Cup 2022", last)  # pyright: ignore[reportPrivateUsage]
+    since = f"{last.verified_at:%Y-%m-%d}"
+    assert f"FIFA World Cup 2022: MISMATCH events Argentina v France: stored events, wikipedia unchanged since {since}" in caplog.text
+    assert "FIFA World Cup 2022: events verified against wikipedia: VERIFIED=0 MISMATCH=1 UNCONFIRMED=0 SOURCE_BEHIND=0 unchanged" in caplog.text
+
+
+async def test_box_without_line_ups_leaves_events_unconfirmed(
+    world_cup_final: tuple[CompetitionSeed, FakeReference, tuple[tuple[LineupRow, ...], tuple[LineupRow, ...]]],
+) -> None:
+    wc, ref, _ = world_cup_final
+    ref.boxes = [MatchBox(FINAL, "Argentina", "France", (3, 3), (4, 2))]
+    await verify_seasons([(wc, wc.seasons[0])], ref)
+    assert await cup_statuses(VerificationAspect.EVENTS) == {("Argentina", "France", FINAL): VerificationStatus.UNCONFIRMED}
+
+
+async def test_line_ups_follow_a_flipped_box(
+    world_cup_final: tuple[CompetitionSeed, FakeReference, tuple[tuple[LineupRow, ...], tuple[LineupRow, ...]]],
+) -> None:
+    wc, ref, (home, away) = world_cup_final
+    ref.boxes = [MatchBox(FINAL, "France", "Argentina", (3, 3), (2, 4), lineups=(away, home))]
+    await verify_seasons([(wc, wc.seasons[0])], ref)
+    assert await cup_statuses(VerificationAspect.EVENTS) == {("Argentina", "France", FINAL): VerificationStatus.VERIFIED}
+
+
+async def test_league_matches_get_no_events_status(
+    premier_league: tuple[list[CompetitionSeed], FakeReference, list[tuple[str, str, tuple[int, int] | None]]],
+    fixture_teams: list[TeamSeed],
+) -> None:
+    competitions, ref, _ = premier_league
+    await verify(competitions, fixture_teams, ref)
+    async with get_sessionmaker()() as session:
+        events = select(func.count()).select_from(MatchVerification).where(MatchVerification.aspect == VerificationAspect.EVENTS)
+        assert await session.scalar(events) == 0
+
+
+async def test_season_without_line_ups_gets_no_events_status(
+    world_cup_final: tuple[CompetitionSeed, FakeReference, tuple[tuple[LineupRow, ...], tuple[LineupRow, ...]]],
+) -> None:
+    """A Euro or Copa América season records no line-ups: Wikipedia's tables there aren't `SOURCE_BEHIND`."""
+    wc, ref, lineups = world_cup_final
+    ref.boxes = [MatchBox(FINAL, "Argentina", "France", (3, 3), (4, 2), lineups=lineups)]
+    await verify_seasons([(wc, wc.seasons[0])], ref)
+    assert await cup_statuses(VerificationAspect.EVENTS)
+    async with get_sessionmaker()() as session, session.begin():
+        await session.execute(update(Season).values(lineups_coverage=Coverage.NONE))
+    await verify_seasons([(wc, wc.seasons[0])], ref)
+    assert await cup_statuses(VerificationAspect.EVENTS) == {}
+    assert await cup_statuses() == {("Argentina", "France", FINAL): VerificationStatus.VERIFIED}

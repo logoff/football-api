@@ -25,7 +25,7 @@ None.
 
 ### Modified Capabilities
 
-- `match-verification`: new requirements Reference line-ups, Events status per match, Events comparison, Player pairing, Events disagreement report, and Events verification in the API.
+- `match-verification`: new requirements Reference line-ups, Events status per match, Events comparison, Event minutes, Player pairing, Events disagreement report, and Events verification in the API.
 
 ## Impact
 

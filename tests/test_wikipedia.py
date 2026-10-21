@@ -1,5 +1,6 @@
 """Wikipedia results-grid reader (match-verification spec): parsing, polite access, title → QID."""
 
+import json
 from datetime import date
 from pathlib import Path
 from urllib.parse import unquote
@@ -7,12 +8,14 @@ from urllib.parse import unquote
 import httpx
 import pytest
 
+from football_api.domain.enums import CardKind
 from football_api.ingestion.wikipedia import (
     PAGE_CACHE_SIZE,
     GridCell,
     WikipediaClient,
     WikipediaUnavailable,
     StandingsLine,
+    merge_boxes,
     merge_standings,
     parse_match_boxes,
     parse_standings,
@@ -410,3 +413,97 @@ async def test_page_cache_keeps_recent_pages_only() -> None:
             await wiki.results_grid(f"Page {i}")
         await wiki.results_grid("Page 0")  # evicted by then: fetched again
     assert len(requested) == PAGE_CACHE_SIZE + 2
+
+
+# --- line-up tables (verify-match-events D1) ------------------------------------------
+
+_ABOUT = iter(range(1000))
+
+
+def _linked_fb(day: str, home: str, away: str, score: str) -> str:
+    return _fb(day, f'<a href="./{home}" title="{home}">{home}</a>', f'<a href="./{away}" title="{away}">{away}</a>', score)
+
+
+def _tpl(name: str, *params: str) -> str:
+    """A template as Parsoid renders it: the `data-mw` span, then its visible text under the same `about`."""
+    about = f"#mwt{next(_ABOUT)}"
+    mw = {"parts": [{"template": {"target": {"wt": name}, "params": {str(i): {"wt": p} for i, p in enumerate(params, 1)}}}]}
+    data = json.dumps(mw).replace("'", "&#39;")
+    return f"<span about=\"{about}\" data-mw='{data}' typeof=\"mw:Transclusion\"><img alt=\"\"/></span><span about=\"{about}\">{params[-1]}'</span>"
+
+
+def _row(pos: str, name: str, *cells: str, number: str | None = "1") -> str:
+    tds = f"<td>{pos}</td>" + (f"<td><b>{number}</b></td>" if number is not None else "") + f'<td><a href="./{name}" rel="mw:WikiLink">{name}</a></td>'
+    return "<tr>" + tds + "".join(f"<td>{c}</td>" for c in cells) + "</tr>"
+
+
+def _side(*rows: str, subs: tuple[str, ...] = (), manager: str = "Made-up Manager") -> str:
+    body = "<tr><th></th><th></th></tr>" + "".join(rows)
+    if subs:
+        body += '<tr><td colspan="3"><b>Substitutions:</b></td></tr>' + "".join(subs)
+    return f"<table><tbody>{body}<tr><td colspan='3'><b>Manager:</b></td></tr><tr><td colspan='3'>{manager}</td></tr></tbody></table>"
+
+
+def _lineups(home: str, away: str, *, wrap: bool = False) -> str:
+    if wrap:  # some pages wrap a side table in another table
+        home = f"<table><tbody><tr><td>{home}</td></tr></tbody></table>"
+    return f'<table><tbody><tr><td valign="top">{home}</td><td valign="top">{away}</td></tr></tbody></table>'
+
+
+def _xi(prefix: str, number: bool = True) -> list[str]:
+    return [_row("GK" if i == 0 else "DF", f"{prefix} Player {i}", number=str(i + 1) if number else None) for i in range(11)]
+
+
+def test_line_up_table_after_a_box() -> None:
+    home = _xi("Home")
+    home[0] = _row("GK", "Home Keeper", _tpl("yel", "15"), number="1")
+    home[5] = _row("CM", "Home Captain (c)", "", _tpl("suboff", "72"), number="10")
+    home[6] = _row("CM", "Home Booked", _tpl("sent off", "2", "54", "74"), number="8")
+    home[7] = _row("FW", "Home Sent", _tpl("sent off", "0", "90+3"), number="9")
+    subs = (
+        _row("FW", "Home Sub", _tpl("yel", "80"), _tpl("subon", "72"), number="14"),
+        _row("GK", "Home Bench", number="22"),
+        "<tr><td></td><td></td><td>—</td><td>" + _tpl("yel", "60") + "</td></tr>",  # a card for someone off the pitch
+    )
+    html = _linked_fb("2031-07-01", "Alpha", "Beta", "1–0") + _lineups(_side(*home, subs=subs), _side(*_xi("Away"))) + _linked_fb("2031-07-02", "Gamma", "Delta", "0–0")
+    first, second = parse_match_boxes(html)
+    assert second.lineups is None
+    assert first.lineups is not None
+    rows, away = first.lineups
+    assert len(away) == 11 and all(r.starter for r in away)
+    assert [r.name for r in rows[:1]] == ["Home Keeper"] and rows[0].number == 1
+    assert rows[0].cards == ((CardKind.YELLOW, (15, None)),)
+    assert rows[5].name == "Home Captain" and rows[5].off == (72, None) and rows[5].number == 10
+    assert rows[6].cards == ((CardKind.YELLOW, (54, None)), (CardKind.SECOND_YELLOW, (74, None)))
+    assert rows[7].cards == ((CardKind.RED, (90, 3)),)
+    sub, bench = rows[11:]
+    assert (sub.name, sub.starter, sub.on, sub.cards) == ("Home Sub", False, (72, None), ((CardKind.YELLOW, (80, None)),))
+    assert (bench.name, bench.played) == ("Home Bench", False)
+
+
+def test_line_up_table_without_numbers_and_wrapped() -> None:
+    html = _linked_fb("1934-05-27", "Alpha", "Beta", "3–1") + _lineups(_side(*_xi("Home", number=False)), _side(*_xi("Away", number=False)), wrap=True)
+    [box] = parse_match_boxes(html)
+    assert box.lineups is not None
+    home, away = box.lineups
+    assert [r.name for r in home] == [f"Home Player {i}" for i in range(11)]
+    assert all(r.number is None and r.starter for r in home + away)
+
+
+def test_line_ups_come_from_the_copy_with_most_detail() -> None:
+    plain = _linked_fb("2031-07-01", "Alpha", "Beta", "1–0")
+    bare = plain + _lineups(_side(*_xi("Home")), _side(*_xi("Away")))
+    booked = _xi("Home")
+    booked[3] = _row("DF", "Home Player 3", _tpl("yel", "30"), number="4")
+    detailed = plain + _lineups(_side(*booked), _side(*_xi("Away")))
+    [box] = merge_boxes([parse_match_boxes(plain), parse_match_boxes(bare), parse_match_boxes(detailed)])
+    assert box.lineups is not None and box.lineups[0][3].cards == ((CardKind.YELLOW, (30, None)),)
+
+
+def test_subarticles_skip_red_links() -> None:
+    html = (
+        f"<html><head><title>{SEASON}</title></head><body>"
+        f'<a href="./{SEASON.replace(" ", "_")}_sponsorship?action=edit&amp;redlink=1" class="new">sponsorship</a>'
+        f'<a href="./{SEASON.replace(" ", "_")}_Group_A">Group A</a></body></html>'
+    )
+    assert parse_subarticle_titles(html, SEASON) == [f"{SEASON} Group A"]

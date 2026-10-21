@@ -8,6 +8,9 @@ compared and logged, never written (match-verification spec).
 A season is verified again only when something it depends on changed: its data, a page it read,
 or its turn in the weekly rotation (skip-unchanged-seasons D5). Otherwise its stored statuses are
 reported as unchanged (D6).
+
+A cup or tournament match whose box is followed by a line-up table also gets a status for its
+line-ups, substitutions and cards (verify-match-events), stored under its own aspect.
 """
 
 import logging
@@ -25,11 +28,34 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from football_api.domain.enums import CompetitionFormat, DecidedBy, EntityType, Stage, VerificationReference, VerificationStatus
+from football_api.domain.enums import (
+    CompetitionFormat,
+    Coverage,
+    DecidedBy,
+    EntityType,
+    LineupRole,
+    Side,
+    Stage,
+    VerificationAspect,
+    VerificationReference,
+    VerificationStatus,
+)
+from football_api.events_check import StoredSide, compare_match
 from football_api.infra.db import get_sessionmaker
-from football_api.infra.models import ExternalRef, Match, MatchVerification, Season, StandingVerification, Team
+from football_api.infra.models import (
+    Card,
+    ExternalRef,
+    LineupEntry,
+    Match,
+    MatchVerification,
+    PlayerTeamSeason,
+    Season,
+    StandingVerification,
+    Substitution,
+    Team,
+)
 from football_api.ingestion.seeds import CompetitionSeed, SeasonSource, load_teams
-from football_api.ingestion.wikipedia import MatchBox, ResultsGrid, StandingsLine, StandingsTable, WikipediaUnavailable
+from football_api.ingestion.wikipedia import LineupRow, MatchBox, ResultsGrid, StandingsLine, StandingsTable, WikipediaUnavailable
 from football_api.season_check import SeasonKey, StoredCheck, record_verification, season_id, stored_checks
 from football_api.season_tables import season_tables, wikidata_ids
 
@@ -126,29 +152,114 @@ async def _record(
     status = None if level_award else classify(stored, ref)
     if status is VerificationStatus.VERIFIED and stored_pens and ref_pens and stored_pens != ref_pens:
         status = VerificationStatus.MISMATCH
-    if status is None:
-        await session.execute(
-            delete(MatchVerification).where(
-                MatchVerification.match_id == match.id, MatchVerification.reference == VerificationReference.WIKIPEDIA
-            )
-        )
-        return
-    counts[status] += 1
-    if status in (VerificationStatus.MISMATCH, VerificationStatus.SOURCE_BEHIND):
+    if status is not None:
+        counts[status] += 1
+    if status is VerificationStatus.MISMATCH or status is VerificationStatus.SOURCE_BEHIND:
         log.warning(
             "%s: %s %s v %s: stored %s, wikipedia %s",
             label, status.value, names[match.home_team_id], names[match.away_team_id],
             _fmt(stored, stored_pens), _fmt(ref, ref_pens),
         )
+    await _store_status(session, match, VerificationAspect.RESULT, status, now)
+
+
+async def _store_status(
+    session: AsyncSession, match: Match, aspect: VerificationAspect, status: VerificationStatus | None, now: datetime
+) -> None:
+    """Upsert one aspect's status of a match, or remove it when there is none."""
+    if status is None:
+        await session.execute(
+            delete(MatchVerification).where(
+                MatchVerification.match_id == match.id,
+                MatchVerification.reference == VerificationReference.WIKIPEDIA,
+                MatchVerification.aspect == aspect,
+            )
+        )
+        return
     stmt = insert(MatchVerification).values(
-        match_id=match.id, reference=VerificationReference.WIKIPEDIA, status=status, checked_at=now
+        match_id=match.id, reference=VerificationReference.WIKIPEDIA, aspect=aspect, status=status, checked_at=now
     )
     await session.execute(
         stmt.on_conflict_do_update(
-            constraint="uq_match_verification_match_id_reference",
+            constraint="uq_match_verification_match_id_reference_aspect",
             set_={"status": stmt.excluded.status, "checked_at": stmt.excluded.checked_at},
         )
     )
+
+
+Lineups = tuple[tuple[LineupRow, ...], tuple[LineupRow, ...]]
+
+
+async def _stored_events(session: AsyncSession, season_id: uuid.UUID) -> dict[uuid.UUID, tuple[StoredSide, StoredSide]]:
+    """The season's stored events by match, for the matches that have line-ups, with each
+    player's shirt number from the squad."""
+    numbers = {
+        (player, team): number
+        for player, team, number in await session.execute(
+            select(PlayerTeamSeason.player_id, PlayerTeamSeason.team_id, PlayerTeamSeason.shirt_number).where(
+                PlayerTeamSeason.season_id == season_id, PlayerTeamSeason.shirt_number.is_not(None)
+            )
+        )
+    }
+    events: dict[uuid.UUID, tuple[StoredSide, StoredSide]] = {}
+
+    def side(match_id: uuid.UUID, which: Side) -> StoredSide:
+        sides = events.setdefault(match_id, (StoredSide(), StoredSide()))
+        return sides[0] if which is Side.HOME else sides[1]
+
+    rows = await session.execute(
+        select(LineupEntry, Match.home_team_id, Match.away_team_id)
+        .join(Match, Match.id == LineupEntry.match_id)
+        .where(Match.season_id == season_id)
+        .order_by(LineupEntry.match_id, LineupEntry.side, LineupEntry.ordinal)
+    )
+    for entry, home, away in rows:
+        stored = side(entry.match_id, entry.side)
+        (stored.starters if entry.role is LineupRole.STARTER else stored.substitutes).append(entry.player_name)
+        team = home if entry.side is Side.HOME else away
+        if entry.player_id is not None and (number := numbers.get((entry.player_id, team))) is not None:
+            stored.numbers[entry.player_name] = number
+    subs = await session.scalars(
+        select(Substitution).join(Match, Match.id == Substitution.match_id).where(Match.season_id == season_id).order_by(Substitution.ordinal)
+    )
+    for sub in subs:
+        if sub.match_id in events:
+            side(sub.match_id, sub.side).substitutions.append((sub.player_off_name, sub.player_on_name, (sub.minute, sub.added_minute)))
+    cards = await session.scalars(
+        select(Card).join(Match, Match.id == Card.match_id).where(Match.season_id == season_id).order_by(Card.ordinal)
+    )
+    for card in cards:
+        if card.match_id in events:
+            side(card.match_id, card.side).cards.append((card.player_name, card.kind, (card.minute, card.added_minute)))
+    return events
+
+
+async def _record_events(
+    session: AsyncSession,
+    label: str,
+    names: dict[uuid.UUID, str],
+    match: Match,
+    stored: tuple[StoredSide, StoredSide] | None,
+    lineups: Lineups | None,
+    now: datetime,
+    counts: Counter[VerificationStatus],
+) -> None:
+    """Compare one stored match's events with its line-up table (in the stored match's home/away
+    order) and upsert, or remove, its events status (verify-match-events D2)."""
+    home, away = names[match.home_team_id], names[match.away_team_id]
+    if stored is None or lineups is None:
+        status = None if stored is None and lineups is None else VerificationStatus.UNCONFIRMED if lineups is None else VerificationStatus.SOURCE_BEHIND
+        if status is VerificationStatus.SOURCE_BEHIND:
+            log.warning("%s: SOURCE_BEHIND events %s v %s: stored none, wikipedia has line-ups", label, home, away)
+    else:
+        diffs = compare_match(*stored, lineups, year=match.kickoff_utc.year)
+        found = [f"{team}: {d}" for team, side in ((home, diffs[0]), (away, diffs[1])) for d in side]
+        status = VerificationStatus.MISMATCH if found else VerificationStatus.VERIFIED
+        if found:
+            log.warning("%s: MISMATCH events %s v %s: stored vs wikipedia: %s", label, home, away, "; ".join(found))
+    if status is not None:
+        counts[status] += 1
+    await _store_status(session, match, VerificationAspect.EVENTS, status, now)
 
 
 async def _team_names(session: AsyncSession) -> dict[uuid.UUID, str]:
@@ -219,10 +330,11 @@ async def apply_boxes(
     boxes: list[MatchBox],
     title_qids: dict[str, str],
     now: datetime,
-) -> tuple[Counter[VerificationStatus], int]:
+) -> tuple[Counter[VerificationStatus], int, Counter[VerificationStatus]]:
     """Compare one cup season with its match boxes and upsert the statuses.
 
-    Returns the count per status and the number of stored matches no box paired with.
+    Returns the count per status, the number of stored matches no box paired with, and the count
+    per events status.
     """
     team_of_title = await _teams_of_titles(session, label, sorted({t for b in boxes for t in (b.home, b.away)}), title_qids)
     by_pairing: dict[tuple[uuid.UUID, uuid.UUID], list[MatchBox]] = {}
@@ -233,7 +345,19 @@ async def apply_boxes(
     for match in await session.scalars(select(Match).where(Match.season_id == season_id)):
         stored.setdefault((match.home_team_id, match.away_team_id), []).append(match)
     names = await _team_names(session)
+    season = await session.get(Season, season_id)
+    # A season that records no line-ups gets no events statuses (verify-match-events D2).
+    with_events = season is not None and season.lineups_coverage is Coverage.FULL
+    events = await _stored_events(session, season_id) if with_events else {}
+    if not with_events:
+        season_matches = select(Match.id).where(Match.season_id == season_id)
+        await session.execute(
+            delete(MatchVerification).where(
+                MatchVerification.match_id.in_(season_matches), MatchVerification.aspect == VerificationAspect.EVENTS
+            )
+        )
     counts: Counter[VerificationStatus] = Counter()
+    events_counts: Counter[VerificationStatus] = Counter()
     paired = 0
     used: set[int] = set()
     left: list[Match] = []
@@ -243,6 +367,8 @@ async def apply_boxes(
             paired += 1
             used.add(id(box))
             await _record(session, label, names, match, box.score, box.shootout, now, counts)
+            if with_events:
+                await _record_events(session, label, names, match, events.get(match.id), box.lineups, now, events_counts)
         done = {match.id for match, _ in pairs}
         left += [m for m in matches if m.id not in done]
     # At neutral venues the sources may name the teams the other way round: a match left over pairs
@@ -259,7 +385,10 @@ async def apply_boxes(
             paired += 1
             used.add(id(box))
             await _record(session, label, names, match, _flip(box.score), _flip(box.shootout), now, counts)
-    return counts, sum(len(m) for m in stored.values()) - paired
+            if with_events:
+                lineups = (box.lineups[1], box.lineups[0]) if box.lineups else None
+                await _record_events(session, label, names, match, events.get(match.id), lineups, now, events_counts)
+    return counts, sum(len(m) for m in stored.values()) - paired, events_counts
 
 
 def _flip(score: tuple[int, int] | None) -> tuple[int, int] | None:
@@ -382,26 +511,36 @@ async def _report_unchanged(seed: CompetitionSeed, label: str, last: StoredCheck
     async with get_sessionmaker()() as session:
         names = await _team_names(session)
         counts: Counter[VerificationStatus] = Counter()
+        events: Counter[VerificationStatus] = Counter()
         rows = await session.execute(
-            select(Match, MatchVerification.status)
+            select(Match, MatchVerification.aspect, MatchVerification.status)
             .join(MatchVerification, MatchVerification.match_id == Match.id)
             .where(Match.season_id == last.season_id, MatchVerification.reference == VerificationReference.WIKIPEDIA)
-            .order_by(Match.kickoff_utc)
+            .order_by(Match.kickoff_utc, MatchVerification.aspect)
         )
-        for match, status in rows:
+        for match, aspect, status in rows:
+            disagrees = status in (VerificationStatus.MISMATCH, VerificationStatus.SOURCE_BEHIND)
+            home, away = names[match.home_team_id], names[match.away_team_id]
+            if aspect is VerificationAspect.EVENTS:
+                events[status] += 1
+                if disagrees:
+                    stored_events = "none" if status is VerificationStatus.SOURCE_BEHIND else "events"
+                    log.warning("%s: %s events %s v %s: stored %s, %s", label, status.value, home, away, stored_events, since)
+                continue
             counts[status] += 1
-            if status in (VerificationStatus.MISMATCH, VerificationStatus.SOURCE_BEHIND):
+            if disagrees:
                 stored, stored_pens = _stored(match)
-                log.warning(
-                    "%s: %s %s v %s: stored %s, %s",
-                    label, status.value, names[match.home_team_id], names[match.away_team_id], _fmt(stored, stored_pens), since,
-                )
+                log.warning("%s: %s %s v %s: stored %s, %s", label, status.value, home, away, _fmt(stored, stored_pens), since)
         log.info(
             "%s: verified against wikipedia: %s%s unchanged",
             label,
             " ".join(f"{s.value}={counts[s]}" for s in VerificationStatus),
             f" unpaired={last.unpaired}" if last.unpaired is not None else "",
         )
+        if events:
+            log.info(
+                "%s: events verified against wikipedia: %s unchanged", label, " ".join(f"{s.value}={events[s]}" for s in VerificationStatus)
+            )
         if not _has_standings(seed):
             return
         table_rows = list(
@@ -457,6 +596,7 @@ async def _verify_matches(
         log.warning("%s: reference unavailable (%s); statuses unchanged", label, exc)
         return False, None
     unpaired = None
+    events: Counter[VerificationStatus] = Counter()
     async with get_sessionmaker()() as session, session.begin():
         sid = await season_id(session, seed, src)
         if sid is None:
@@ -465,13 +605,15 @@ async def _verify_matches(
         if grid is not None:
             counts = await apply_grid(session, label, sid, grid, title_qids, now)
         else:
-            counts, unpaired = await apply_boxes(session, label, sid, boxes, title_qids, now)
+            counts, unpaired, events = await apply_boxes(session, label, sid, boxes, title_qids, now)
     log.info(
         "%s: verified against wikipedia: %s%s",
         label,
         " ".join(f"{s.value}={counts[s]}" for s in VerificationStatus),
         f" unpaired={unpaired}" if unpaired is not None else "",
     )
+    if events:
+        log.info("%s: events verified against wikipedia: %s", label, " ".join(f"{s.value}={events[s]}" for s in VerificationStatus))
     return True, unpaired
 
 
