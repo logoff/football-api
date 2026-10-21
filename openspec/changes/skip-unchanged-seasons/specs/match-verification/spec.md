@@ -33,13 +33,25 @@ After a complete verification of a season, the system SHALL store the title and 
 
 ### Requirement: Verification rotation
 
-On each run, the seventh of the run's verifiable seasons (rounded up) whose last complete verification is oldest SHALL be verified again, even when nothing visible changed.
+A season whose last complete verification is more than seven days old SHALL be verified again, even when nothing visible changed. Each run SHALL take at most a seventh of its verifiable seasons (rounded up) this way, oldest first.
 
-#### Scenario: Rotation
+#### Scenario: Check older than a week
 
-- **GIVEN** 227 verifiable seasons in which nothing changed
-- **WHEN** verification runs on seven consecutive nights
-- **THEN** every season is verified at least once
+- **GIVEN** a season last verified eight days ago, in which nothing changed
+- **WHEN** verification runs
+- **THEN** the season is verified again
+
+#### Scenario: Recent check
+
+- **GIVEN** a season verified yesterday, in which nothing changed
+- **WHEN** verification runs
+- **THEN** the season isn't verified again
+
+#### Scenario: Many checks due at once
+
+- **GIVEN** 227 verifiable seasons, all last verified eight days ago, in which nothing changed
+- **WHEN** verification runs
+- **THEN** the 33 with the oldest checks are verified again, and the others on later runs
 
 ### Requirement: Incomplete verification keeps its state
 

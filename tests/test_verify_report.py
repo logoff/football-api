@@ -74,3 +74,18 @@ def test_missing_baseline_is_ignored(tmp_path: Path) -> None:
     md = tmp_path / "s.md"
     assert vr.main([str(log), "--baseline", str(tmp_path / "none.json"), "--markdown", str(md)]) == 0
     assert "Since the baseline" not in md.read_text(encoding="utf-8")
+
+
+def test_unchanged_season_lines_count_like_verified_ones() -> None:
+    """Seasons skipped as unchanged log their stored statuses in the same lines (skip-unchanged-seasons D6)."""
+    log = """\
+INFO CONMEBOL Copa Libertadores 2015: verified against wikipedia: VERIFIED=124 MISMATCH=1 UNCONFIRMED=0 SOURCE_BEHIND=0 unchanged
+WARNING CONMEBOL Copa Libertadores 2015: MISMATCH Boca Juniors v CA River Plate: stored 0–3, wikipedia unchanged since 2026-10-21
+INFO CONMEBOL Copa Libertadores 2015: standings checked against wikipedia: VERIFIED=32 MISMATCH=0 UNCONFIRMED=0 unchanged
+"""
+    report = vr.parse_log(log.splitlines())
+    assert report.seasons == 1
+    assert report.matches["CONMEBOL Copa Libertadores"]["MISMATCH"] == 1
+    assert report.tables["CONMEBOL Copa Libertadores"]["VERIFIED"] == 32
+    assert set(report.disagreements) == {"CONMEBOL Copa Libertadores 2015: MISMATCH Boca Juniors v CA River Plate"}
+

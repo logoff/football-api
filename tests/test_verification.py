@@ -1,7 +1,10 @@
 """Verification against a reference grid (match-verification spec), with a fake reference."""
 
 import logging
-from datetime import UTC, date, datetime
+from dataclasses import replace
+from collections.abc import Generator
+from contextlib import contextmanager
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -9,10 +12,12 @@ from sqlalchemy import func, inspect, select, update
 
 from football_api.domain.enums import MatchStatus, SeasonStatus, VerificationStatus
 from football_api.infra.db import get_engine, get_sessionmaker
-from football_api.infra.models import Match, MatchVerification, Season, StandingVerification, Team
+from football_api.infra.models import Match, MatchVerification, Season, SeasonCheck, StandingVerification, Team
 from football_api.ingestion.seeds import CompetitionSeed, TeamSeed
 from football_api.ingestion.wikipedia import GridCell, MatchBox, ResultsGrid, StandingsLine, StandingsTable, WikipediaUnavailable
 from football_api.sync import run_sync
+from football_api import verification
+from football_api.season_check import stored_checks
 from football_api.verification import classify, verify_seasons
 
 pytestmark = pytest.mark.db
@@ -39,9 +44,30 @@ class FakeReference:
         self.requests: list[str] = []
         self.qualifying: list[bool] = []
         self.tables: list[StandingsTable] = []
+        self.revision_of: dict[str, int] = {}  # current revision per title; 1 when not set
+        self.revision_error: Exception | None = None
+        self._recording: dict[str, int] | None = None
+
+    def _read(self, title: str) -> None:
+        if self._recording is not None:
+            self._recording[title] = self.revision_of.get(title, 1)
+
+    @contextmanager
+    def record_pages(self) -> Generator[dict[str, int]]:
+        self._recording = {}
+        try:
+            yield self._recording
+        finally:
+            self._recording = None
+
+    async def revisions(self, titles: list[str]) -> dict[str, int]:
+        if self.revision_error:
+            raise self.revision_error
+        return {t: self.revision_of.get(t, 1) for t in titles}
 
     async def results_grid(self, title: str) -> ResultsGrid | None:
         self.requests.append(title)
+        self._read(title)
         if self.error:
             raise self.error
         return self.grid
@@ -49,6 +75,7 @@ class FakeReference:
     async def match_boxes(self, title: str, *, qualifying: bool = False) -> list[MatchBox]:
         self.requests.append(title)
         self.qualifying.append(qualifying)
+        self._read(title)
         if self.error:
             raise self.error
         return self.boxes
@@ -156,6 +183,7 @@ async def test_status_follows_the_sources_on_a_rerun(
     assert first_status is VerificationStatus.UNCONFIRMED
 
     ref.grid = full
+    ref.revision_of[ARTICLE] = 2  # the article was edited
     await verify(competitions, fixture_teams, ref)
     status, checked = (await statuses())[(h, a)]
     assert status is VerificationStatus.VERIFIED and checked > first_checked
@@ -536,3 +564,107 @@ async def test_provisional_table_keeps_no_status(
         await session.execute(update(Season).values(status=SeasonStatus.IN_PROGRESS))
     await verify_seasons([(pl, pl.seasons[0])], standings_reference(fixture_teams, []))
     assert await standing_statuses() == {}
+
+
+# --- unchanged seasons (skip-unchanged-seasons) ---------------------------------------
+
+Fixture = tuple[list[CompetitionSeed], FakeReference, list[tuple[str, str, tuple[int, int] | None]]]
+
+
+async def season_check() -> SeasonCheck:
+    async with get_sessionmaker()() as session:
+        check = await session.scalar(select(SeasonCheck))
+        assert check is not None
+        return check
+
+
+async def test_unchanged_season_isnt_fetched_and_reports_its_stored_statuses(
+    premier_league: Fixture, fixture_teams: list[TeamSeed], caplog: pytest.LogCaptureFixture
+) -> None:
+    competitions, ref, matches = premier_league
+    h, a, s = matches[0]
+    assert s is not None
+    ref.grid = with_cells(ref.grid or ResultsGrid([], []), {(h, a): (s[0], s[1] + 1)})
+    await verify(competitions, fixture_teams, ref)
+    first = await statuses()
+    check = await season_check()
+    assert check.reference_revisions == {ARTICLE: 1}
+    assert check.reference_fingerprint == check.source_fingerprint and check.verified_at is not None
+
+    ref.requests.clear()
+    with caplog.at_level(logging.INFO, logger="football_api.verification"):
+        await verify(competitions, fixture_teams, ref)
+    assert ref.requests == []
+    assert await statuses() == first  # statuses and checked_at untouched
+    day = f"{check.verified_at:%Y-%m-%d}"
+    assert f"MISMATCH {h} v {a}: stored {s[0]}–{s[1]}, wikipedia unchanged since {day}" in caplog.text
+    assert f"Premier League 2024-25: verified against wikipedia: VERIFIED={len(matches) - 1} MISMATCH=1 UNCONFIRMED=0 SOURCE_BEHIND=0 unchanged" in caplog.text
+    assert "verification: 0 of 1 seasons due" in caplog.text
+
+
+async def test_resynced_season_is_verified_again(
+    premier_league: Fixture, fixture_teams: list[TeamSeed], fresh_db: Path
+) -> None:
+    competitions, ref, _ = premier_league
+    await verify(competitions, fixture_teams, ref)
+    path = fresh_db / competitions[0].seasons[0].file
+    path.write_bytes(path.read_bytes() + b"\n")
+    ref.requests.clear()
+    await verify(competitions, fixture_teams, ref)
+    assert ref.requests == [ARTICLE]
+
+
+async def test_check_older_than_a_week_is_verified_again(premier_league: Fixture, fixture_teams: list[TeamSeed]) -> None:
+    competitions, ref, _ = premier_league
+    await verify(competitions, fixture_teams, ref)
+    async with get_engine().begin() as conn:
+        await conn.execute(update(SeasonCheck).values(verified_at=datetime.now(UTC) - timedelta(days=8)))
+    ref.requests.clear()
+    await verify(competitions, fixture_teams, ref)
+    assert ref.requests == [ARTICLE]
+    assert (await season_check()).verified_at > datetime.now(UTC) - timedelta(minutes=1)  # pyright: ignore[reportOptionalOperand]
+
+
+async def test_incomplete_verification_keeps_the_season_due(premier_league: Fixture, fixture_teams: list[TeamSeed]) -> None:
+    competitions, ref, _ = premier_league
+    await verify(competitions, fixture_teams, ref)
+    before = await season_check()
+    ref.revision_of[ARTICLE] = 2
+    ref.error = WikipediaUnavailable("HTTP 503")
+    await verify(competitions, fixture_teams, ref)
+    after = await season_check()
+    assert (after.reference_revisions, after.verified_at) == (before.reference_revisions, before.verified_at)
+
+    ref.error = None
+    ref.requests.clear()
+    await verify(competitions, fixture_teams, ref)  # still due: the edit was never verified
+    assert ref.requests == [ARTICLE]
+    assert (await season_check()).reference_revisions == {ARTICLE: 2}
+
+
+async def test_full_run_verifies_unchanged_seasons(premier_league: Fixture, fixture_teams: list[TeamSeed]) -> None:
+    competitions, ref, _ = premier_league
+    await verify(competitions, fixture_teams, ref)
+    ref.requests.clear()
+    report = await run_sync(competitions=competitions, teams=fixture_teams, refresh_sources=False, verify=True, full=True, reference=ref)
+    assert not report.failed and ref.requests == [ARTICLE]
+
+
+async def test_unchanged_season_reports_its_stored_table_mismatch(
+    fresh_db: Path,
+    fixture_competitions: list[CompetitionSeed],
+    fixture_teams: list[TeamSeed],
+    fixture_seeds: None,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    wc = await world_cup_synced(fixture_competitions, fixture_teams)
+    deducted = [*GROUP_A[:1], StandingsLine(2, "Senegal", 3, 2, 0, 1, 5, 4, 5), *GROUP_A[2:]]
+    await verify_seasons([(wc, wc.seasons[0])], standings_reference(fixture_teams, [deducted]))
+    async with get_sessionmaker()() as session:
+        last = (await stored_checks(session))[(wc.wikidata, wc.seasons[0].label)]
+    last = replace(last, verified_at=datetime(2026, 10, 20, 1, 0, tzinfo=UTC))
+    with caplog.at_level(logging.INFO, logger="football_api.verification"):
+        await verification._report_unchanged(wc, "FIFA World Cup 2022", last)  # pyright: ignore[reportPrivateUsage]
+    assert "FIFA World Cup 2022: MISMATCH table Senegal: stored pos 2, P3 W2 D0 L1 5-4 6 pts, wikipedia unchanged since 2026-10-20" in caplog.text
+    assert "FIFA World Cup 2022: standings checked against wikipedia: VERIFIED=3 MISMATCH=1 UNCONFIRMED=0 unchanged" in caplog.text
+

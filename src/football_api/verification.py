@@ -4,11 +4,18 @@ For each season whose seed names a Wikipedia article, every cell of the article'
 grid is paired with the stored LEAGUE match of the same home and away teams (identified
 through Wikidata QIDs only) and the match gets a status. The reference's values are only
 compared and logged, never written (match-verification spec).
+
+A season is verified again only when something it depends on changed: its data, a page it read,
+or its turn in the weekly rotation (skip-unchanged-seasons D5). Otherwise its stored statuses are
+reported as unchanged (D6).
 """
 
 import logging
+import math
 import uuid
 from collections import Counter
+from collections.abc import Collection
+from contextlib import AbstractContextManager
 from datetime import UTC, date, datetime, timedelta
 from functools import cache
 from typing import Protocol
@@ -23,12 +30,14 @@ from football_api.infra.db import get_sessionmaker
 from football_api.infra.models import ExternalRef, Match, MatchVerification, Season, StandingVerification, Team
 from football_api.ingestion.seeds import CompetitionSeed, SeasonSource, load_teams
 from football_api.ingestion.wikipedia import MatchBox, ResultsGrid, StandingsLine, StandingsTable, WikipediaUnavailable
+from football_api.season_check import SeasonKey, StoredCheck, record_verification, season_id, stored_checks
 from football_api.season_tables import season_tables, wikidata_ids
 
 log = logging.getLogger("football_api.verification")
 
 WIKIDATA = "wikidata"
 Score = tuple[int, int]
+ROTATION_DAYS = 7  # every season is verified again at least about this often (D5)
 
 
 class ResultsReference(Protocol):
@@ -39,6 +48,14 @@ class ResultsReference(Protocol):
     async def standings(self, title: str, *, qualifying: bool = False) -> list[StandingsTable]: ...
 
     async def qids(self, titles: list[str]) -> dict[str, str]: ...
+
+    def record_pages(self) -> AbstractContextManager[dict[str, int]]:
+        """Collect the title and revision ID of every page read inside the block."""
+        ...
+
+    async def revisions(self, titles: list[str]) -> dict[str, int]:
+        """The current revision ID of each title that exists, following redirects."""
+        ...
 
 
 def classify(stored: Score | None, reference: Score | None) -> VerificationStatus | None:
@@ -55,19 +72,6 @@ def _fmt(score: Score | None, shootout: Score | None = None) -> str:
     if not score:
         return "none"
     return f"{score[0]}–{score[1]}" + (f" ({shootout[0]}–{shootout[1]} p)" if shootout else "")
-
-
-async def _season_id(session: AsyncSession, seed: CompetitionSeed, src: SeasonSource) -> uuid.UUID | None:
-    comp_id = (
-        select(ExternalRef.entity_id)
-        .where(
-            ExternalRef.entity_type == EntityType.COMPETITION,
-            ExternalRef.source == WIKIDATA,
-            ExternalRef.source_id == seed.wikidata,
-        )
-        .scalar_subquery()
-    )
-    return await session.scalar(select(Season.id).where(Season.competition_id == comp_id, Season.label == src.label))
 
 
 async def _teams_by_qid(session: AsyncSession, qids: set[str]) -> dict[str, uuid.UUID]:
@@ -179,12 +183,12 @@ async def apply_grid(
 async def _stores_qualifying(seed: CompetitionSeed, src: SeasonSource) -> bool:
     """Whether the season holds qualifying matches, whose sub-articles are then worth reading."""
     async with get_sessionmaker()() as session:
-        season_id = await _season_id(session, seed, src)
-        if season_id is None:
+        sid = await season_id(session, seed, src)
+        if sid is None:
             return False
         stage = await session.scalar(
             select(Match.stage)
-            .where(Match.season_id == season_id, Match.stage.in_((Stage.QUALIFYING, Stage.PRELIMINARY, Stage.ROUND)))
+            .where(Match.season_id == sid, Match.stage.in_((Stage.QUALIFYING, Stage.PRELIMINARY, Stage.ROUND)))
             .limit(1)
         )
         return stage is not None
@@ -274,31 +278,160 @@ def _as_seeded(title_qids: dict[str, str]) -> dict[str, str]:
     return {title: seeded.get(qid, qid) for title, qid in title_qids.items()}
 
 
+def _has_standings(seed: CompetitionSeed) -> bool:
+    return seed.format in (CompetitionFormat.LEAGUE, CompetitionFormat.TOURNAMENT)
+
+
 async def verify_seasons(
-    targets: list[tuple[CompetitionSeed, SeasonSource]], reference: ResultsReference, *, now: datetime | None = None
+    targets: list[tuple[CompetitionSeed, SeasonSource]],
+    reference: ResultsReference,
+    *,
+    now: datetime | None = None,
+    changed: Collection[SeasonKey] | None = None,
 ) -> None:
     """Verify every target season that names a Wikipedia article: a results grid for leagues,
     match boxes for cups, then the final standings tables of leagues and tournaments.
 
-    A season whose reference is unavailable, or has no grid or boxes, is skipped with a warning
-    and keeps its statuses; nothing here raises for reference problems.
+    With `changed` (the seasons synced in this run), only the seasons due (D5) are verified; the
+    others report their stored statuses. Without it, every season is verified. A season whose
+    reference is unavailable, or has no grid or boxes, is skipped with a warning and keeps its
+    statuses; nothing here raises for reference problems.
     """
     now = now or datetime.now(UTC)
-    for seed, src in targets:
-        if not src.wikipedia:
-            continue
+    verifiable = [(seed, src) for seed, src in targets if src.wikipedia]
+    async with get_sessionmaker()() as session:
+        stored = await stored_checks(session)
+    due = await _due(verifiable, stored, reference, changed, now)
+    for seed, src in verifiable:
         label = f"{seed.name} {src.label}"
-        await _verify_matches(seed, src, label, reference, now)
-        if seed.format in (CompetitionFormat.LEAGUE, CompetitionFormat.TOURNAMENT):
-            try:
-                await verify_standings(seed, src, label, reference, now)
-            except SQLAlchemyError as exc:  # a data problem in one season mustn't stop the run
-                log.error("%s: standings verification failed: %s", label, exc)
+        last = stored.get((seed.wikidata, src.label))
+        if (seed.wikidata, src.label) not in due and last is not None:
+            await _report_unchanged(seed, label, last)
+            continue
+        with reference.record_pages() as pages:
+            complete = await _verify_matches(seed, src, label, reference, now)
+            if _has_standings(seed):
+                try:
+                    complete = await verify_standings(seed, src, label, reference, now) and complete
+                except SQLAlchemyError as exc:  # a data problem in one season mustn't stop the run
+                    log.error("%s: standings verification failed: %s", label, exc)
+                    complete = False
+        if complete:  # an incomplete verification stores nothing, so the season is due next run
+            async with get_sessionmaker()() as session, session.begin():
+                if (sid := await season_id(session, seed, src)) is not None:
+                    await record_verification(session, sid, dict(pages), now)
+
+
+async def _due(
+    verifiable: list[tuple[CompetitionSeed, SeasonSource]],
+    stored: dict[SeasonKey, StoredCheck],
+    reference: ResultsReference,
+    changed: Collection[SeasonKey] | None,
+    now: datetime,
+) -> set[SeasonKey]:
+    """The seasons to verify again (D5): changed data, no complete verification of the current
+    data, a page with a new revision, or a check older than the rotation period (at most a
+    `ROTATION_DAYS`th of the seasons per run, oldest first)."""
+    keys = [(seed.wikidata, src.label) for seed, src in verifiable]
+    if changed is None:
+        return set(keys)
+    due: set[SeasonKey] = set()
+    quiet: list[tuple[SeasonKey, StoredCheck]] = []
+    for key in keys:
+        last = stored.get(key)
+        if (
+            key in changed
+            or last is None
+            or last.verified_at is None
+            or last.reference_revisions is None
+            or last.reference_fingerprint != last.source_fingerprint
+        ):
+            due.add(key)
+        else:
+            quiet.append((key, last))
+    resynced = len(due)
+    titles = sorted({title for _, last in quiet for title in last.reference_revisions or {}})
+    edited = 0
+    if titles:
+        try:
+            current = await reference.revisions(titles)
+        except WikipediaUnavailable as exc:
+            log.warning("wikipedia revisions unavailable (%s); edited pages aren't detected this run", exc)
+        else:
+            for key, last in quiet:
+                if any(current.get(title) != rev for title, rev in (last.reference_revisions or {}).items()):
+                    due.add(key)
+                    edited += 1
+    stale = now - timedelta(days=ROTATION_DAYS)
+    rest = sorted(
+        (last.verified_at, key) for key, last in quiet if key not in due and last.verified_at and last.verified_at < stale
+    )
+    rotation = [key for _, key in rest[: math.ceil(len(keys) / ROTATION_DAYS)]]
+    due.update(rotation)
+    log.info(
+        "verification: %d of %d seasons due (%d new or re-synced, %d with edited pages, %d in rotation)",
+        len(due), len(keys), resynced, edited, len(rotation),
+    )
+    return due
+
+
+async def _report_unchanged(seed: CompetitionSeed, label: str, last: StoredCheck) -> None:
+    """Log a season's stored statuses in the same lines a verification logs (D6), with the date of
+    the last check in place of the reference's values, which aren't stored."""
+    since = f"wikipedia unchanged since {last.verified_at:%Y-%m-%d}" if last.verified_at else "wikipedia unchanged"
+    async with get_sessionmaker()() as session:
+        names = await _team_names(session)
+        counts: Counter[VerificationStatus] = Counter()
+        rows = await session.execute(
+            select(Match, MatchVerification.status)
+            .join(MatchVerification, MatchVerification.match_id == Match.id)
+            .where(Match.season_id == last.season_id, MatchVerification.reference == VerificationReference.WIKIPEDIA)
+            .order_by(Match.kickoff_utc)
+        )
+        for match, status in rows:
+            counts[status] += 1
+            if status in (VerificationStatus.MISMATCH, VerificationStatus.SOURCE_BEHIND):
+                stored, stored_pens = _stored(match)
+                log.warning(
+                    "%s: %s %s v %s: stored %s, %s",
+                    label, status.value, names[match.home_team_id], names[match.away_team_id], _fmt(stored, stored_pens), since,
+                )
+        log.info(
+            "%s: verified against wikipedia: %s unchanged", label, " ".join(f"{s.value}={counts[s]}" for s in VerificationStatus)
+        )
+        if not _has_standings(seed):
+            return
+        table_rows = list(
+            await session.execute(
+                select(StandingVerification).where(
+                    StandingVerification.season_id == last.season_id,
+                    StandingVerification.reference == VerificationReference.WIKIPEDIA,
+                )
+            )
+        )
+        if not table_rows:
+            return
+        table_counts = Counter(v.status for (v,) in table_rows)
+        mismatched = {(v.team_id, v.stage, v.phase, v.group_name) for (v,) in table_rows if v.status is VerificationStatus.MISMATCH}
+        if mismatched:
+            season = await session.get(Season, last.season_id)
+            assert season is not None
+            for table in await season_tables(session, season):
+                for row in table.rows:
+                    if (row.team, table.key.stage, table.key.phase, table.key.group or "") in mismatched:
+                        ours = _line(row.position, row.played, row.won, row.drawn, row.lost, row.goals_for, row.goals_against, row.points)
+                        log.warning("%s: MISMATCH table %s: stored %s, %s", label, names[row.team], ours, since)
+    log.info(
+        "%s: standings checked against wikipedia: %s unchanged",
+        label,
+        " ".join(f"{s.value}={table_counts[s]}" for s in (VerificationStatus.VERIFIED, VerificationStatus.MISMATCH, VerificationStatus.UNCONFIRMED)),
+    )
 
 
 async def _verify_matches(
     seed: CompetitionSeed, src: SeasonSource, label: str, reference: ResultsReference, now: datetime
-) -> None:
+) -> bool:
+    """Verify the season's matches; whether the comparison completed."""
     assert src.wikipedia is not None
     cup = seed.format in (CompetitionFormat.CUP, CompetitionFormat.LEAGUE_CUP, CompetitionFormat.TOURNAMENT)
     try:
@@ -306,35 +439,36 @@ async def _verify_matches(
             boxes = await reference.match_boxes(src.wikipedia, qualifying=await _stores_qualifying(seed, src))
             if not boxes:
                 log.warning("%s: no match boxes in %r; statuses unchanged", label, src.wikipedia)
-                return
+                return False
             title_qids = _as_seeded(await reference.qids(sorted({t for b in boxes for t in (b.home, b.away)})))
             grid = None
         else:
             grid = await reference.results_grid(src.wikipedia)
             if grid is None:
                 log.warning("%s: no results grid in %r; statuses unchanged", label, src.wikipedia)
-                return
+                return False
             title_qids = _as_seeded(await reference.qids(grid.teams))
             boxes = []
     except WikipediaUnavailable as exc:
         log.warning("%s: reference unavailable (%s); statuses unchanged", label, exc)
-        return
+        return False
     unpaired = None
     async with get_sessionmaker()() as session, session.begin():
-        season_id = await _season_id(session, seed, src)
-        if season_id is None:
+        sid = await season_id(session, seed, src)
+        if sid is None:
             log.warning("%s: season not in the database; nothing to verify", label)
-            return
+            return False
         if grid is not None:
-            counts = await apply_grid(session, label, season_id, grid, title_qids, now)
+            counts = await apply_grid(session, label, sid, grid, title_qids, now)
         else:
-            counts, unpaired = await apply_boxes(session, label, season_id, boxes, title_qids, now)
+            counts, unpaired = await apply_boxes(session, label, sid, boxes, title_qids, now)
     log.info(
         "%s: verified against wikipedia: %s%s",
         label,
         " ".join(f"{s.value}={counts[s]}" for s in VerificationStatus),
         f" unpaired={unpaired}" if unpaired is not None else "",
     )
+    return True
 
 
 # --- standings (verify-standings design) ----------------------------------------------
@@ -346,17 +480,17 @@ def _line(position: int, played: int, won: int, drawn: int, lost: int, gf: int, 
 
 async def verify_standings(
     seed: CompetitionSeed, src: SeasonSource, label: str, reference: ResultsReference, now: datetime
-) -> None:
+) -> bool:
     """Compare the season's final tables with Wikipedia's and record a status per row (D3).
 
-    Provisional tables keep no status. Nothing here raises for reference problems.
+    Provisional tables keep no status. Nothing here raises for reference problems. Returns
+    whether the comparison completed: false when the reference or the season is missing.
     """
     assert src.wikipedia is not None
     async with get_sessionmaker()() as session, session.begin():
-        season_id = await _season_id(session, seed, src)
-        season = await session.get(Season, season_id) if season_id else None
+        season = await session.get(Season, sid) if (sid := await season_id(session, seed, src)) else None
         if season is None:
-            return
+            return False
         tables = await season_tables(session, season)
         finals = [t for t in tables if t.status == "final"]
         await session.execute(
@@ -365,13 +499,13 @@ async def verify_standings(
             )
         )
         if not finals:
-            return
+            return True
         try:
             wiki = await reference.standings(src.wikipedia, qualifying=await _stores_qualifying(seed, src))
             title_qids = _as_seeded(await reference.qids(sorted({line.team for table in wiki for line in table})))
         except WikipediaUnavailable as exc:
             log.warning("%s: standings reference unavailable (%s); no standings statuses", label, exc)
-            return
+            return False
         by_teams: dict[frozenset[str], dict[str, StandingsLine]] = {}
         for table in wiki:
             # Teams that withdrew are listed with no games (World Cup 1950): they aren't in our table.
@@ -417,3 +551,4 @@ async def verify_standings(
         label,
         " ".join(f"{s.value}={counts[s]}" for s in (VerificationStatus.VERIFIED, VerificationStatus.MISMATCH, VerificationStatus.UNCONFIRMED)),
     )
+    return True

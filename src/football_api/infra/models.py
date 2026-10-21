@@ -4,7 +4,8 @@ Every entity has a server-generated uuidv7 primary key (PostgreSQL 18). External
 identifiers never live on entity tables; they go in ``external_ref``. No synced row
 carries created/updated timestamps, so an unchanged re-sync leaves rows byte-for-byte
 equal. ``match_verification`` is the exception by design: it is written by verification
-runs, not by the sync, and records when each check happened.
+runs, not by the sync, and records when each check happened. ``season_check`` is internal
+bookkeeping of when each season was last synced and verified, never served.
 """
 
 import uuid
@@ -23,6 +24,7 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy import Enum as SAEnum
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from football_api.domain.enums import (
@@ -278,6 +280,24 @@ class ExternalRef(Base):
     entity_id: Mapped[uuid.UUID] = mapped_column(index=True)
     source: Mapped[str] = mapped_column(String(32))
     source_id: Mapped[str] = mapped_column(String(256))
+
+
+class SeasonCheck(Base):
+    """What each season's last sync and last complete verification saw (skip-unchanged-seasons D3).
+
+    `source_fingerprint` hashes the sync's inputs; `reference_revisions` maps each Wikipedia page
+    title the verification read to its revision ID. Titles and revision IDs only: never the
+    reference's content. Internal, never served.
+    """
+
+    __tablename__ = "season_check"
+
+    season_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("season.id", ondelete="CASCADE"), primary_key=True)
+    source_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    synced_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    reference_revisions: Mapped[dict[str, int] | None] = mapped_column(JSONB)
+    reference_fingerprint: Mapped[str | None] = mapped_column(String(64))
+    verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class MatchVerification(Base):

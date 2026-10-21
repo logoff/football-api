@@ -46,7 +46,7 @@ A SHA-256 over, in order:
 
 1. the code fingerprint (D2);
 1. the competition's seed entry without its `seasons` list, and this season's entry, as canonical JSON;
-1. the bytes of `seeds/teams.yaml`, since team spellings decide how every name resolves;
+1. the team seeds from `seeds/teams.yaml`, as canonical JSON of the parsed entries, since team spellings decide how every name resolves;
 1. the path and bytes of every file the season's sync reads: the text file, the JSON mirror, the events file and every squad file the patterns match. An optional file that is missing is hashed as missing.
 
 The file list comes from the same functions that read the files, so the fingerprint can't miss a file the parser reads.
@@ -96,9 +96,11 @@ With `--verify` and without `--full`, a season that names an article is verified
 1. it was synced in this run (its data changed);
 1. it has no complete verification stored, or `reference_fingerprint` differs from `source_fingerprint`;
 1. any page in `reference_revisions` has a different current revision;
-1. it is among the `ceil(n / 7)` seasons with the oldest `verified_at`, where `n` is the number of seasons in this run that name an article.
+1. its last complete verification is more than 7 days old, and it is among the `ceil(n / 7)` such seasons with the oldest `verified_at`, where `n` is the number of seasons in this run that name an article.
 
-Rule 4 is a rotation. Every season is re-checked at least about once a week, even when nothing visible changed. That catches what revision IDs can't show: edits to an included template, and a team article that now links a different Wikidata item. After the first week, the rotation spreads the load evenly.
+Rule 4 is a rotation. Every season is re-checked about once a week, even when nothing visible changed. That catches what revision IDs can't show: edits to an included template, and a team article that now links a different Wikidata item. The cap of a seventh per run spreads the load: after a full run, nothing rotates for a week, then the seasons come due over the following week and stay spread from then on. A season can then wait up to about two weeks once, right after a full run.
+
+**Alternative:** always re-check the seventh with the oldest checks. Rejected: it re-checks seasons verified the night before, after every full run, and at least one season on every run, however recent.
 
 A verification that can't complete (reference unavailable, no grid or boxes) stores nothing, so the season is tried again on the next run.
 

@@ -1,6 +1,7 @@
 # Full sync of every competition from fresh openfootball sources into an empty database, then
 # verification against Wikipedia. It takes about 20 minutes, so it doesn't run on pull requests:
-# it runs nightly, after a merge to main, and by hand. The summary lists every disagreement; a
+# it runs weekly, after a merge to main, and by hand. Starting from an empty database, it always
+# syncs and verifies every season: it shows that a full rebuild still works. The summary lists every disagreement; a
 # manual run on another branch also lists what is new and gone since main's latest run. Fails
 # only when a season fails to sync: disagreements change with the sources, so they are
 # reported, not enforced.
@@ -11,7 +12,7 @@ on:
     branches: [main]
     paths: ["src/**", "seeds/**", "migrations/**"]
   schedule:
-    - cron: "0 3 * * *"
+    - cron: "0 3 * * 0"  # Sundays
   workflow_dispatch:
 
 concurrency:

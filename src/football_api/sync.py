@@ -3,9 +3,11 @@
 Order: schema and run-lock checks → competitions and teams from `seeds/` → Wikidata
 check of seeded QIDs → one transaction per competition-season for the openfootball
 data. Every write is an upsert on a natural key (ingestion spec, "Idempotency"), so an
-unchanged re-run rewrites identical values and creates nothing.
+unchanged re-run rewrites identical values and creates nothing. A season whose inputs are
+unchanged since its last successful sync is skipped altogether (`season_check`), unless
+`--full`.
 
-    python -m football_api.sync [--competition QID ...] [--verify] [--no-refresh]
+    python -m football_api.sync [--competition QID ...] [--verify] [--full] [--no-refresh]
 
 Exit codes: 0 every requested season synced (verification findings never fail a run),
 1 a season or the seed step failed, 2 usage error (e.g. unknown QID), 3 database schema
@@ -65,6 +67,14 @@ from football_api.ingestion.seeds import (
 from football_api.ingestion.sources import ensure_sources
 from football_api.ingestion.wikidata import WikidataUnavailable, verify_qids
 from football_api.ingestion.wikipedia import WikipediaClient
+from football_api.season_check import (
+    record_sync,
+    season_fingerprint,
+    season_id,
+    squad_paths,
+    stored_checks,
+    teams_fingerprint,
+)
 from football_api.verification import ResultsReference, verify_seasons
 
 log = logging.getLogger("football_api.sync")
@@ -305,8 +315,7 @@ async def sync_squads(session: AsyncSession, ctx: SeasonContext) -> None:
     if squad_src is None:
         return
     players: list[SquadPlayer] = []
-    for pattern in squad_src.files:
-        paths = sorted(ctx.sources.glob(pattern))
+    for pattern, paths in zip(squad_src.files, squad_paths(ctx.src, ctx.sources), strict=True):
         if not paths:
             raise SyncError(f"squad pattern matched no files: {pattern}")
         for path in paths:
@@ -672,6 +681,9 @@ class SyncReport:
     synced: list[tuple[CompetitionSeed, SeasonSource]] = field(
         default_factory=lambda: list[tuple[CompetitionSeed, SeasonSource]]()
     )
+    unchanged: list[tuple[CompetitionSeed, SeasonSource]] = field(
+        default_factory=lambda: list[tuple[CompetitionSeed, SeasonSource]]()
+    )
     failed: list[tuple[CompetitionSeed, SeasonSource, Exception]] = field(
         default_factory=lambda: list[tuple[CompetitionSeed, SeasonSource, Exception]]()
     )
@@ -720,12 +732,15 @@ async def run_sync(
     teams: list[TeamSeed] | None = None,
     refresh_sources: bool = True,
     verify: bool = False,
+    full: bool = False,
     reference: ResultsReference | None = None,
 ) -> SyncReport:
     """Sync every season of `competitions`; a failing season is logged and reported, not raised.
 
-    With `verify`, the seasons that synced and name a reference are then verified against it
-    (`reference` defaults to English Wikipedia). Verification never fails the run.
+    A season whose fingerprint matches its last successful sync is skipped, unless `full`.
+    With `verify`, the seasons that synced or were unchanged and name a reference are then
+    verified against it (`reference` defaults to English Wikipedia), each only when something
+    it depends on changed, unless `full`. Verification never fails the run.
     """
     settings = get_settings()
     competitions = competitions if competitions is not None else load_competitions()
@@ -742,26 +757,41 @@ async def run_sync(
             for comp_seed in competitions:
                 await upsert_competition(session, comp_seed)
             await sync_teams(session, teams)
+            stored = await stored_checks(session)
         if settings.wikidata_enabled:
             await verify_wikidata(competitions, teams)
+        teams_fp = teams_fingerprint(teams)
+        targets: list[tuple[CompetitionSeed, SeasonSource]] = []
         for comp_seed in competitions:
             for src in comp_seed.seasons:
                 # One transaction per competition-season: a bad file leaves no partial writes.
                 try:
+                    fingerprint = season_fingerprint(comp_seed, src, teams_fp, sources)
+                    last = stored.get((comp_seed.wikidata, src.label))
+                    if not full and last is not None and last.source_fingerprint == fingerprint:
+                        log.info("%s %s: unchanged, %d matches", comp_seed.name, src.label, last.matches)
+                        report.unchanged.append((comp_seed, src))
+                        targets.append((comp_seed, src))
+                        continue
                     async with maker() as session, session.begin():
                         count = await sync_season(session, comp_seed, src, sources)
+                        synced_id = await season_id(session, comp_seed, src)
+                        assert synced_id is not None
+                        await record_sync(session, synced_id, fingerprint, datetime.now(UTC))
                 except Exception as exc:  # noqa: BLE001 — one bad season must not block the rest
                     log.error("%s %s: FAILED: %s", comp_seed.name, src.label, exc)
                     report.failed.append((comp_seed, src, exc))
                     continue
                 log.info("%s %s: %d matches", comp_seed.name, src.label, count)
                 report.synced.append((comp_seed, src))
+                targets.append((comp_seed, src))
         if verify and settings.wikipedia_enabled:
+            changed = None if full else {(c.wikidata, s.label) for c, s in report.synced}
             if reference is not None:
-                await verify_seasons(report.synced, reference)
+                await verify_seasons(targets, reference, changed=changed)
             else:
                 async with WikipediaClient(rest=settings.wikipedia_rest, api=settings.wikipedia_api) as wiki:
-                    await verify_seasons(report.synced, wiki)
+                    await verify_seasons(targets, wiki, changed=changed)
     return report
 
 
@@ -772,6 +802,9 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="sync only this competition (Wikidata QID); repeatable. Default: all",
     )
     parser.add_argument("--verify", action="store_true", help="verify synced seasons that have a reference")
+    parser.add_argument(
+        "--full", action="store_true", help="re-sync and re-verify every season, even those whose inputs are unchanged"
+    )
     parser.add_argument("--no-refresh", action="store_true", help="use the existing source checkouts as they are")
     return parser.parse_args(argv)
 
@@ -783,7 +816,9 @@ async def _main(args: argparse.Namespace) -> int:
         log.error("%s", exc)
         return 2
     try:
-        report = await run_sync(competitions=competitions, refresh_sources=not args.no_refresh, verify=args.verify)
+        report = await run_sync(
+            competitions=competitions, refresh_sources=not args.no_refresh, verify=args.verify, full=args.full
+        )
     except SchemaNotMigratedError as exc:
         log.error("%s", exc)
         return 3

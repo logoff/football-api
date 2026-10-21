@@ -13,7 +13,7 @@
 ## 3. Verification
 
 - [ ] 3.1 Record `content-revision-id` with every page the Wikipedia client fetches, and add a batched current-revision query (`prop=info`, `redirects=1`, 50 titles per request) (D4). Verify with client tests on recorded responses, including a redirect and a missing page.
-- [ ] 3.2 Decide which seasons to verify (D5), and store the titles, revisions, fingerprint and time after each complete verification. Verify with tests for each rule: synced in this run, no stored verification, a changed article, a changed sub-article, a redirected or missing page, the rotation over seven runs, and an unavailable reference leaving the state as it was.
+- [ ] 3.2 Decide which seasons to verify (D5), and store the titles, revisions, fingerprint and time after each complete verification. Verify with tests for each rule: synced in this run, no stored verification, a changed article, a changed sub-article, a redirected or missing page, the rotation (a check older than 7 days, capped per run, oldest first), and an unavailable reference leaving the state as it was.
 - [ ] 3.3 Log skipped seasons' stored statuses (D6). Verify with tests that the lines match the report patterns in `tools/verify_report.py`, and that a stored mismatch is logged on every run.
 
 ## 4. CI and docs
@@ -23,7 +23,7 @@
 
 ## 5. Integration
 
-- [ ] 5.1 On an empty database, run a full sync with `--verify`, then a second run. Verify that the second run re-syncs nothing, verifies only the rotation's seasons, reports the same totals and the same mismatch, and record both timings.
+- [ ] 5.1 On an empty database, run a full sync with `--verify`, then a second run. Verify that the second run re-syncs nothing, verifies nothing (every check is fresh), reports the same totals and the same mismatch, and record both timings.
 - [ ] 5.2 Change one season's source file and one season's article revision (by editing the stored revision), and run again. Verify that exactly those seasons are re-synced or re-verified.
 - [ ] 5.3 Verify that `just typecheck`, `just test` and `openspec validate skip-unchanged-seasons --strict` all pass.
 

@@ -5,15 +5,17 @@ import uuid
 from datetime import UTC, datetime
 from pathlib import Path
 
+import logging
+
 import pytest
 from sqlalchemy import func, select, text
 
 from football_api.domain.enums import Coverage, DecidedBy, MatchStatus, Stage, VerificationReference, VerificationStatus
 from football_api.infra.db import get_sessionmaker
-from football_api.infra.models import Competition, ExternalRef, Goal, Match, MatchVerification, Player, PlayerTeamSeason, Season, Team, TeamSeason
+from football_api.infra.models import Competition, ExternalRef, Goal, Match, MatchVerification, Player, PlayerTeamSeason, Season, SeasonCheck, Team, TeamSeason
 from football_api.ingestion.openfootball.squads import parse_more_squads, parse_per_team_squad
-from football_api.ingestion.seeds import CompetitionSeed, ScopedSpelling, TeamSeed
-from football_api.sync import UnknownTeamError, run_sync
+from football_api.ingestion.seeds import CompetitionSeed, ScopedSpelling, SeasonSource, TeamSeed
+from football_api.sync import SyncReport, UnknownTeamError, run_sync
 
 pytestmark = pytest.mark.db
 
@@ -34,9 +36,10 @@ async def snapshot() -> dict[str, list[str]]:
         return out
 
 
-async def sync(competitions: list[CompetitionSeed], teams: list[TeamSeed]) -> None:
-    report = await run_sync(competitions=competitions, teams=teams, refresh_sources=False)
+async def sync(competitions: list[CompetitionSeed], teams: list[TeamSeed], *, full: bool = False) -> SyncReport:
+    report = await run_sync(competitions=competitions, teams=teams, refresh_sources=False, full=full)
     assert not report.failed, report.failed
+    return report
 
 
 async def match_by(home: str, away: str, stage: Stage) -> Match:
@@ -115,7 +118,7 @@ async def test_repeat_sync_is_byte_for_byte_identical(
 ) -> None:
     await sync(fixture_competitions, fixture_teams)
     first = await snapshot()
-    await sync(fixture_competitions, fixture_teams)
+    await sync(fixture_competitions, fixture_teams, full=True)  # a real re-sync, not a skip
     assert await snapshot() == first
 
 
@@ -314,7 +317,8 @@ async def test_earlier_local_midnight_placeholder_is_not_a_move(
         match = await session.get(Match, (await match_by("Manchester United", "Fulham", Stage.LEAGUE)).id)
         assert match is not None
         match.original_kickoff_utc = legacy
-    await sync(competitions, fixture_teams)
+    # Rows from earlier code: in production the code change itself makes the next sync full.
+    await sync(competitions, fixture_teams, full=True)
     match = await match_by("Manchester United", "Fulham", Stage.LEAGUE)
     assert (match.kickoff_utc, match.original_kickoff_utc) == (datetime(2024, 8, 16, 19, 0, tzinfo=UTC), None)
 
@@ -445,3 +449,82 @@ async def test_year_scoped_spelling_moves_matches_to_the_team_of_those_years(
         assert not await session.scalar(select(func.count()).select_from(PlayerTeamSeason).where(PlayerTeamSeason.team_id == old.id))
         refs = set(await session.scalars(select(ExternalRef.source_id).where(ExternalRef.entity_id == old.id, ExternalRef.source == "openfootball")))
     assert refs == {"Netherlands @-2021"}  # the plain spelling no longer names the old team
+
+
+# --- unchanged seasons (skip-unchanged-seasons) ---------------------------------------
+
+
+def _labels(seasons: list[tuple[CompetitionSeed, SeasonSource]]) -> list[str]:
+    return [seed.name for seed, _ in seasons]
+
+
+async def test_repeat_sync_skips_every_unchanged_season(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed], caplog: pytest.LogCaptureFixture
+) -> None:
+    first = await sync(fixture_competitions, fixture_teams)
+    before = await snapshot()
+    with caplog.at_level(logging.INFO, logger="football_api.sync"):
+        second = await sync(fixture_competitions, fixture_teams)
+    assert not second.synced
+    assert len(second.unchanged) == len(first.synced)
+    assert await snapshot() == before
+    assert "Premier League 2024-25: unchanged, 20 matches" in caplog.text
+
+
+async def test_changed_file_resyncs_only_its_season(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    await sync(fixture_competitions, fixture_teams)
+    path = fresh_db / "england/2023-24/facup.txt"
+    path.write_text(path.read_text(encoding="utf-8").replace("Forest Green Rovers      2-4", "Forest Green Rovers      2-5"), encoding="utf-8")
+    report = await sync(fixture_competitions, fixture_teams)
+    assert _labels(report.synced) == ["FA Cup"]
+    async with get_sessionmaker()() as session:
+        scores = set(await session.execute(select(Match.home_score, Match.away_score).where(Match.home_score == 2, Match.away_score == 5)))
+    assert scores == {(2, 5)}
+
+
+async def test_failed_season_is_retried(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    competitions = [c for c in fixture_competitions if c.name == "FA Cup"]
+    await sync(competitions, fixture_teams)
+    path = fresh_db / "england/2023-24/facup.txt"
+    good = path.read_text(encoding="utf-8")
+    path.write_text(good.replace("Scarborough Athletic FC", "Nowhere Rovers"), encoding="utf-8")
+    for _ in range(2):  # a failure stores no fingerprint, so the same broken file is tried again
+        report = await run_sync(competitions=competitions, teams=fixture_teams, refresh_sources=False)
+        assert len(report.failed) == 1 and not report.unchanged
+    path.write_text(good, encoding="utf-8")
+    report = await sync(competitions, fixture_teams)
+    assert _labels(report.unchanged) == ["FA Cup"]  # back to the inputs of the last successful sync
+
+
+async def test_full_resyncs_every_season(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    first = await sync(fixture_competitions, fixture_teams)
+    report = await sync(fixture_competitions, fixture_teams, full=True)
+    assert len(report.synced) == len(first.synced) and not report.unchanged
+
+
+async def test_team_seed_change_resyncs_every_season(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    first = await sync(fixture_competitions, fixture_teams)
+    renamed = [t.model_copy(update={"name": f"{t.name} (renamed)"}) if i == 0 else t for i, t in enumerate(fixture_teams)]
+    report = await sync(fixture_competitions, renamed)
+    assert len(report.synced) == len(first.synced)
+
+
+
+async def test_season_check_goes_with_its_season(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    await sync([c for c in fixture_competitions if c.name == "FA Cup"], fixture_teams)
+    async with get_sessionmaker()() as session, session.begin():
+        assert await session.scalar(select(func.count()).select_from(SeasonCheck)) == 1
+        for table in ("match", "team_season", "player_team_season", "season"):  # season_check isn't listed: it cascades
+            await session.execute(text(f"DELETE FROM {table}"))
+    async with get_sessionmaker()() as session:
+        assert await session.scalar(select(func.count()).select_from(SeasonCheck)) == 0
