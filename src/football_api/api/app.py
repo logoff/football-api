@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from football_api.api import v1
 from football_api.api.errors import install_error_handlers
+from football_api.api.graphql.schema import graphql_router
 
 DESCRIPTION = """
 Football (soccer) statistics from public-domain [openfootball](https://github.com/openfootball)
@@ -40,6 +41,7 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     app.include_router(v1.router)
+    app.include_router(graphql_router(), prefix="/graphql", include_in_schema=False)
     return app
 
 

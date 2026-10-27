@@ -47,11 +47,14 @@ type MatchRow = tuple[Match, Season]
 @dataclass(frozen=True)
 class Listing[R]:
     items: list[R]
-    next_cursor: str | None
+    cursors: list[str]  # each item's own cursor: listing after it continues with the next item
+    next_cursor: str | None  # the last item's cursor when more items follow
 
 
 def _listing[R](rows: Sequence[R], limit: int, key: Callable[[R], Sequence[object]]) -> Listing[R]:
-    return Listing(list(rows[:limit]), encode_cursor(key(rows[limit - 1])) if len(rows) > limit else None)
+    items = list(rows[:limit])
+    cursors = [encode_cursor(key(r)) for r in items]
+    return Listing(items, cursors, cursors[-1] if len(rows) > limit else None)
 
 
 # --- catalog -----------------------------------------------------------------------
