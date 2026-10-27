@@ -43,7 +43,7 @@ curl -s localhost:8000/graphql -H 'Content-Type: application/json' \
 - **Lists** are connections: `first` (default 50, at most 200) and `after` (a `pageInfo.endCursor`), in the same order and with the same cursors as REST.
 - **Lookups** (`match(id:)`, `team(id:)`, …) return `null` for an unknown UUID.
 - **Errors** carry a code in `extensions.code`, the same as REST's where REST has one (e.g. `invalid_cursor`). An error in one field leaves the rest of the data in place.
-- **Limits.** A query is refused before it runs when it is more than 10 levels deep (`query_too_deep`; every selection set counts, so `edges { node { … } }` takes two), uses more than 20 aliases (`too_many_aliases`), asks for more than 200 items in a list (`page_too_large`), or costs more than 50,000 (`query_too_costly`). Each refusal reports `measured` and `limit`. Introspection is exempt from the depth limit.
+- **Limits.** A query is refused before it runs when it is more than 10 levels deep (`query_too_deep`; each level of fields counts, but a connection's `edges { node { … } }` adds none, so `competitions → seasons → matches → homeTeam { name }` is 5), uses more than 20 aliases (`too_many_aliases`), asks for more than 200 items in a list (`page_too_large`), or costs more than 50,000 (`query_too_costly`). Each refusal reports `measured` and `limit`. Introspection is exempt from the depth limit.
 - **Cost** estimates how many objects a query can return: each object counts 1; a list counts its `first` (or 50) times what each item selects; event lists count a fixed size (line-up side 25, scorers 10, substitutions 12, cards 12). 200 matches with every relation, the largest page REST serves, cost 38,400.
 
 ## Container image

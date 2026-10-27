@@ -470,15 +470,27 @@ async def test_relations_are_batched(client: httpx.AsyncClient) -> None:
 # --- limits (3.1, 3.2) -------------------------------------------------------------
 
 
-def down_to_a_match(leaf: str) -> str:
-    """Nine levels down to a match (one item per connection), then `leaf`."""
-    return (
-        "{ competitions(first: 1) { edges { node { seasons(first: 1) { edges { node { "
-        f"matches(first: 1) {{ edges {{ node {{ {leaf} }} }} }} }} }} }} }} }} }} }}"
-    )
+def cyclic(depth: int) -> str:
+    """A walk `depth` levels deep, season → competition → seasons → competition → …, one item per list.
+
+    `edges` and `node` add no depth, so only the objects and the final field count.
+    """
+    opens, closes, kind = [f'season(id: "{UNKNOWN}") {{'], ["}"], "season"
+    for _ in range(depth - 2):
+        if kind == "season":
+            opens.append("competition {")
+            closes.append("}")
+            kind = "competition"
+        else:
+            opens.append("seasons(first: 1) { edges { node {")
+            closes.append("} } }")
+            kind = "season"
+    leaf = "label" if kind == "season" else "name"
+    return "{ " + " ".join(opens) + f" {leaf} " + " ".join(reversed(closes)) + " }"
 
 
-DEPTH = {10: down_to_a_match("id"), 11: down_to_a_match("cards { kind }"), 12: down_to_a_match("lineups { home { formation } }")}
+WRAPPED = """{ competitions(first: 5) { edges { node { seasons(first: 5) { edges { node {
+  matches(first: 5) { edges { node { homeTeam { name } } } } } } } } } } }"""
 
 
 def refusal(body: dict[str, Any]) -> dict[str, Any]:
@@ -488,13 +500,19 @@ def refusal(body: dict[str, Any]) -> dict[str, Any]:
 
 
 async def test_depth_limit(client: httpx.AsyncClient) -> None:
-    assert "competitions" in await gql(client, DEPTH[10])
+    assert "season" in await gql(client, cyclic(10))
     with count_statements() as statements:
-        body = await gql(client, DEPTH[11], errors=True)
+        body = await gql(client, cyclic(11), errors=True)
     assert refusal(body) == {"code": "query_too_deep", "measured": 11, "limit": 10}
     assert statements == []  # refused before anything ran
     # Deeper still: the walk stops one level past the limit, so `measured` reads "at least 11"
-    assert refusal(await gql(client, DEPTH[12], errors=True))["measured"] == 11
+    assert refusal(await gql(client, cyclic(12), errors=True))["measured"] == 11
+
+
+async def test_connections_add_no_depth(client: httpx.AsyncClient) -> None:
+    """competitions → seasons → matches → homeTeam { name } is 5 levels, not 11 (graphql-depth-by-objects)."""
+    data = await gql(client, WRAPPED)
+    assert nodes(data["competitions"])
 
 
 async def test_alias_limit(client: httpx.AsyncClient) -> None:

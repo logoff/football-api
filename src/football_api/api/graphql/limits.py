@@ -91,10 +91,12 @@ class _Walk:
             if field is None:
                 continue  # unknown fields are reported by the standard rules
             child = cast(GraphQLNamedType, get_named_type(field.type))  # pyright reads graphql-core's overloads as unknown
+            # a connection's `edges` and an edge's `node` add no depth (graphql-depth-by-objects D1)
+            step = 0 if _wrapper(owner.name, name) else 1
             sub_depth = sub_cost = 0
             if node.selection_set and isinstance(child, GraphQLObjectType) and level < MAX_DEPTH + 1:
-                sub_depth, sub_cost = self.measure(node.selection_set, child, level + 1, seen)
-            depth = max(depth, 1 + sub_depth)
+                sub_depth, sub_cost = self.measure(node.selection_set, child, level + step, seen)
+            depth = max(depth, step + sub_depth)
             if not isinstance(child, GraphQLObjectType):
                 continue  # scalars and enums cost nothing
             if "first" in field.args:  # a connection: its page size times what each node selects
@@ -104,6 +106,10 @@ class _Walk:
             else:
                 cost += LIST_SIZES.get((owner.name, name), 1) * (1 + sub_cost)
         return depth, cost
+
+
+def _wrapper(type_name: str, field_name: str) -> bool:
+    return (field_name == "edges" and type_name.endswith("Connection")) or (field_name == "node" and type_name.endswith("Edge"))
 
 
 def _refuse(node: Any, message: str, code: str, measured: int, limit: int) -> GraphQLError:
