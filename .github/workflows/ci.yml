@@ -1,6 +1,7 @@
-# Type-check and test every push and pull request; publish the image to GHCR
-# from main and from version tags, only after the checks pass. A version tag
-# also gets a GitHub release that names the image it published.
+# Type-check and test every push, and every pull request that touches more than
+# docs; publish the image to GHCR from main and from version tags, only after the
+# checks pass. A version tag also gets a GitHub release that names the image it
+# published.
 name: CI
 
 on:
@@ -17,7 +18,34 @@ permissions:
   contents: read
 
 jobs:
+  # A pull request that only touches OpenSpec artifacts, Markdown, LICENSE or
+  # .gitignore skips `check`. A job skipped by `if:` counts as passing, so the
+  # required check doesn't block it; `paths-ignore` would never report at all.
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      code: ${{ steps.diff.outputs.code }}
+    steps:
+      - id: diff
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT: ${{ github.event_name }}
+          PR: ${{ github.event.number }}
+          REPO: ${{ github.repository }}
+        # Pushes, and any failure to list the files, run the checks.
+        run: |
+          code=true
+          if [ "$EVENT" = pull_request ] && files=$(gh pr diff "$PR" --repo "$REPO" --name-only) \
+            && ! grep -qvE '^(openspec/|LICENSE$|\.gitignore$)|\.md$' <<< "$files"; then
+            code=false
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+
   check:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     services:
       postgres:
