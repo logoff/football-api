@@ -2,8 +2,8 @@
 
 ## 1. Shared query layer
 
-- [ ] 1.1 Move the per-resource selects, filters and keyset paging out of `api/v1.py` into `football_api.api.queries` (D2), with `v1.py` calling them. Verify that `tests/test_api.py` passes unchanged and `just typecheck` is clean.
-- [ ] 1.2 Move the derived-value helpers (season coverage, match coverage and verification, line-up grouping and formation, events batching, standings) into the shared layer. Verify with `tests/test_api.py` and `tests/test_standings.py` unchanged.
+- [x] 1.1 Move the per-resource selects, filters and keyset paging out of `api/v1.py` into `football_api.api.queries` (D2), with `v1.py` calling them. Verify that `tests/test_api.py` passes unchanged and `just typecheck` is clean.
+- [x] 1.2 Move the derived-value helpers (season coverage, match coverage and verification, line-up grouping and formation, events batching, standings) into the shared layer. Verify with `tests/test_api.py` and `tests/test_standings.py` unchanged.
 
 ## 2. Schema and endpoint
 
