@@ -16,6 +16,7 @@ data, with Wikidata identifiers.
 - Related resources are embedded on request with `expand=…`.
 - Timestamps are UTC (`Z`).
 - Errors use `{"error": {"code", "message", "details"}}`.
+- The same data is also served read-only over GraphQL at `/graphql` (open it in a browser for an explorer).
 
 **Coverage.** Goal scorers, squads, line-ups, substitutions and cards exist only for some
 competitions and seasons; every season and match says which in a `coverage` field. Line-ups,

@@ -11,6 +11,41 @@ curl localhost:8000/v1/competitions
 
 `just up` builds and starts the API and PostgreSQL. `just sync` clones the openfootball repositories into `.cache/sources`, applies migrations, and loads everything (about 20 seconds). Interactive docs: <http://localhost:8000/docs>.
 
+## GraphQL
+
+The same data is served read-only at `/graphql`, with the same fields, filters and values as `/v1` (camelCase names, same UUIDs, enums and UTC timestamps). Objects link to each other, so one request can walk from a competition to its seasons, matches, teams and events. Open <http://localhost:8000/graphql> in a browser for the GraphiQL explorer; the schema is also committed as [`schema.graphql`](schema.graphql).
+
+```graphql
+{
+  matches(stage: FINAL, first: 3) {
+    edges {
+      node {
+        kickoffUtc
+        season { label competition { name } }
+        homeTeam { name }
+        awayTeam { name }
+        homeScore
+        awayScore
+        verification { status }
+        scorers { name minute isPenalty }
+      }
+    }
+    pageInfo { hasNextPage endCursor }
+  }
+}
+```
+
+```sh
+curl -s localhost:8000/graphql -H 'Content-Type: application/json' \
+  -d '{"query": "{ competitions(first: 3) { edges { node { name format } } } }"}'
+```
+
+- **Lists** are connections: `first` (default 50, at most 200) and `after` (a `pageInfo.endCursor`), in the same order and with the same cursors as REST.
+- **Lookups** (`match(id:)`, `team(id:)`, …) return `null` for an unknown UUID.
+- **Errors** carry a code in `extensions.code`, the same as REST's where REST has one (e.g. `invalid_cursor`). An error in one field leaves the rest of the data in place.
+- **Limits.** A query is refused before it runs when it is more than 10 levels deep (`query_too_deep`; every selection set counts, so `edges { node { … } }` takes two), uses more than 20 aliases (`too_many_aliases`), asks for more than 200 items in a list (`page_too_large`), or costs more than 50,000 (`query_too_costly`). Each refusal reports `measured` and `limit`. Introspection is exempt from the depth limit.
+- **Cost** estimates how many objects a query can return: each object counts 1; a list counts its `first` (or 50) times what each item selects; event lists count a fixed size (line-up side 25, scorers 10, substitutions 12, cards 12). 200 matches with every relation, the largest page REST serves, cost 38,400.
+
 ## Container image
 
 CI publishes the API image to GitHub Container Registry once type checks and tests pass:
@@ -49,7 +84,7 @@ The sync refuses to run until the API container has applied the migrations (exit
 **v0.1 has no authentication.** The API is read-only and serves public-domain data, so the risk is abuse rather than disclosure.
 
 - **Local and compose:** every published port binds to `127.0.0.1` only (`docker-compose.yml`). Keep it that way; the compose PostgreSQL password is a development default.
-- **Public deployments:** put the API behind a reverse proxy that terminates TLS and enforces a per-client rate limit and a cap on concurrent requests. API keys and per-key limits are planned for a later gateway change.
+- **Public deployments:** put the API behind a reverse proxy that terminates TLS and enforces a per-client rate limit and a cap on concurrent requests. Route `/graphql` as well as `/v1`. A proxy counts requests, not what a GraphQL request costs; the [GraphQL limits](#graphql) cap that in the application. API keys and per-key limits are planned for a later gateway change.
 
 ## Data coverage
 

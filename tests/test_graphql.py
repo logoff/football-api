@@ -4,11 +4,13 @@ Parity tests run the same request through REST and GraphQL and compare the value
 snake_case keys turned into GraphQL's camelCase.
 """
 
+import json
 import re
 import uuid
 from collections.abc import Generator
 from contextlib import contextmanager
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, cast
 
 import httpx
@@ -528,6 +530,22 @@ async def test_cost_limit(client: httpx.AsyncClient) -> None:
     # The same query for one competition, one season and a page of matches is cheap
     small = FLOOD.replace("seasons(first: 200)", "seasons(first: 1)")
     assert "competitions" in await gql(client, small, {"n": 1})
+
+
+def readme_queries() -> list[str]:
+    """The README's GraphQL examples: the ```graphql block and the query inside the curl example."""
+    readme = (Path(__file__).parent.parent / "README.md").read_text()
+    blocks = re.findall(r"```graphql\n(.*?)```", readme, re.S)
+    curls = [json.loads(m)["query"] for m in re.findall(r"curl -s localhost:8000/graphql .*?-d '(.*?)'", readme, re.S)]
+    return [*blocks, *curls]
+
+
+async def test_readme_examples_run(client: httpx.AsyncClient) -> None:
+    queries = readme_queries()
+    assert len(queries) == 2
+    for query in queries:
+        data = await gql(client, query)  # within every limit, and answered
+        assert all(connection["edges"] for connection in data.values()), query
 
 
 async def test_largest_rest_page_is_allowed(client: httpx.AsyncClient) -> None:

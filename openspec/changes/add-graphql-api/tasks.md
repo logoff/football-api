@@ -22,9 +22,9 @@
 
 ## 4. Schema file and docs
 
-- [ ] 4.1 Add a `just graphql-schema` recipe exporting `schema.graphql`, commit the file, and add a test that fails when the live schema differs (D9). Verify by changing a field locally and seeing the test fail.
-- [ ] 4.2 Document GraphQL in the README (endpoint, an example query, connections, the limits and the cost model) and in the app description. Format the README with mdformat. Verify by running the README's example query against a local `just up && just sync`.
-- [ ] 4.3 Verify that `just typecheck`, `just test` and `openspec validate add-graphql-api --strict` pass.
+- [x] 4.1 Add a `just graphql-schema` recipe exporting `schema.graphql`, commit the file, and add a test that fails when the live schema differs (D9). Verify by changing a field locally and seeing the test fail.
+- [x] 4.2 Document GraphQL in the README (endpoint, an example query, connections, the limits and the cost model) and in the app description. Format the README with mdformat. Verify by running the README's example query against a local `just up && just sync`.
+- [x] 4.3 Verify that `just typecheck`, `just test` and `openspec validate add-graphql-api --strict` pass.
 
 ## Workflow follow-up
 

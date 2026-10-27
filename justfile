@@ -43,3 +43,7 @@ test *args:
 # Strict type check
 typecheck:
     uv run pyright
+
+# Write the GraphQL schema to schema.graphql (commit it; a test checks it matches)
+graphql-schema:
+    uv run python -c "from football_api.api.graphql.schema import schema; print(schema.as_str())" > schema.graphql
