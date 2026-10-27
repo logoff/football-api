@@ -1,0 +1,419 @@
+type Card {
+  side: Side!
+  minute: Int!
+  addedMinute: Int
+  kind: CardKind!
+  name: String!
+  player: Player
+}
+
+enum CardKind {
+  YELLOW
+  SECOND_YELLOW
+  RED
+}
+
+type Competition {
+  id: UUID!
+  name: String!
+  country: String
+  teamKind: TeamKind!
+  scope: CompetitionScope!
+  format: CompetitionFormat!
+  seasons(first: Int = null, after: String = null): SeasonConnection
+}
+
+type CompetitionConnection {
+  edges: [CompetitionEdge!]!
+  pageInfo: PageInfo!
+}
+
+type CompetitionEdge {
+  cursor: String!
+  node: Competition!
+}
+
+enum CompetitionFormat {
+  LEAGUE
+  CUP
+  LEAGUE_CUP
+  SUPER_CUP
+  TOURNAMENT
+}
+
+enum CompetitionScope {
+  DOMESTIC
+  CONTINENTAL
+  INTERCONTINENTAL
+}
+
+enum Coverage {
+  full
+  none
+}
+
+"""Date (isoformat)"""
+scalar Date
+
+"""UTC timestamp, ISO 8601 with a `Z` suffix"""
+scalar DateTime
+
+enum DecidedBy {
+  REGULAR
+  EXTRA_TIME
+  PENALTIES
+}
+
+type Goal {
+  ordinal: Int!
+  side: Side!
+
+  """Scorer name as shown (player's display name, or the source text)"""
+  name: String!
+  minute: Int
+  addedMinute: Int
+  isPenalty: Boolean!
+  isOwnGoal: Boolean!
+
+  """Resolved squad player; null when the source name is ambiguous"""
+  player: Player
+}
+
+type Lineup {
+  formation: String
+  entries: [LineupEntry!]!
+}
+
+type LineupEntry {
+  name: String!
+  role: LineupRole!
+  line: Int
+  isCaptain: Boolean!
+  player: Player
+}
+
+enum LineupRole {
+  STARTER
+  SUBSTITUTE
+}
+
+type Lineups {
+  home: Lineup!
+  away: Lineup!
+}
+
+type Match {
+  id: UUID!
+  competitionId: UUID!
+  seasonId: UUID!
+  stage: Stage!
+  matchday: Int
+  occurrence: Int!
+  roundLabel: String!
+  kickoffUtc: DateTime!
+  originalKickoffUtc: DateTime
+  status: MatchStatus!
+  homeTeamId: UUID!
+  awayTeamId: UUID!
+  venueId: UUID
+  homeScore: Int
+  awayScore: Int
+  decidedBy: DecidedBy
+  homePens: Int
+  awayPens: Int
+  awarded: Boolean!
+  referee: String
+  attendance: Int
+  coverage: MatchCoverage!
+  season: Season!
+  competition: Competition
+  homeTeam: Team
+  awayTeam: Team
+  venue: Venue
+
+  """
+  Score check against an independent open reference; null when not verified
+  """
+  verification: Verification
+
+  """
+  Line-ups, substitutions and cards checked against the reference's line-up table
+  """
+  eventsVerification: Verification
+  scorers: [Goal!]!
+  lineups: Lineups!
+
+  """Ordered by minute, then source order"""
+  substitutions: [Substitution!]!
+
+  """Ordered by minute, then source order"""
+  cards: [Card!]!
+}
+
+type MatchConnection {
+  edges: [MatchEdge!]!
+  pageInfo: PageInfo!
+}
+
+type MatchCoverage {
+  scorers: Coverage!
+  lineups: Coverage!
+  substitutions: Coverage!
+  cards: Coverage!
+}
+
+type MatchEdge {
+  cursor: String!
+  node: Match!
+}
+
+enum MatchStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  POSTPONED
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+
+  """Pass as `after` to get the next page"""
+  endCursor: String
+}
+
+type Player {
+  id: UUID!
+  displayName: String!
+  fullName: String
+  givenName: String
+  familyName: String
+  birthYear: Int
+  dob: Date
+  nationality: String
+  position: String
+}
+
+type PlayerConnection {
+  edges: [PlayerEdge!]!
+  pageInfo: PageInfo!
+
+  """Present when filtering by team and season"""
+  coverage: PlayerCoverage
+}
+
+type PlayerCoverage {
+  players: Coverage!
+}
+
+type PlayerEdge {
+  cursor: String!
+  node: Player!
+}
+
+type Query {
+  competition(id: UUID!): Competition
+  competitions(format: CompetitionFormat = null, first: Int = null, after: String = null): CompetitionConnection
+  season(id: UUID!): Season
+  seasons(competitionId: UUID = null, first: Int = null, after: String = null): SeasonConnection
+  team(id: UUID!): Team
+  teams(competitionId: UUID = null, seasonId: UUID = null, kind: TeamKind = null, first: Int = null, after: String = null): TeamConnection
+  player(id: UUID!): Player
+
+  """Players exist only where the source publishes squads; see `coverage`"""
+  players(teamId: UUID = null, seasonId: UUID = null, competitionId: UUID = null, first: Int = null, after: String = null): PlayerConnection
+  venue(id: UUID!): Venue
+  venues(first: Int = null, after: String = null): VenueConnection
+  match(id: UUID!): Match
+  matches(
+    competitionId: UUID = null
+    seasonId: UUID = null
+    teamId: UUID = null
+    stage: Stage = null
+
+    """Kickoff on or after this UTC date"""
+    from: Date = null
+
+    """Kickoff on or before this UTC date"""
+    to: Date = null
+    verification: VerificationStatus = null
+    eventsVerification: VerificationStatus = null
+    first: Int = null
+    after: String = null
+  ): MatchConnection
+}
+
+type Season {
+  id: UUID!
+  competitionId: UUID!
+  label: String!
+  startsOn: Date
+  endsOn: Date
+  status: SeasonStatus!
+  coverage: SeasonCoverage!
+  competition: Competition
+  teams(kind: TeamKind = null, first: Int = null, after: String = null): TeamConnection
+  matches(teamId: UUID = null, stage: Stage = null, from: Date = null, to: Date = null, verification: VerificationStatus = null, eventsVerification: VerificationStatus = null, first: Int = null, after: String = null): MatchConnection
+
+  """
+  Tables computed from the season's results; `asOf` in the season's time zone
+  """
+  standings(asOf: Date = null): Standings!
+}
+
+type SeasonConnection {
+  edges: [SeasonEdge!]!
+  pageInfo: PageInfo!
+}
+
+type SeasonCoverage {
+  scorers: Coverage!
+  players: Coverage!
+  lineups: Coverage!
+  substitutions: Coverage!
+  cards: Coverage!
+}
+
+type SeasonEdge {
+  cursor: String!
+  node: Season!
+}
+
+enum SeasonStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum Side {
+  HOME
+  AWAY
+}
+
+enum Stage {
+  QUALIFYING
+  PRELIMINARY
+  ROUND
+  LEAGUE
+  GROUP
+  PLAYOFF
+  R32
+  R16
+  QF
+  SF
+  THIRD_PLACE
+  FIFTH_PLACE
+  FINAL
+}
+
+type StandingAdjustment {
+  points: Int!
+  reason: String!
+  source: String!
+}
+
+type StandingRow {
+  position: Int!
+  teamId: UUID!
+  played: Int!
+  won: Int!
+  drawn: Int!
+  lost: Int!
+  goalsFor: Int!
+  goalsAgainst: Int!
+  goalDifference: Int!
+  points: Int!
+  adjustments: [StandingAdjustment!]!
+  tied: Boolean!
+  verification: Verification
+  team: Team
+}
+
+type StandingTable {
+  stage: Stage!
+  phase: Int!
+  group: String
+
+  """`final` or `provisional`"""
+  status: String!
+  rows: [StandingRow!]!
+}
+
+type Standings {
+  seasonId: UUID!
+  asOf: Date
+  tables: [StandingTable!]!
+}
+
+type Substitution {
+  side: Side!
+  minute: Int!
+  addedMinute: Int
+  playerOffName: String!
+  playerOnName: String!
+  playerOff: Player
+  playerOn: Player
+}
+
+type Team {
+  id: UUID!
+  name: String!
+  country: String
+  kind: TeamKind!
+
+  """The seasons the team took part in"""
+  seasons: [Season!]!
+
+  """Squad players; with `seasonId`, that season's squad and its coverage"""
+  players(seasonId: UUID = null, first: Int = null, after: String = null): PlayerConnection
+}
+
+type TeamConnection {
+  edges: [TeamEdge!]!
+  pageInfo: PageInfo!
+}
+
+type TeamEdge {
+  cursor: String!
+  node: Team!
+}
+
+enum TeamKind {
+  CLUB
+  NATIONAL
+}
+
+scalar UUID
+
+type Venue {
+  id: UUID!
+  name: String!
+  city: String
+  country: String
+}
+
+type VenueConnection {
+  edges: [VenueEdge!]!
+  pageInfo: PageInfo!
+}
+
+type VenueEdge {
+  cursor: String!
+  node: Venue!
+}
+
+type Verification {
+  status: VerificationStatus!
+  reference: VerificationReference!
+  checkedAt: DateTime!
+}
+
+enum VerificationReference {
+  wikipedia
+}
+
+enum VerificationStatus {
+  VERIFIED
+  MISMATCH
+  UNCONFIRMED
+  SOURCE_BEHIND
+}

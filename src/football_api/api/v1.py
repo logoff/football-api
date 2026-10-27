@@ -1,16 +1,17 @@
 """`/v1` routes. Every identifier, in paths and in filters, is a UUID."""
 
 import uuid
-from collections.abc import Callable, Sequence
-from datetime import UTC, date, datetime, time, timedelta
+from collections.abc import Sequence
+from datetime import date
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import Select, exists, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from football_api.api import queries
 from football_api.api.errors import ERROR_RESPONSES, ApiError, not_found
-from football_api.api.pagination import DEFAULT_LIMIT, Cursor, Limit, apply_keyset, encode_cursor
+from football_api.api.pagination import DEFAULT_LIMIT, Cursor, Limit
+from football_api.api.queries import MatchRow
 from football_api.api.schemas import (
     CardOut,
     CompetitionOut,
@@ -39,33 +40,23 @@ from football_api.api.schemas import (
 )
 from football_api.domain.enums import (
     CompetitionFormat,
-    Coverage,
-    LineupRole,
     Side,
     Stage,
     TeamKind,
     VerificationAspect,
-    VerificationReference,
     VerificationStatus,
 )
 from football_api.infra.db import session_dependency
 from football_api.infra.models import (
-    Card,
     Competition,
-    Goal,
     LineupEntry,
-    Match,
     MatchVerification,
     Player,
-    PlayerTeamSeason,
     Season,
     StandingVerification,
-    Substitution,
     Team,
-    TeamSeason,
     Venue,
 )
-
 from football_api.season_tables import season_tables
 
 router = APIRouter(prefix="/v1", responses=ERROR_RESPONSES)
@@ -92,8 +83,8 @@ def parse_expand(raw: str | None, allowed: set[str]) -> set[str]:
     return wanted
 
 
-def page_cursor[R](rows: Sequence[R], limit: int, key: Callable[[R], Sequence[object]]) -> str | None:
-    return encode_cursor(key(rows[limit - 1])) if len(rows) > limit else None
+def verification_out(v: MatchVerification | StandingVerification | None) -> MatchVerificationOut | None:
+    return MatchVerificationOut(status=v.status, reference=v.reference, checked_at=v.checked_at) if v else None
 
 
 # --- competitions ------------------------------------------------------------------
@@ -106,15 +97,8 @@ async def list_competitions(
     limit: Limit = DEFAULT_LIMIT,
     cursor: Cursor = None,
 ) -> Page[CompetitionOut]:
-    keys = [Competition.name, Competition.id]
-    stmt = select(Competition)
-    if format:
-        stmt = stmt.where(Competition.format == format)
-    rows = (await session.scalars(apply_keyset(stmt, keys, limit, cursor))).all()
-    return Page(
-        data=[CompetitionOut.model_validate(c) for c in rows[:limit]],
-        next_cursor=page_cursor(rows, limit, lambda c: (c.name, c.id)),
-    )
+    listing = await queries.competitions(session, format=format, limit=limit, cursor=cursor)
+    return Page(data=[CompetitionOut.model_validate(c) for c in listing.items], next_cursor=listing.next_cursor)
 
 
 @router.get("/competitions/{id}", tags=["catalog"], summary="Get a competition")
@@ -150,11 +134,8 @@ def _season_out(season: Season) -> SeasonOut:
 async def list_seasons(
     session: Session, competition_id: CompetitionId = None, limit: Limit = DEFAULT_LIMIT, cursor: Cursor = None
 ) -> Page[SeasonOut]:
-    stmt = select(Season)
-    if competition_id:
-        stmt = stmt.where(Season.competition_id == competition_id)
-    rows = (await session.scalars(apply_keyset(stmt, [Season.id], limit, cursor))).all()
-    return Page(data=[_season_out(s) for s in rows[:limit]], next_cursor=page_cursor(rows, limit, lambda s: (s.id,)))
+    listing = await queries.seasons(session, competition_id=competition_id, limit=limit, cursor=cursor)
+    return Page(data=[_season_out(s) for s in listing.items], next_cursor=listing.next_cursor)
 
 
 @router.get("/seasons/{id}", tags=["catalog"], summary="Get a season")
@@ -180,22 +161,12 @@ async def get_standings(session: Session, id: uuid.UUID, as_of: AsOf = None, exp
     if season is None:
         raise not_found("season", id)
     tables = await season_tables(session, season, as_of)
-    checks = (
-        {}
-        if as_of is not None
-        else {
-            (v.team_id, v.stage, v.phase, v.group_name): MatchVerificationOut(status=v.status, reference=v.reference, checked_at=v.checked_at)
-            for v in await session.scalars(
-                select(StandingVerification).where(
-                    StandingVerification.season_id == season.id,
-                    StandingVerification.reference == VerificationReference.WIKIPEDIA,
-                )
-            )
-        }
-    )
-    team_ids = {r.team for t in tables for r in t.rows}
+    checks = {} if as_of is not None else await queries.standing_checks(session, season.id)
     team_out = (
-        {t.id: TeamOut.model_validate(t) for t in await session.scalars(select(Team).where(Team.id.in_(team_ids)))}
+        {
+            t.id: TeamOut.model_validate(t)
+            for t in (await queries.by_id(session, Team, list({r.team for t in tables for r in t.rows}))).values()
+        }
         if "teams" in expands
         else {}
     )
@@ -226,7 +197,7 @@ async def get_standings(session: Session, id: uuid.UUID, as_of: AsOf = None, exp
                             for a in t.adjustments.get(r.team, [])
                         ],
                         tied=r.tied,
-                        verification=checks.get((r.team, t.key.stage, t.key.phase, t.key.group or ""))
+                        verification=verification_out(checks.get((r.team, t.key.stage, t.key.phase, t.key.group or "")))
                         if t.status == "final"
                         else None,
                     )
@@ -242,16 +213,10 @@ async def get_standings(session: Session, id: uuid.UUID, as_of: AsOf = None, exp
 
 
 async def _team_seasons(session: AsyncSession, team_ids: Sequence[uuid.UUID]) -> dict[uuid.UUID, list[TeamSeasonOut]]:
-    rows = await session.execute(
-        select(TeamSeason.team_id, Season.id, Season.competition_id, Season.label)
-        .join(Season, Season.id == TeamSeason.season_id)
-        .where(TeamSeason.team_id.in_(team_ids))
-        .order_by(Season.id)
-    )
-    out: dict[uuid.UUID, list[TeamSeasonOut]] = {}
-    for team_id, season_id, competition_id, label in rows:
-        out.setdefault(team_id, []).append(TeamSeasonOut(season_id=season_id, competition_id=competition_id, label=label))
-    return out
+    return {
+        team_id: [TeamSeasonOut(season_id=s.id, competition_id=s.competition_id, label=s.label) for s in seasons]
+        for team_id, seasons in (await queries.team_seasons(session, team_ids)).items()
+    }
 
 
 @router.get("/teams", tags=["catalog"], summary="List teams")
@@ -265,23 +230,15 @@ async def list_teams(
     cursor: Cursor = None,
 ) -> Page[TeamOut]:
     expands = parse_expand(expand, {"seasons"})
-    stmt = select(Team)
-    if kind:
-        stmt = stmt.where(Team.kind == kind)
-    if competition_id or season_id:
-        participation = select(TeamSeason.team_id).join(Season, Season.id == TeamSeason.season_id)
-        if competition_id:
-            participation = participation.where(Season.competition_id == competition_id)
-        if season_id:
-            participation = participation.where(Season.id == season_id)
-        stmt = stmt.where(Team.id.in_(participation))
-    rows = (await session.scalars(apply_keyset(stmt, [Team.name, Team.id], limit, cursor))).all()
-    teams = [TeamOut.model_validate(t) for t in rows[:limit]]
+    listing = await queries.teams(
+        session, competition_id=competition_id, season_id=season_id, kind=kind, limit=limit, cursor=cursor
+    )
+    teams = [TeamOut.model_validate(t) for t in listing.items]
     if "seasons" in expands:
         seasons = await _team_seasons(session, [t.id for t in teams])
         for t in teams:
             t.seasons = seasons.get(t.id, [])
-    return Page(data=teams, next_cursor=page_cursor(rows, limit, lambda t: (t.name, t.id)))
+    return Page(data=teams, next_cursor=listing.next_cursor)
 
 
 @router.get("/teams/{id}", tags=["catalog"], summary="Get a team")
@@ -309,27 +266,14 @@ async def list_players(
     cursor: Cursor = None,
 ) -> PlayerPage:
     """Players exist only where openfootball publishes squads; see `coverage`."""
-    stmt = select(Player)
-    if team_id or season_id or competition_id:
-        membership = select(PlayerTeamSeason.player_id).join(Season, Season.id == PlayerTeamSeason.season_id)
-        if team_id:
-            membership = membership.where(PlayerTeamSeason.team_id == team_id)
-        if season_id:
-            membership = membership.where(PlayerTeamSeason.season_id == season_id)
-        if competition_id:
-            membership = membership.where(Season.competition_id == competition_id)
-        stmt = stmt.where(Player.id.in_(membership))
-    rows = (await session.scalars(apply_keyset(stmt, [Player.display_name, Player.id], limit, cursor))).all()
-
-    coverage: PlayerCoverage | None = None
-    if team_id and season_id:
-        season = await session.get(Season, season_id)
-        coverage = PlayerCoverage(players=season.players_coverage if season else Coverage.NONE)
-
+    listing = await queries.players(
+        session, team_id=team_id, season_id=season_id, competition_id=competition_id, limit=limit, cursor=cursor
+    )
+    coverage = (
+        PlayerCoverage(players=await queries.squad_coverage(session, season_id)) if team_id and season_id else None
+    )
     return PlayerPage(
-        data=[PlayerOut.model_validate(p) for p in rows[:limit]],
-        next_cursor=page_cursor(rows, limit, lambda p: (p.display_name, p.id)),
-        coverage=coverage,
+        data=[PlayerOut.model_validate(p) for p in listing.items], next_cursor=listing.next_cursor, coverage=coverage
     )
 
 
@@ -346,11 +290,8 @@ async def get_player(session: Session, id: uuid.UUID) -> PlayerOut:
 
 @router.get("/venues", tags=["catalog"], summary="List venues")
 async def list_venues(session: Session, limit: Limit = DEFAULT_LIMIT, cursor: Cursor = None) -> Page[VenueOut]:
-    rows = (await session.scalars(apply_keyset(select(Venue), [Venue.name, Venue.id], limit, cursor))).all()
-    return Page(
-        data=[VenueOut.model_validate(v) for v in rows[:limit]],
-        next_cursor=page_cursor(rows, limit, lambda v: (v.name, v.id)),
-    )
+    listing = await queries.venues(session, limit=limit, cursor=cursor)
+    return Page(data=[VenueOut.model_validate(v) for v in listing.items], next_cursor=listing.next_cursor)
 
 
 @router.get("/venues/{id}", tags=["catalog"], summary="Get a venue")
@@ -364,61 +305,40 @@ async def get_venue(session: Session, id: uuid.UUID) -> VenueOut:
 # --- matches -----------------------------------------------------------------------
 
 MATCH_EXPANDS = {"teams", "venue", "scorers", "lineups", "substitutions", "cards"}
-type MatchRow = tuple[Match, Season]
 
 
-def _match_select() -> Select[Match, Season]:
-    return select(Match, Season).join(Season, Season.id == Match.season_id)
-
-
-def formation(entries: Sequence[LineupEntry]) -> str | None:
-    """Starters per source line group after the first (the goalkeeper), joined by `-`; null for one group."""
-    lines = [e.line_index for e in entries if e.role is LineupRole.STARTER and e.line_index is not None]
-    if not lines or max(lines) < 2:
-        return None
-    return "-".join(str(lines.count(i)) for i in range(2, max(lines) + 1))
-
-
-async def _player_refs(session: AsyncSession, ids: set[uuid.UUID]) -> dict[uuid.UUID, PlayerRef]:
-    if not ids:
-        return {}
-    players = await session.scalars(select(Player).where(Player.id.in_(ids)))
-    return {p.id: PlayerRef(id=p.id, display_name=p.display_name) for p in players}
-
-
-async def _events_out(
-    session: AsyncSession, match_ids: list[uuid.UUID], expands: set[str]
-) -> tuple[dict[uuid.UUID, LineupsOut], dict[uuid.UUID, list[SubstitutionOut]], dict[uuid.UUID, list[CardOut]]]:
-    """Lineups, substitutions and cards per match, for the ones `expands` asks for."""
-    entries = list(
-        await session.scalars(
-            select(LineupEntry).where(LineupEntry.match_id.in_(match_ids)).order_by(LineupEntry.side, LineupEntry.ordinal)
-        )
-    ) if "lineups" in expands else []
-    subs = list(
-        await session.scalars(select(Substitution).where(Substitution.match_id.in_(match_ids)))
-    ) if "substitutions" in expands else []
-    cards = list(await session.scalars(select(Card).where(Card.match_id.in_(match_ids)))) if "cards" in expands else []
-    refs = await _player_refs(
+async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands: set[str]) -> list[MatchOut]:
+    match_ids = [m.id for m, _ in rows]
+    checks = await queries.verifications(session, match_ids)
+    teams = (
+        await queries.by_id(session, Team, list({i for m, _ in rows for i in (m.home_team_id, m.away_team_id)}))
+        if "teams" in expands
+        else {}
+    )
+    venues = (
+        await queries.by_id(session, Venue, list({m.venue_id for m, _ in rows if m.venue_id})) if "venue" in expands else {}
+    )
+    goals = await queries.goals(session, match_ids) if "scorers" in expands else {}
+    entries = await queries.lineup_entries(session, match_ids) if "lineups" in expands else {}
+    subs = await queries.substitutions(session, match_ids) if "substitutions" in expands else {}
+    cards = await queries.cards(session, match_ids) if "cards" in expands else {}
+    players = await queries.by_id(
         session,
-        {e.player_id for e in entries if e.player_id}
-        | {i for s in subs for i in (s.player_off_id, s.player_on_id) if i}
-        | {c.player_id for c in cards if c.player_id},
+        Player,
+        list(
+            {e.player_id for es in entries.values() for e in es if e.player_id}
+            | {i for ss in subs.values() for s in ss for i in (s.player_off_id, s.player_on_id) if i}
+            | {c.player_id for cs in cards.values() for c in cs if c.player_id}
+        ),
     )
 
     def ref(player_id: uuid.UUID | None) -> PlayerRef | None:
-        return refs.get(player_id) if player_id else None
-
-    def when(row: Substitution | Card) -> tuple[int, int, bool, int]:
-        return row.minute, row.added_minute or 0, row.side is Side.AWAY, row.ordinal
-
-    by_side: dict[tuple[uuid.UUID, Side], list[LineupEntry]] = {}
-    for e in entries:
-        by_side.setdefault((e.match_id, e.side), []).append(e)
+        p = players.get(player_id) if player_id else None
+        return PlayerRef(id=p.id, display_name=p.display_name) if p else None
 
     def lineup(rows: list[LineupEntry]) -> LineupOut:
         return LineupOut(
-            formation=formation(rows),
+            formation=queries.formation(rows),
             entries=[
                 LineupEntryOut(
                     player=ref(e.player_id), name=e.player_name, role=e.role, line=e.line_index, is_captain=e.is_captain
@@ -426,74 +346,6 @@ async def _events_out(
                 for e in rows
             ],
         )
-
-    lineups = {
-        match_id: LineupsOut(home=lineup(by_side.get((match_id, Side.HOME), [])), away=lineup(by_side.get((match_id, Side.AWAY), [])))
-        for match_id in match_ids
-    } if "lineups" in expands else {}
-    substitutions: dict[uuid.UUID, list[SubstitutionOut]] = {}
-    for s in sorted(subs, key=when):
-        substitutions.setdefault(s.match_id, []).append(
-            SubstitutionOut(
-                side=s.side, minute=s.minute, added_minute=s.added_minute,
-                player_off=ref(s.player_off_id), player_off_name=s.player_off_name,
-                player_on=ref(s.player_on_id), player_on_name=s.player_on_name,
-            )
-        )
-    cards_out: dict[uuid.UUID, list[CardOut]] = {}
-    for c in sorted(cards, key=when):
-        cards_out.setdefault(c.match_id, []).append(
-            CardOut(
-                side=c.side, minute=c.minute, added_minute=c.added_minute, kind=c.kind,
-                player=ref(c.player_id), name=c.player_name,
-            )
-        )
-    return lineups, substitutions, cards_out
-
-
-async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands: set[str]) -> list[MatchOut]:
-    matches = [r[0] for r in rows]
-    teams: dict[uuid.UUID, TeamOut] = {}
-    venues: dict[uuid.UUID, VenueOut] = {}
-    goals: dict[uuid.UUID, list[GoalOut]] = {}
-    verifications = {
-        (v.match_id, v.aspect): MatchVerificationOut(status=v.status, reference=v.reference, checked_at=v.checked_at)
-        for v in await session.scalars(
-            select(MatchVerification).where(
-                MatchVerification.match_id.in_([m.id for m in matches]),
-                MatchVerification.reference == VerificationReference.WIKIPEDIA,
-            )
-        )
-    }
-    if "teams" in expands:
-        ids = {m.home_team_id for m in matches} | {m.away_team_id for m in matches}
-        teams = {t.id: TeamOut.model_validate(t) for t in await session.scalars(select(Team).where(Team.id.in_(ids)))}
-    if "venue" in expands:
-        ids = {m.venue_id for m in matches if m.venue_id}
-        venues = {v.id: VenueOut.model_validate(v) for v in await session.scalars(select(Venue).where(Venue.id.in_(ids)))}
-    if "scorers" in expands:
-        goal_rows = await session.execute(
-            select(Goal, Player.display_name)
-            .outerjoin(Player, Player.id == Goal.scorer_player_id)
-            .where(Goal.match_id.in_([m.id for m in matches]))
-            .order_by(Goal.match_id, Goal.ordinal)
-        )
-        for goal, player_name in goal_rows:
-            player = PlayerRef(id=goal.scorer_player_id, display_name=player_name) if goal.scorer_player_id and player_name else None
-            goals.setdefault(goal.match_id, []).append(
-                GoalOut(
-                    ordinal=goal.ordinal,
-                    side=goal.side,
-                    player=player,
-                    name=player_name or goal.scorer_name or "",
-                    minute=goal.minute,
-                    added_minute=goal.added_minute,
-                    is_penalty=goal.is_penalty,
-                    is_own_goal=goal.is_own_goal,
-                )
-            )
-
-    lineups, substitutions, cards = await _events_out(session, [m.id for m in matches], expands)
 
     out: list[MatchOut] = []
     for m, season in rows:
@@ -525,21 +377,51 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
                 substitutions=season.substitutions_coverage,
                 cards=season.cards_coverage,
             ),
-            verification=verifications.get((m.id, VerificationAspect.RESULT)),
-            events_verification=verifications.get((m.id, VerificationAspect.EVENTS)),
+            verification=verification_out(checks.get((m.id, VerificationAspect.RESULT))),
+            events_verification=verification_out(checks.get((m.id, VerificationAspect.EVENTS))),
         )
         if "teams" in expands:
-            item.home_team, item.away_team = teams.get(m.home_team_id), teams.get(m.away_team_id)
+            home, away = teams.get(m.home_team_id), teams.get(m.away_team_id)
+            item.home_team = TeamOut.model_validate(home) if home else None
+            item.away_team = TeamOut.model_validate(away) if away else None
         if "venue" in expands:
-            item.venue = venues.get(m.venue_id) if m.venue_id else None
+            venue = venues.get(m.venue_id) if m.venue_id else None
+            item.venue = VenueOut.model_validate(venue) if venue else None
         if "scorers" in expands:
-            item.scorers = goals.get(m.id, [])
+            item.scorers = [
+                GoalOut(
+                    ordinal=g.ordinal,
+                    side=g.side,
+                    player=PlayerRef(id=g.scorer_player_id, display_name=name) if g.scorer_player_id and name else None,
+                    name=name or g.scorer_name or "",
+                    minute=g.minute,
+                    added_minute=g.added_minute,
+                    is_penalty=g.is_penalty,
+                    is_own_goal=g.is_own_goal,
+                )
+                for g, name in goals.get(m.id, [])
+            ]
         if "lineups" in expands:
-            item.lineups = lineups[m.id]
+            item.lineups = LineupsOut(
+                home=lineup(entries.get((m.id, Side.HOME), [])), away=lineup(entries.get((m.id, Side.AWAY), []))
+            )
         if "substitutions" in expands:
-            item.substitutions = substitutions.get(m.id, [])
+            item.substitutions = [
+                SubstitutionOut(
+                    side=s.side, minute=s.minute, added_minute=s.added_minute,
+                    player_off=ref(s.player_off_id), player_off_name=s.player_off_name,
+                    player_on=ref(s.player_on_id), player_on_name=s.player_on_name,
+                )
+                for s in subs.get(m.id, [])
+            ]
         if "cards" in expands:
-            item.cards = cards.get(m.id, [])
+            item.cards = [
+                CardOut(
+                    side=c.side, minute=c.minute, added_minute=c.added_minute, kind=c.kind,
+                    player=ref(c.player_id), name=c.player_name,
+                )
+                for c in cards.get(m.id, [])
+            ]
         out.append(item)
     return out
 
@@ -569,42 +451,26 @@ async def list_matches(
     cursor: Cursor = None,
 ) -> Page[MatchOut]:
     expands = parse_expand(expand, MATCH_EXPANDS)
-    stmt = _match_select()
-    if competition_id:
-        stmt = stmt.where(Season.competition_id == competition_id)
-    if season_id:
-        stmt = stmt.where(Match.season_id == season_id)
-    if stage:
-        stmt = stmt.where(Match.stage == stage)
-    if team_id:
-        stmt = stmt.where(or_(Match.home_team_id == team_id, Match.away_team_id == team_id))
-    if from_:
-        stmt = stmt.where(Match.kickoff_utc >= datetime.combine(from_, time(0), tzinfo=UTC))
-    if to:
-        stmt = stmt.where(Match.kickoff_utc < datetime.combine(to + timedelta(days=1), time(0), tzinfo=UTC))
-    for aspect, status in ((VerificationAspect.RESULT, verification), (VerificationAspect.EVENTS, events_verification)):
-        if status:
-            stmt = stmt.where(
-                exists().where(
-                    MatchVerification.match_id == Match.id,
-                    MatchVerification.reference == VerificationReference.WIKIPEDIA,
-                    MatchVerification.aspect == aspect,
-                    MatchVerification.status == status,
-                )
-            )
-    rows: Sequence[MatchRow] = (
-        await session.execute(apply_keyset(stmt, [Match.kickoff_utc, Match.id], limit, cursor))
-    ).all()
-    return Page(
-        data=await _matches_out(session, rows[:limit], expands),
-        next_cursor=page_cursor(rows, limit, lambda r: (r[0].kickoff_utc, r[0].id)),
+    listing = await queries.matches(
+        session,
+        competition_id=competition_id,
+        season_id=season_id,
+        team_id=team_id,
+        stage=stage,
+        from_=from_,
+        to=to,
+        verification=verification,
+        events_verification=events_verification,
+        limit=limit,
+        cursor=cursor,
     )
+    return Page(data=await _matches_out(session, listing.items, expands), next_cursor=listing.next_cursor)
 
 
 @router.get("/matches/{id}", tags=["matches"], summary="Get a match")
 async def get_match(session: Session, id: uuid.UUID, expand: MatchExpand = None) -> MatchOut:
     expands = parse_expand(expand, MATCH_EXPANDS)
-    row = (await session.execute(_match_select().where(Match.id == id))).first()
+    row = await queries.match(session, id)
     if row is None:
         raise not_found("match", id)
     return (await _matches_out(session, [row], expands))[0]
