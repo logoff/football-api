@@ -16,6 +16,7 @@ from strawberry.types import ExecutionContext, ExecutionResult
 from football_api.api import queries
 from football_api.api.errors import ApiError
 from football_api.api.graphql.connection import Connection, connection, page_size
+from football_api.api.graphql.limits import QueryLimitsExtension
 from football_api.api.graphql.context import Context, get_context
 from football_api.api.graphql.types import (
     UTC_DATETIME,
@@ -176,7 +177,9 @@ class FootballSchema(strawberry.Schema):
                 log.error("graphql resolver failed at %s", error.path, exc_info=error.original_error)
 
 
-schema = FootballSchema(query=Query, config=StrawberryConfig(scalar_map={datetime: UTC_DATETIME}))
+schema = FootballSchema(
+    query=Query, config=StrawberryConfig(scalar_map={datetime: UTC_DATETIME}), extensions=[QueryLimitsExtension]
+)
 
 
 class Router(GraphQLRouter[Context, None]):

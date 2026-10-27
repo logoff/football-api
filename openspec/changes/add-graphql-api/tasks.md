@@ -17,8 +17,8 @@
 
 ## 3. Limits
 
-- [ ] 3.1 Add the depth (10) and alias (20) limits and the `first` ≤ 200 rule, each refusing with `extensions` `code`, `measured` and `limit` (D6). Verify with a test per spec scenario, including that the standard introspection query still works and that a refused query issues no SQL.
-- [ ] 3.2 Add the cost rule with the weights and the 25,000 limit (D6). Verify with tests: the 200 × 200 × 200 query is refused with `query_too_costly`; 200 matches with every relation (the largest REST request) is allowed; fragments and variables are counted.
+- [x] 3.1 Add the depth (10) and alias (20) limits and the `first` ≤ 200 rule, each refusing with `extensions` `code`, `measured` and `limit` (D6). Verify with a test per spec scenario, including that the standard introspection query still works and that a refused query issues no SQL.
+- [x] 3.2 Add the cost rule with the weights and the 50,000 limit (D6). Verify with tests: the 200 × 200 × 200 query is refused with `query_too_costly`; 200 matches with every relation (the largest REST request) is allowed; fragments and variables are counted.
 
 ## 4. Schema file and docs
 

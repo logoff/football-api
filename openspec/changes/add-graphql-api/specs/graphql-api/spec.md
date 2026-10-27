@@ -112,7 +112,7 @@ A query whose cost exceeds the allowed cost SHALL be refused before it runs with
 
 #### Scenario: Too costly
 
-- **WHEN** a client asks for 200 competitions, each with 200 seasons, each with 200 matches with their line-ups
+- **WHEN** a client asks for 200 competitions, each with 200 seasons, each with 200 matches, within the depth limit
 - **THEN** it is refused with `query_too_costly`, the computed cost and the allowed cost
 
 #### Scenario: Largest REST page

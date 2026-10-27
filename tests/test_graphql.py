@@ -13,6 +13,7 @@ from typing import Any, cast
 
 import httpx
 import pytest
+from graphql import get_introspection_query
 from sqlalchemy import delete, event
 from test_api import competition_id, get, season_id
 
@@ -462,5 +463,76 @@ async def test_relations_are_batched(client: httpx.AsyncClient) -> None:
         assert len(data["matches"]["edges"]) == min(n, len(await all_match_ids(client)))
         counts.append(len(statements))
     assert counts[0] == counts[1], counts
+
+
+# --- limits (3.1, 3.2) -------------------------------------------------------------
+
+
+def down_to_a_match(leaf: str) -> str:
+    """Nine levels down to a match (one item per connection), then `leaf`."""
+    return (
+        "{ competitions(first: 1) { edges { node { seasons(first: 1) { edges { node { "
+        f"matches(first: 1) {{ edges {{ node {{ {leaf} }} }} }} }} }} }} }} }} }} }}"
+    )
+
+
+DEPTH = {10: down_to_a_match("id"), 11: down_to_a_match("cards { kind }"), 12: down_to_a_match("lineups { home { formation } }")}
+
+
+def refusal(body: dict[str, Any]) -> dict[str, Any]:
+    [error] = body["errors"]
+    assert body.get("data") is None
+    return cast(dict[str, Any], error["extensions"])
+
+
+async def test_depth_limit(client: httpx.AsyncClient) -> None:
+    assert "competitions" in await gql(client, DEPTH[10])
+    with count_statements() as statements:
+        body = await gql(client, DEPTH[11], errors=True)
+    assert refusal(body) == {"code": "query_too_deep", "measured": 11, "limit": 10}
+    assert statements == []  # refused before anything ran
+    # Deeper still: the walk stops one level past the limit, so `measured` reads "at least 11"
+    assert refusal(await gql(client, DEPTH[12], errors=True))["measured"] == 11
+
+
+async def test_alias_limit(client: httpx.AsyncClient) -> None:
+    def aliased(n: int) -> str:
+        return "{ " + " ".join(f'm{i}: match(id: "{UNKNOWN}") {{ id }}' for i in range(n)) + " }"
+
+    assert len(await gql(client, aliased(20))) == 20
+    assert refusal(await gql(client, aliased(21), errors=True)) == {"code": "too_many_aliases", "measured": 21, "limit": 20}
+
+
+async def test_page_size_limit_with_literals_and_variables(client: httpx.AsyncClient) -> None:
+    expected = {"code": "page_too_large", "measured": 201, "limit": 200}
+    assert refusal(await gql(client, "{ venues(first: 201) { edges { cursor } } }", errors=True)) == expected
+    body = await gql(client, "query($n: Int) { venues(first: $n) { edges { cursor } } }", {"n": 201}, errors=True)
+    assert refusal(body) == expected
+
+
+async def test_introspection_is_exempt(client: httpx.AsyncClient) -> None:
+    data = await gql(client, get_introspection_query())
+    assert any(t["name"] == "Match" for t in data["__schema"]["types"])
+
+
+FLOOD = """query($n: Int) { competitions(first: $n) { edges { node { seasons(first: 200) { edges { node {
+  ...Matches } } } } } } }
+fragment Matches on Season { matches(first: 200) { edges { node { id } } } }"""
+
+
+async def test_cost_limit(client: httpx.AsyncClient) -> None:
+    body = await gql(client, FLOOD, {"n": 200}, errors=True)
+    extensions = refusal(body)
+    assert extensions["code"] == "query_too_costly" and extensions["limit"] == 50_000
+    assert extensions["measured"] > 8_000_000  # 200 × 200 × 200 matches, through the fragment and the variable
+    # The same query for one competition, one season and a page of matches is cheap
+    small = FLOOD.replace("seasons(first: 200)", "seasons(first: 1)")
+    assert "competitions" in await gql(client, small, {"n": 1})
+
+
+async def test_largest_rest_page_is_allowed(client: httpx.AsyncClient) -> None:
+    """200 matches with every relation REST can embed: the biggest single REST response."""
+    data = await gql(client, f"{{ matches(first: 200) {{ edges {{ node {{ {MATCH} }} }} }} }}")
+    assert data["matches"]["edges"]
 
 

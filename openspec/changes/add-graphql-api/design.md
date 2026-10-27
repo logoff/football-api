@@ -65,11 +65,11 @@ A context object per request holds the `AsyncSession` and one DataLoader per to-
 | Depth     | 10            | Strawberry `QueryDepthLimiter` (ignores introspection fields by default) |
 | Aliases   | 20            | Strawberry `MaxAliasesLimiter`                                           |
 | Page size | `first` ≤ 200 | Validation rule over literal and variable `first` arguments              |
-| Cost      | 25,000        | Custom validation rule (below)                                           |
+| Cost      | 50,000        | Custom validation rule (below)                                           |
 
-**Cost model.** Walk the operation (with variables and fragments resolved): a scalar costs 0; an object field costs 1 plus its selection; a connection costs `first` (or 50) × (1 + its selection); a plain list with a known bound (line-up entries, goals, substitutions, cards) counts a fixed size (line-up side 25, goals 10, substitutions 12, cards 12).
+**Cost model.** Walk the operation (with variables and fragments resolved): a scalar costs 0; an object field costs 1 plus its selection; a connection costs `first` (or 50) × (1 + its selection); a plain list with a known bound counts a fixed size × (1 + its selection): line-up side 25, goals 10, substitutions 12, cards 12, a team's seasons 40, standings tables 12, table rows 24, row adjustments 2.
 
-25,000 is chosen so the largest REST request stays possible: 200 matches with teams, venue, scorers, line-ups, substitutions and cards cost about 200 × (1 + 2 + 1 + 10 + 2 × 25 + 12 + 12) ≈ 17,600. The scenario's 200 × 200 × 200 matches costs millions.
+50,000 is chosen so the largest REST request stays possible: 200 matches with teams, venue, scorers, line-ups, substitutions and cards, each event with its player, cost about 200 × 192 ≈ 38,400 (a REST page of that size returns about as many objects). The scenario's 200 × 200 × 200 matches costs millions. (The first draft said 25,000 from an estimate that left out the player on each event; the tests measure the real figure.)
 
 Each refusal raises a `GraphQLError` with `extensions` `{code, measured, limit}` and happens in validation, so nothing touches the database.
 
@@ -95,7 +95,7 @@ The schema has a `Query` type only, so graphql-core refuses mutations and subscr
 - **[Cost model drifts from the real expense]** → it's a static estimate. Keep the weights next to the types they describe, and revisit if the query-count or timing tests show a hot spot.
 - **[The D2 refactor could change REST output]** → land it as the first task, with `tests/test_api.py` unchanged and passing, before any GraphQL code.
 - **[GraphiQL loads its assets from a CDN]** → acceptable for a public read-only API, like FastAPI's `/docs`. If self-hosting is wanted later, Strawberry can serve a local copy.
-- **[Proxy rate limits count requests, not cost]** → one GraphQL request can do up to 25,000 units of work. D6 caps it; the proxy's concurrency cap still applies.
+- **[Proxy rate limits count requests, not cost]** → one GraphQL request can do up to 50,000 units of work. D6 caps it; the proxy's concurrency cap still applies.
 
 ## Migration Plan
 
