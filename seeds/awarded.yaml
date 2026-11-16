@@ -193,4 +193,13 @@ matches:
     reason: "Abandoned within the first minutes after Medellín supporters threw flares and objects onto the pitch"
     source: https://elgrafico.com.ar/articulo/conmebol-libertadores/100114/conmebol-le-dio-por-ganado-el-partido-cancelado-a-flamengo-ante-dim-el-panorama-de-estudiantes
 
-teams: []
+teams:
+  # --- Segunda División (Q35615) -------------------------------------------------------
+  # LaLiga's results pages list Reus's second-half matches 1-0 to the opponent, with no referee.
+  - competition: Q35615
+    season: "2018-19"
+    team: Q1387573 # CF Reus Deportiu
+    from: 2019-01-19
+    played: NONE
+    reason: "Not played: Reus was suspended and then expelled by LaLiga for unpaid wages; every remaining fixture was awarded 1-0 to the opponent"
+    source: https://www.laliga.com/laliga-hypermotion/resultados/2018-19/jornada-42
