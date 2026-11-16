@@ -1,6 +1,6 @@
 # Football API
 
-HTTP API for football (soccer) statistics, built from public-domain [openfootball](https://github.com/openfootball) data (CC0) and Wikidata identifiers.
+HTTP API for football (soccer) statistics, built from public-domain [openfootball](https://github.com/openfootball) data (CC0), English Wikipedia for older European Cup seasons (CC BY-SA 4.0), and Wikidata identifiers. See [Data sources and licenses](#data-sources-and-licenses).
 
 ## Quickstart
 
@@ -9,7 +9,7 @@ just up && just sync
 curl localhost:8000/v1/competitions
 ```
 
-`just up` builds and starts the API and PostgreSQL. `just sync` clones the openfootball repositories into `.cache/sources`, applies migrations, and loads everything (about 20 seconds). Interactive docs: <http://localhost:8000/docs>.
+`just up` builds and starts the API and PostgreSQL. `just sync` clones the openfootball repositories into `.cache/sources`, fetches the pinned Wikipedia revisions the first time, applies migrations, and loads everything. Interactive docs: <http://localhost:8000/docs>.
 
 ## GraphQL
 
@@ -88,30 +88,30 @@ The sync refuses to run until the API container has applied the migrations (exit
 
 ## Data coverage
 
-20 competitions. The five top domestic leagues have every season openfootball publishes, up to the one in progress, and Segunda División every complete one, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The international competitions have every edition openfootball publishes with a date for every match, including those in progress, also checked against Wikipedia. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
+20 competitions. The five top domestic leagues have every season openfootball publishes, up to the one in progress, and Segunda División every complete one, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The international competitions have every edition openfootball publishes with a date for every match, including those in progress, also checked against Wikipedia. The Champions League also goes back to the first European Cup, 1955-56, from Wikipedia. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
 
-| Competition                | Format     | Seasons                 | Results | Verified | Goal scorers | Squads     | Line-ups and cards |
-| -------------------------- | ---------- | ----------------------- | ------- | -------- | ------------ | ---------- | ------------------ |
-| Premier League             | LEAGUE     | 1992-93 to 2026-27 (35) | ✅      | ✅       | none         | none       | 2025-26            |
-| La Liga                    | LEAGUE     | 2012-13 to 2026-27 (15) | ✅      | ✅       | none         | none       | 2025-26            |
-| Segunda División           | LEAGUE     | 2012-13 to 2024-25 (13) | ✅      | ✅       | none         | none       | none               |
-| Bundesliga                 | LEAGUE     | 2010-11 to 2026-27 (17) | ✅      | ✅       | none         | none       | 2025-26            |
-| Serie A                    | LEAGUE     | 2013-14 to 2026-27 (14) | ✅      | ✅       | none         | none       | 2025-26            |
-| Ligue 1                    | LEAGUE     | 2014-15 to 2026-27 (13) | ✅      | ✅       | none         | none       | 2025-26            |
-| FA Cup                     | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none       | none               |
-| EFL Cup                    | LEAGUE_CUP | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none       | none               |
-| Copa del Rey               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none       | none               |
-| DFB-Pokal                  | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅       | none         | none       | none               |
-| Coppa Italia               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none       | none               |
-| Coupe de France            | CUP        | 2024-25                 | ✅      | ✅       | none         | none       | none               |
-| UEFA Champions League      | TOURNAMENT | 2011-12 to 2025-26 (15) | ✅      | ✅       | none         | none       | none               |
-| UEFA Europa League         | TOURNAMENT | 2020-21 to 2024-25 (5)  | ✅      | ✅       | none         | none       | none               |
-| UEFA Conference League     | TOURNAMENT | 2021-22 to 2024-25 (4)  | ✅      | ✅       | none         | none       | none               |
-| CONMEBOL Copa Libertadores | TOURNAMENT | 2012 to 2026 (15)       | ✅      | ✅       | none         | none       | none               |
-| FIFA Club World Cup        | TOURNAMENT | 2000 to 2025 (21)       | ✅      | ✅       | most         | ✅         | ✅                 |
-| FIFA World Cup             | TOURNAMENT | 1930 to 2026 (23)       | ✅      | ✅       | ✅           | ✅         | ✅                 |
-| UEFA European Championship | TOURNAMENT | 1960 to 2024 (15)       | ✅      | ✅       | most         | 2021, 2024 | none               |
-| CONMEBOL Copa América      | TOURNAMENT | 2011, 2021, 2024        | ✅      | ✅       | 2024         | 2021, 2024 | none               |
+| Competition                | Format     | Seasons                 | Results | Verified   | Goal scorers | Squads     | Line-ups and cards |
+| -------------------------- | ---------- | ----------------------- | ------- | ---------- | ------------ | ---------- | ------------------ |
+| Premier League             | LEAGUE     | 1992-93 to 2026-27 (35) | ✅      | ✅         | none         | none       | 2025-26            |
+| La Liga                    | LEAGUE     | 2012-13 to 2026-27 (15) | ✅      | ✅         | none         | none       | 2025-26            |
+| Segunda División           | LEAGUE     | 2012-13 to 2024-25 (13) | ✅      | ✅         | none         | none       | none               |
+| Bundesliga                 | LEAGUE     | 2010-11 to 2026-27 (17) | ✅      | ✅         | none         | none       | 2025-26            |
+| Serie A                    | LEAGUE     | 2013-14 to 2026-27 (14) | ✅      | ✅         | none         | none       | 2025-26            |
+| Ligue 1                    | LEAGUE     | 2014-15 to 2026-27 (13) | ✅      | ✅         | none         | none       | 2025-26            |
+| FA Cup                     | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅         | none         | none       | none               |
+| EFL Cup                    | LEAGUE_CUP | 2018-19 to 2024-25 (7)  | ✅      | ✅         | none         | none       | none               |
+| Copa del Rey               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅         | none         | none       | none               |
+| DFB-Pokal                  | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅         | none         | none       | none               |
+| Coppa Italia               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅         | none         | none       | none               |
+| Coupe de France            | CUP        | 2024-25                 | ✅      | ✅         | none         | none       | none               |
+| UEFA Champions League      | TOURNAMENT | 1955-56 to 2025-26 (71) | ✅      | 2011-12 on | none         | none       | none               |
+| UEFA Europa League         | TOURNAMENT | 2020-21 to 2024-25 (5)  | ✅      | ✅         | none         | none       | none               |
+| UEFA Conference League     | TOURNAMENT | 2021-22 to 2024-25 (4)  | ✅      | ✅         | none         | none       | none               |
+| CONMEBOL Copa Libertadores | TOURNAMENT | 2012 to 2026 (15)       | ✅      | ✅         | none         | none       | none               |
+| FIFA Club World Cup        | TOURNAMENT | 2000 to 2025 (21)       | ✅      | ✅         | most         | ✅         | ✅                 |
+| FIFA World Cup             | TOURNAMENT | 1930 to 2026 (23)       | ✅      | ✅         | ✅           | ✅         | ✅                 |
+| UEFA European Championship | TOURNAMENT | 1960 to 2024 (15)       | ✅      | ✅         | most         | 2021, 2024 | none               |
+| CONMEBOL Copa América      | TOURNAMENT | 2011, 2021, 2024        | ✅      | ✅         | 2024         | 2021, 2024 | none               |
 
 Euro 1984 and Euro 1992 are not included: openfootball lists some of their matches without a date. Euro 2020, played in 2021, has the season label `2021`. The Club World Cup's placement match has stage `FIFTH_PLACE`.
 
@@ -120,6 +120,8 @@ Cups start where the source does: the FA Cup at Round 1 (the first round proper)
 The Premier League's 1992-93 to 1997-98 and 1999-00 seasons have dates but no kickoff times in the source; their `kickoff_utc` is midnight UTC on the match date.
 
 Segunda División 2025-26 is not included: openfootball stopped updating it after 131 of its 462 results. The promotion play-offs aren't in the source, and in 2024-25 the source is missing 9 last-day results. English Wikipedia redirects UE Llagostera (2014-15 and 2015-16) to its successor club's article, so its matches and those seasons' tables can't be verified.
+
+The Champions League's 1955-56 to 2010-11 seasons, the European Cup until 1991-92, come from the match boxes of English Wikipedia's season articles and their group and knockout sub-articles, each pinned to a revision (see [Data sources and licenses](#data-sources-and-licenses)). Up to 1993-94 every round is included, since all of them were the competition proper; from 1994-95 the qualifying rounds are left out, as they are from 2011-12. These matches have dates but no kickoff times (`kickoff_utc` is midnight UTC). A replay or play-off has the stage of its tie. Four ties a club withdrew from or was expelled from, such as Linfield v Vorwärts Berlin in 1961-62, are listed as `CANCELLED` without a score. These seasons aren't verified: Wikipedia is their source, so it can't also be their check.
 
 Ligue 1 2019-20 was stopped after 279 matches; its 101 unplayed fixtures are listed as `CANCELLED`.
 
@@ -139,7 +141,7 @@ The API reports all of this in a `coverage` field on seasons, matches, and playe
 
 ### Verification
 
-openfootball is the only data source. Domestic league scores are additionally checked against the results grid of the English Wikipedia season article, and cup and tournament scores (including penalty shootouts) against the match boxes of the season article and its group and knockout sub-articles, so a wrong score in either source shows up instead of passing silently. Wikipedia is read only to compare: none of its values are stored or served.
+Seasons from openfootball are checked against English Wikipedia; seasons taken from Wikipedia aren't verified. Domestic league scores are checked against the results grid of the English Wikipedia season article, and cup and tournament scores (including penalty shootouts) against the match boxes of the season article and its group and knockout sub-articles, so a wrong score in either source shows up instead of passing silently. For these seasons Wikipedia is read only to compare: none of its values are stored or served.
 
 Each verified match gets a `verification` object in the API (`null` elsewhere), and `/v1/matches?verification=MISMATCH` lists the disagreements:
 
@@ -188,9 +190,9 @@ Known gaps:
 
 ## How it works
 
-- `seeds/competitions.yaml`: the competitions, their source files, and each file's hand-verified time zone.
+- `seeds/competitions.yaml`: the competitions, their source files, and each file's hand-verified time zone. A season taken from Wikipedia lists its pages instead, each pinned to a revision (`wikipedia_source`). `just wikipedia-pins "<article>"` prints the pins at the current revisions, and given the competition QID and season label it lists what moving them would change. Pinned revisions are fetched once and cached under `.cache/sources/wikipedia`.
 - `seeds/standings.yaml`: point deductions and off-the-table orders for standings, each with a source.
-- `seeds/teams.yaml`: canonical teams, each with its Wikidata QID and every openfootball spelling. A season whose file uses a team name not listed here fails to sync. A spelling can apply only from or until a year (`{name: "Yugoslavia", until: 1992}`), for a name that meant different teams over time. `reference_wikidata` lists other Wikidata items verification references use for the same side (the Dutch East Indies of 1938, linked as Indonesia). `tools/propose_teams.py` drafts entries for new sources; review them before committing.
+- `seeds/teams.yaml`: canonical teams, each with its Wikidata QID and every openfootball spelling. A team that appears only in Wikipedia seasons has no spelling: the QID of the club article a match box links identifies it. A season whose file uses a team name not listed here fails to sync. A spelling can apply only from or until a year (`{name: "Yugoslavia", until: 1992}`), for a name that meant different teams over time. `reference_wikidata` lists other Wikidata items verification references use for the same side (the Dutch East Indies of 1938, linked as Indonesia). `tools/propose_teams.py` drafts entries for new sources; review them before committing.
 - `just sync` is idempotent: running it again with unchanged sources leaves the database byte-for-byte identical, UUIDs included.
 - Design and specs: `openspec/changes/init-football-api-v0.1/`.
 
@@ -208,7 +210,7 @@ just sync-competition Q324867 --verify                       # the same, after l
 - `--full`: re-sync and re-verify every season, even those whose inputs haven't changed.
 - `--no-refresh`: use the existing source checkouts without fetching.
 
-Each season is synced in its own transaction, so a broken file costs only that season, and the log has one line per season. A season is skipped, and logged as `unchanged`, when nothing it reads has changed since its last successful sync: its source files, its entry in `seeds/competitions.yaml`, `seeds/teams.yaml`, and the code. Any code change makes the next run a full one. The sync never runs migrations: the API container applies them on start.
+Each season is synced in its own transaction, so a broken file costs only that season, and the log has one line per season. A season is skipped, and logged as `unchanged`, when nothing it reads has changed since its last successful sync: its source files, its entry in `seeds/competitions.yaml` (including its Wikipedia pins), `seeds/teams.yaml`, and the code. Any code change makes the next run a full one. The sync never runs migrations: the API container applies them on start.
 
 | Exit code | Meaning                                                                     |
 | --------- | --------------------------------------------------------------------------- |
@@ -228,6 +230,20 @@ just typecheck   # pyright, strict
 just psql        # database shell
 ```
 
+## Data sources and licenses
+
+| Source                                              | License                                                         | Seasons                                                 |
+| --------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------- |
+| [openfootball](https://github.com/openfootball)     | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)   | every season, except those below                        |
+| [English Wikipedia](https://en.wikipedia.org/)      | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | UEFA Champions League (European Cup) 1955-56 to 2010-11 |
+| [Wikidata](https://www.wikidata.org/) (identifiers) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)   | team and competition identity                           |
+
+Every season has a `source` with its publisher, its license as an SPDX identifier (`CC0-1.0` or `CC-BY-SA-4.0`) and the pages it was read from, and every match has the `license` of its season. A Wikipedia season links the exact revision of each article it was taken from (`https://en.wikipedia.org/w/index.php?oldid=…`), where the article's history credits its authors. The match data was extracted from the articles' match boxes and reshaped into this API's records.
+
+Data from a Wikipedia season, and anything derived from it, is served under CC BY-SA 4.0: its matches, and the standings and team listings computed from them. If you reuse it, credit English Wikipedia and its contributors, link the license, and share what you build from it under the same license. Data from openfootball seasons is CC0, with no conditions; to use only that, filter on `license`.
+
+Rankings, point deductions and other curated decisions in `seeds/` cite their sources, which are only referenced, never copied.
+
 ## License
 
-The code is released under the [MIT License](LICENSE). The data it serves comes from [openfootball](https://github.com/openfootball) and [Wikidata](https://www.wikidata.org/), both CC0 (public domain).
+The code is released under the [MIT License](LICENSE). For the data it serves, see [Data sources and licenses](#data-sources-and-licenses).

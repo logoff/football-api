@@ -16,19 +16,19 @@
 
 ## 3. European Cup and Champions League 1955-56 to 2010-11
 
-- [ ] 3.1 Generate the 189 missing clubs from Wikidata and review them by hand into `seeds/teams.yaml` (D5). Verify that the seeds load and that every QID the pinned boxes link resolves.
-- [ ] 3.2 Pin the 56 seasons with `just wikipedia-pins`. Verify that each season's match count matches the spike (4,321 in all; 1955-56: 29), and that no pinned page belongs to another competition.
-- [ ] 3.3 Add the 5 awarded entries to `seeds/awarded.yaml`, each confirmed from a source (D4). Verify that a sync logs no awarded match missing from the seed.
-- [ ] 3.4 Add the Champions League standings eras for the group stages from 1991-92, cited from the regulations of the time (D8). Verify by comparing the computed group tables with Wikipedia's, once and without storing anything. Explain any difference in the PR.
+- [x] 3.1 Generate the 189 missing clubs from Wikidata and review them by hand into `seeds/teams.yaml` (D5). Verify that the seeds load and that every QID the pinned boxes link resolves.
+- [x] 3.2 Pin the 56 seasons with `just wikipedia-pins`. Verify that each season's match count matches the spike (4,321 in all; 1955-56: 29), and that no pinned page belongs to another competition. Outcome: 4,320 stored matches, since sync folds the postponed date of Panathinaikos v CSKA Sofia 1972-73 into the match played later.
+- [x] 3.3 Add the 5 awarded entries to `seeds/awarded.yaml`, each confirmed from a source (D4). Verify that a sync logs no awarded match missing from the seed.
+- [x] 3.4 Add the Champions League standings eras for the group stages from 1991-92, cited from the regulations of the time (D8). Verify by comparing the computed group tables with Wikipedia's, once and without storing anything. Explain any difference in the PR. Outcome: 142 of 142 tables agree, with head-to-head first and Milan's 1994-95 deduction.
 
 ## 4. Docs
 
-- [ ] 4.1 In the README, add the data sources and license section (spec `Attribution and share-alike`), the Champions League coverage row, the note that Wikipedia seasons aren't verified, and the walkover note. Update the `openspec/config.yaml` context and the `ingestion` spec's Purpose. Verify that mdformat leaves no changes.
+- [x] 4.1 In the README, add the data sources and license section (spec `Attribution and share-alike`), the Champions League coverage row, the note that Wikipedia seasons aren't verified, and the walkover note. Update the `openspec/config.yaml` context and the `ingestion` spec's Purpose. Verify that mdformat leaves no changes.
 
 ## 5. Integration
 
-- [ ] 5.1 Run a full local sync from an empty cache, and then a second one. Verify that the first one fetches each pin once and logs no warnings, and that the second one sends no request to Wikipedia and skips every season.
-- [ ] 5.2 Verify that `just typecheck`, `just test` and `openspec validate source-older-seasons-from-wikipedia --strict` all pass.
+- [x] 5.1 Run a full local sync from an empty cache, and then a second one. Verify that the first one fetches each pin once and logs no warnings, and that the second one sends no request to Wikipedia and skips every season. Outcome: the first sync fetched all 106 pins and synced 296 seasons in about 4 minutes, with no warning (only the usual Wikidata rate-limit notice). The second skipped all 296.
+- [x] 5.2 Verify that `just typecheck`, `just test` and `openspec validate source-older-seasons-from-wikipedia --strict` all pass.
 
 ## Workflow follow-up
 

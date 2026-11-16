@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Bring data from external sources into the canonical schema, idempotently and on demand. v0.1 ingests from two sources: the `openfootball/*` GitHub repositories (primary data) and Wikidata (entity identifier seed).
+Bring data from external sources into the canonical schema, idempotently and on demand. Match data comes from the `openfootball/*` GitHub repositories and, for seasons they lack, from pinned revisions of English Wikipedia articles; Wikidata seeds entity identifiers.
 
 ## Requirements
 

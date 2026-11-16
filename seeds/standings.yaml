@@ -146,6 +146,15 @@ adjustments:
     reason: "Firecracker thrown at Montpellier v Clermont (8 October 2023), LFP disciplinary committee (a second point suspended)"
     source: https://fr.soccerway.com/actualites/football-ligue-1-montpellier-clermont-rejoue-a-huis-clos-et-retrait-d-un-point-pour-le-mhsc-atal-suspendu/6s4q0pEc
 
+  # --- UEFA Champions League (Q18756) -------------------------------------------------------
+  # No official decision found online; RSSSF's season page.
+  - competition: Q18756
+    season: "1994-95"
+    team: Q1543 # AC Milan
+    points: -2
+    reason: "Salzburg's goalkeeper Otto Konrad was hit by a bottle thrown from the crowd at San Siro on matchday 2"
+    source: https://rsssf.org/ec/ec199495.html
+
 orders:
   # World Cup 1954 and 1958: level teams met again in a play-off for the last place in the
   # knockout stage; the play-off isn't part of the group table.
