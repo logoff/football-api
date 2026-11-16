@@ -328,6 +328,96 @@
       json: football.json/2026-27/es.1.json
       wikipedia: "2026–27 La Liga"
 
+- name: Segunda División
+  country: "ES"
+  team_kind: CLUB
+  scope: DOMESTIC
+  format: LEAGUE
+  wikidata: Q35615
+  standings:
+    # RFEF Reglamento General, as for La Liga
+    - from: 1992
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_goal_difference, goal_difference, goals_for]
+  # openfootball/espana's 2-liga2.txt from 2012-13; 2025-26 is left out until upstream completes it.
+  # The promotion play-offs aren't in the source.
+  seasons:
+    - label: 2012-13
+      start_year: 2012
+      file: espana/2012-13/2-liga2.txt
+      tz: Europe/Madrid
+      json: football.json/2012-13/es.2.json
+      wikipedia: "2012–13 Segunda División"
+    - label: 2013-14
+      start_year: 2013
+      file: espana/2013-14/2-liga2.txt
+      tz: Europe/Madrid
+      json: football.json/2013-14/es.2.json
+      wikipedia: "2013–14 Segunda División"
+    - label: 2014-15
+      start_year: 2014
+      file: espana/2014-15/2-liga2.txt
+      tz: Europe/Madrid
+      json: football.json/2014-15/es.2.json
+      wikipedia: "2014–15 Segunda División"
+    - label: 2015-16
+      start_year: 2015
+      file: espana/2015-16/2-liga2.txt
+      tz: Europe/Madrid
+      json: football.json/2015-16/es.2.json
+      wikipedia: "2015–16 Segunda División"
+    - label: 2016-17
+      start_year: 2016
+      file: espana/2016-17/2-liga2.txt
+      tz: Europe/Madrid
+      json: football.json/2016-17/es.2.json
+      wikipedia: "2016–17 Segunda División"
+    - label: 2017-18
+      start_year: 2017
+      file: espana/2017-18/2-liga2.txt
+      tz: Europe/Madrid
+      json: football.json/2017-18/es.2.json
+      wikipedia: "2017–18 Segunda División"
+    - label: 2018-19
+      start_year: 2018
+      file: espana/2018-19/2-liga2.txt
+      tz: Europe/Madrid
+      json: football.json/2018-19/es.2.json
+      wikipedia: "2018–19 Segunda División"
+    - label: 2019-20
+      start_year: 2019
+      file: espana/2019-20/2-liga2.txt
+      tz: Europe/Madrid
+      json: football.json/2019-20/es.2.json
+      wikipedia: "2019–20 Segunda División"
+    - label: 2020-21
+      start_year: 2020
+      file: espana/2020-21/2-liga2.txt
+      tz: Europe/Madrid
+      json: football.json/2020-21/es.2.json
+      wikipedia: "2020–21 Segunda División"
+    - label: 2021-22
+      start_year: 2021
+      file: espana/2021-22/2-liga2.txt
+      tz: Europe/Madrid
+      wikipedia: "2021–22 Segunda División"
+    - label: 2022-23
+      start_year: 2022
+      file: espana/2022-23/2-liga2.txt
+      tz: Europe/Madrid
+      wikipedia: "2022–23 Segunda División"
+    - label: 2023-24
+      start_year: 2023
+      file: espana/2023-24/2-liga2.txt
+      tz: Europe/Madrid
+      wikipedia: "2023–24 Segunda División"
+    - label: 2024-25
+      start_year: 2024
+      file: espana/2024-25/2-liga2.txt
+      tz: Europe/Madrid
+      json: football.json/2024-25/es.2.json
+      wikipedia: "2024–25 Segunda División"
+
 - name: Bundesliga
   country: "DE"
   team_kind: CLUB

@@ -13,12 +13,14 @@ context: |
   aliases). External IDs live only in external_ref; no source is
   privileged.
 
-  Scope: 19 competitions. Domestic club leagues (5): every season
+  Scope: 20 competitions. Domestic club leagues (6): every season
   openfootball has, up to 2026-27 (in progress), each score verified
   against the English Wikipedia season grid: Premier League from
   1992-93, Bundesliga 2010-11, La Liga 2012-13, Serie A 2013-14, Ligue 1
   2014-15 (changes
-  verify-and-schedule-la-liga, extend-and-verify-top-leagues).
+  verify-and-schedule-la-liga, extend-and-verify-top-leagues); Segunda
+  División 2012-13 to 2024-25, complete seasons only (change
+  add-segunda-division).
   Domestic cups (6): FA Cup, EFL Cup (league cup) and DFB-Pokal
   2018-19 to 2024-25, Copa del Rey and Coppa Italia 2020-21 to 2024-25,
   Coupe de France 2024-25 (change add-domestic-cups), each score

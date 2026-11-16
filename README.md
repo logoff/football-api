@@ -88,12 +88,13 @@ The sync refuses to run until the API container has applied the migrations (exit
 
 ## Data coverage
 
-19 competitions. The five domestic leagues have every season openfootball publishes, up to the one in progress, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The international competitions have every edition openfootball publishes with a date for every match, including those in progress, also checked against Wikipedia. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
+20 competitions. The five top domestic leagues have every season openfootball publishes, up to the one in progress, and Segunda División every complete one, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The international competitions have every edition openfootball publishes with a date for every match, including those in progress, also checked against Wikipedia. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
 
 | Competition                | Format     | Seasons                 | Results | Verified | Goal scorers | Squads     | Line-ups and cards |
 | -------------------------- | ---------- | ----------------------- | ------- | -------- | ------------ | ---------- | ------------------ |
 | Premier League             | LEAGUE     | 1992-93 to 2026-27 (35) | ✅      | ✅       | none         | none       | 2025-26            |
 | La Liga                    | LEAGUE     | 2012-13 to 2026-27 (15) | ✅      | ✅       | none         | none       | 2025-26            |
+| Segunda División           | LEAGUE     | 2012-13 to 2024-25 (13) | ✅      | ✅       | none         | none       | none               |
 | Bundesliga                 | LEAGUE     | 2010-11 to 2026-27 (17) | ✅      | ✅       | none         | none       | 2025-26            |
 | Serie A                    | LEAGUE     | 2013-14 to 2026-27 (14) | ✅      | ✅       | none         | none       | 2025-26            |
 | Ligue 1                    | LEAGUE     | 2014-15 to 2026-27 (13) | ✅      | ✅       | none         | none       | 2025-26            |
@@ -117,6 +118,8 @@ Euro 1984 and Euro 1992 are not included: openfootball lists some of their match
 Cups start where the source does: the FA Cup at Round 1 (the first round proper), the Coupe de France at round 7. Numbered cup rounds have stage `ROUND` with the round's number in `matchday`, and a preliminary round that is part of the competition proper has stage `PRELIMINARY`; clients that switch over `stage` should expect both. A pairing played again with the same home team in the same round (FA Cup 2023-24: Scarborough Athletic v Forest Green Rovers, drawn and then replayed at Scarborough after a voided replay) is two matches with `occurrence` 1 and 2.
 
 The Premier League's 1992-93 to 1997-98 and 1999-00 seasons have dates but no kickoff times in the source; their `kickoff_utc` is midnight UTC on the match date.
+
+Segunda División 2025-26 is not included: openfootball stopped updating it after 131 of its 462 results. The promotion play-offs aren't in the source, and in 2024-25 the source is missing 9 last-day results. English Wikipedia redirects UE Llagostera (2014-15 and 2015-16) to its successor club's article, so its matches and those seasons' tables can't be verified.
 
 Ligue 1 2019-20 was stopped after 279 matches; its 101 unplayed fixtures are listed as `CANCELLED`.
 

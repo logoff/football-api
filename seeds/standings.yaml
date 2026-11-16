@@ -63,6 +63,16 @@ adjustments:
     reason: "FIFA sanction for a late payment to Aalborg BK, applied after the last round once Almería withdrew its CAS appeal"
     source: https://www.tas-cas.org/fileadmin/user_upload/Media_Release_3919.pdf
 
+  # --- Segunda División (Q35615) -------------------------------------------------------------
+  # No official table found; BDFutbol, both Wikipedias and the press agree on the deduction.
+  - competition: Q35615
+    season: "2018-19"
+    team: Q1387573 # CF Reus Deportiu
+    points: -21
+    effective: 2019-02-07
+    reason: "Expelled by LaLiga after the first half for unpaid wages; all points taken away, second-half matches awarded 1–0 to the opponents"
+    source: https://www.bdfutbol.com/es/t/t2018-192a.html
+
   # --- Serie A (Q15804) ----------------------------------------------------------------------
   - competition: Q15804
     season: "2014-15"

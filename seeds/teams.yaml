@@ -852,6 +852,13 @@
     - "Athletic Club (ESP)"
     - "Athletic Bilbao"
 
+- name: "Athletic Club B"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q794970
+  openfootball:
+    - "Athletic Club B"
+
 - name: "Atlante"
   kind: CLUB
   country: "MX"
@@ -2458,6 +2465,13 @@
   openfootball:
     - "Rayo Majadahonda"
 
+- name: "CF Reus Deportiu"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q1387573
+  openfootball:
+    - "CF Reus Deportiu"
+
 - name: "CF Rusadir"
   kind: CLUB
   country: "ES"
@@ -3913,6 +3927,13 @@
     - "FC Barcelona"
     - "FC Barcelona (ESP)"
     - "Barcelona (ESP)"
+
+- name: "FC Barcelona B"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q10467
+  openfootball:
+    - "FC Barcelona B"
 
 - name: "FC Basel"
   kind: CLUB
@@ -5700,6 +5721,13 @@
     - "Liverpool (URU)"
     - "Liverpool FC (URU)"
 
+- name: "Lorca"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q6463150
+  openfootball:
+    - "Lorca FC"
+
 - name: "Lorca Deportiva CF"
   kind: CLUB
   country: "ES"
@@ -6846,6 +6874,13 @@
     - "Real Madrid CF (ESP)"
     - "Real Madrid (ESP)"
 
+- name: "Real Madrid Castilla"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q12217
+  openfootball:
+    - "Real Madrid Castilla"
+
 - name: "Real Murcia"
   kind: CLUB
   country: "ES"
@@ -6869,6 +6904,13 @@
     - "Real Sociedad (ESP)"
     - "Real Sociedad de Fútbol"
     - "Real Sociedad de Fútbol (ESP)"
+
+- name: "Real Sociedad B"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q1067750
+  openfootball:
+    - "Real Sociedad B"
 
 - name: "Real Titánico"
   kind: CLUB
@@ -7472,6 +7514,13 @@
     - "Sevilla"
     - "Sevilla FC"
     - "Sevilla FC (ESP)"
+
+- name: "Sevilla Atlético"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q950835
+  openfootball:
+    - "Sevilla Atlético"
 
 - name: "SFC Neuilly-sur-Marne"
   kind: CLUB
@@ -9249,6 +9298,13 @@
     - "Villarreal"
     - "Villarreal CF"
     - "Villarreal CF (ESP)"
+
+- name: "Villarreal CF B"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q1094113
+  openfootball:
+    - "Villarreal CF B"
 
 - name: "Virtus Entella"
   kind: CLUB
