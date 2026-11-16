@@ -58,7 +58,10 @@ class Table:
 
 
 def phase_of(round_label: str | None) -> int:
-    return 2 if (round_label or "").startswith("Second Round") else 1
+    """2 for a second group stage: `Second Round / Group A` (World Cups 1974–82) or
+    `Second group stage / Group A` (Champions League 1999-2000 to 2002-03)."""
+    label = round_label or ""
+    return 2 if label.startswith("Second Round") or label.startswith("Second group stage") else 1
 
 
 def group_of(round_label: str | None) -> str | None:

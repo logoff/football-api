@@ -93,7 +93,8 @@
 
 ### D6. Pinning tool
 
-- **`just wikipedia-pins <competition> <season>`** writes or moves a season's pins. It discovers sub-articles, and lists the box differences between the old and the new revisions, so a reviewer sees what a pin move changes.
+- **`just wikipedia-pins <article> [<competition> <season>]`** prints a season's pins at the current revisions, ready to paste into the seed. It discovers the sub-articles itself. Given the competition and season, it also lists the box differences from the seeded pins, so a reviewer sees what a pin move changes.
+  - **Alternative: edit `competitions.yaml` in place.** Rejected during implementation. Rewriting YAML would drop the seed's comments, and pasting a printed block is just as quick.
 - **Discovery fix:** it skips titles whose suffix names another competition (`Cup Winners' Cup`) or another sport (a parenthesised qualifier such as `(handball)`). The same fix goes into verification's discovery, which is harmless for today's seasons.
 
 ### D7. Source and license storage

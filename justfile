@@ -47,3 +47,7 @@ typecheck:
 # Write the GraphQL schema to schema.graphql (commit it; a test checks it matches)
 graphql-schema:
     uv run python -c "from football_api.api.graphql.schema import schema; print(schema.as_str())" > schema.graphql
+
+# Print the Wikipedia pins of a season article; with a competition QID and season label, also diff against the seeded pins
+wikipedia-pins title *args:
+    uv run python -m football_api.wikipedia_pins "{{title}}" {{args}}

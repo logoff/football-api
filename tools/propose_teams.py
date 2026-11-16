@@ -85,6 +85,8 @@ def collect(sources: Path) -> dict[str, Group]:
     for comp in load_competitions():
         names: set[str] = set()
         for season in comp.seasons:
+            if season.file is None:
+                continue
             for m in parse_file(sources / season.file, start_year=season.start_year, display_path=season.file):
                 names |= {m.home, m.away}
             if season.json_file and (sources / season.json_file).exists():

@@ -8,11 +8,11 @@
 
 ## 2. Wikipedia as a season source
 
-- [ ] 2.1 Add `wikipedia_source` pins to the season seed, exclusive with every openfootball field and with `wikipedia` (D1). Let `TeamSeed.openfootball` be empty when there is a QID (D5). Verify with seed loader tests for each rejected combination.
-- [ ] 2.2 Fetch pinned revisions and cache their HTML and resolved QIDs under `SOURCES_DIR/wikipedia/` (D2, D5). Verify with client tests on a mock transport that a second read sends no request, and that a failed fetch raises the source error.
-- [ ] 2.3 Give each match box its heading path, and add the stage rules the spike found (D3). Verify with parser tests on fixture HTML: numbered rounds, groups, two group stages, replays, and an unknown heading that fails.
-- [ ] 2.4 Turn boxes into parsed matches, keyed by QID, with walkovers `CANCELLED` and awarded boxes flagged (D3, D4). Sync Wikipedia seasons through them, add the pins to the fingerprint, and teach `phase_of` the second group stage. Verify with sync tests on a fixture season: stored matches, an unknown QID that fails, and a moved pin that re-syncs only that season.
-- [ ] 2.5 Add `just wikipedia-pins` with the box diff between revisions, and the discovery fix for other competitions and sports, applied to verification too (D6). Verify on `1960–61 European Cup` that the Winners' Cup article isn't pinned.
+- [x] 2.1 Add `wikipedia_source` pins to the season seed, exclusive with every openfootball field and with `wikipedia` (D1). Let `TeamSeed.openfootball` be empty when there is a QID (D5). Verify with seed loader tests for each rejected combination.
+- [x] 2.2 Fetch pinned revisions and cache their HTML and resolved QIDs under `SOURCES_DIR/wikipedia/` (D2, D5). Verify with client tests on a mock transport that a second read sends no request, and that a failed fetch raises the source error.
+- [x] 2.3 Give each match box its heading path, and add the stage rules the spike found (D3). Verify with parser tests on fixture HTML: numbered rounds, groups, two group stages, replays, and an unknown heading that fails.
+- [x] 2.4 Turn boxes into parsed matches, keyed by QID, with walkovers `CANCELLED` and awarded boxes flagged (D3, D4). Sync Wikipedia seasons through them, add the pins to the fingerprint, and teach `phase_of` the second group stage. Verify with sync tests on a fixture season: stored matches, an unknown QID that fails, and a moved pin that re-syncs only that season.
+- [x] 2.5 Add `just wikipedia-pins` with the box diff between revisions, and the discovery fix for other competitions and sports, applied to verification too (D6). Verify on `1960–61 European Cup` that the Winners' Cup article isn't pinned.
 
 ## 3. European Cup and Champions League 1955-56 to 2010-11
 

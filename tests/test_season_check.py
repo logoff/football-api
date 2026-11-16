@@ -60,6 +60,7 @@ def test_season_fingerprint_follows_each_input(
     seen = [fingerprints()]
     assert fingerprints() == seen[0]
 
+    assert league_src.file
     touch(league_src.file)
     seen.append(fingerprints())
     touch(league_src.json_file)

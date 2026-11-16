@@ -53,11 +53,22 @@ class SquadSource(_Seed):
     files: list[str]
 
 
+class WikipediaPin(_Seed):
+    """An English Wikipedia page at one revision: what a season sourced from Wikipedia reads (design D1)."""
+
+    title: str
+    revision: int
+
+
+_OPENFOOTBALL_FIELDS = ("file", "tz", "json_file", "events", "squads")
+
+
 class SeasonSource(_Seed):
     label: str
     start_year: int
-    file: str
-    tz: str = Field(description="IANA zone of the file's kickoff times, or `inline`")
+    file: str | None = Field(default=None, description="openfootball text file; absent for a Wikipedia season")
+    # A Wikipedia season's matches are date-only, so the zone only matters for openfootball files.
+    tz: str = Field(default="UTC", description="IANA zone of the file's kickoff times, or `inline`")
     json_file: str | None = Field(default=None, alias="json")
     events: str | None = Field(
         default=None, description="openfootball `-full` text file with the season's lineups, substitutions and cards"
@@ -67,6 +78,25 @@ class SeasonSource(_Seed):
         default=None, description="English Wikipedia article whose results grid verifies this season"
     )
     ranking: Literal["points", "points_per_game"] = "points"
+    wikipedia_source: list[WikipediaPin] | None = Field(
+        default=None,
+        min_length=1,
+        description="The season article and sub-articles, each pinned to a revision, that this season is read "
+        "from instead of openfootball (season-sources)",
+    )
+
+    @model_validator(mode="after")
+    def _one_source(self) -> "SeasonSource":
+        if self.wikipedia_source is not None:
+            given = [f for f in (*_OPENFOOTBALL_FIELDS, "wikipedia") if f in self.model_fields_set]
+            if given:
+                raise ValueError(f"season {self.label}: `wikipedia_source` excludes {', '.join(given)}")
+            titles = [p.title for p in self.wikipedia_source]
+            if len(titles) != len(set(titles)):
+                raise ValueError(f"season {self.label}: a page is pinned twice")
+        elif self.file is None or "tz" not in self.model_fields_set:
+            raise ValueError(f"season {self.label}: needs `file` and `tz`, or `wikipedia_source`")
+        return self
 
 
 class CompetitionSeed(_Seed):
@@ -123,12 +153,21 @@ class TeamSeed(_Seed):
     kind: TeamKind
     country: str | None
     wikidata: str | None = None
-    openfootball: list[str | ScopedSpelling] = Field(min_length=1)
+    openfootball: list[str | ScopedSpelling] = Field(
+        default_factory=list[str | ScopedSpelling],
+        description="Every openfootball spelling; none for a team known only from Wikipedia seasons, which its QID identifies",
+    )
     reference_wikidata: list[str] = Field(
         default_factory=list[str],
         description="Other Wikidata items that verification references use for this same side "
         "(the Dutch East Indies of 1938 as Indonesia); never used for identity",
     )
+
+    @model_validator(mode="after")
+    def _identified(self) -> "TeamSeed":
+        if not self.openfootball and not self.wikidata:
+            raise ValueError(f"team {self.name}: needs an openfootball spelling or a Wikidata QID")
+        return self
 
     @property
     def spelling_keys(self) -> list[str]:
