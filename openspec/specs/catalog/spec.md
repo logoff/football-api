@@ -26,6 +26,7 @@ In-scope competitions are:
 | -------------------------- | --------- | ---------------- | ---------- |
 | Premier League             | CLUB      | DOMESTIC         | LEAGUE     |
 | La Liga                    | CLUB      | DOMESTIC         | LEAGUE     |
+| Segunda División           | CLUB      | DOMESTIC         | LEAGUE     |
 | Bundesliga                 | CLUB      | DOMESTIC         | LEAGUE     |
 | Serie A                    | CLUB      | DOMESTIC         | LEAGUE     |
 | Ligue 1                    | CLUB      | DOMESTIC         | LEAGUE     |
@@ -79,7 +80,7 @@ The system SHALL track one or more seasons per competition. Each season has:
 - a start and end date
 - a status: `SCHEDULED`, `IN_PROGRESS`, `COMPLETED`
 
-The seasons ingested for each competition are those listed in its seed. The five domestic leagues list every season their source provides: Premier League 1992-93, Bundesliga 2010-11, La Liga 2012-13, Serie A 2013-14 and Ligue 1 2014-15, each up to 2026-27. The domestic cups list every completed season their source provides in full: FA Cup, EFL Cup and DFB-Pokal 2018-19 to 2024-25, Copa del Rey and Coppa Italia 2020-21 to 2024-25, and Coupe de France 2024-25. The international competitions list every edition their source provides with a date for every match: UEFA Champions League 2011-12 to 2025-26, UEFA Europa League 2020-21 to 2024-25, UEFA Conference League 2021-22 to 2024-25, CONMEBOL Copa Libertadores 2012 to 2026, FIFA Club World Cup 2000 to 2025, FIFA World Cup 1930 to 2026, UEFA European Championship 1960 to 2024, and CONMEBOL Copa América 2011, 2021 and 2024. Editions in progress are included.
+The seasons ingested for each competition are those listed in its seed. The five domestic leagues list every season their source provides: Premier League 1992-93, Bundesliga 2010-11, La Liga 2012-13, Serie A 2013-14 and Ligue 1 2014-15, each up to 2026-27. Segunda División lists every season its source provides in full, 2012-13 to 2024-25. The domestic cups list every completed season their source provides in full: FA Cup, EFL Cup and DFB-Pokal 2018-19 to 2024-25, Copa del Rey and Coppa Italia 2020-21 to 2024-25, and Coupe de France 2024-25. The international competitions list every edition their source provides with a date for every match: UEFA Champions League 2011-12 to 2025-26, UEFA Europa League 2020-21 to 2024-25, UEFA Conference League 2021-22 to 2024-25, CONMEBOL Copa Libertadores 2012 to 2026, FIFA Club World Cup 2000 to 2025, FIFA World Cup 1930 to 2026, UEFA European Championship 1960 to 2024, and CONMEBOL Copa América 2011, 2021 and 2024. Editions in progress are included.
 
 #### Scenario: Listing seasons for a competition
 
@@ -99,6 +100,13 @@ The seasons ingested for each competition are those listed in its seed. The five
 - **WHEN** a client GETs `/v1/seasons?competition_id={premier-league}` after a sync
 - **THEN** the response lists those 35 seasons
 - **AND** the 22-club seasons 1992-93 to 1994-95 have 462 matches each and every later season has 380
+
+#### Scenario: Second tier
+
+- **GIVEN** Segunda División is seeded with the 13 seasons from 2012-13 to 2024-25
+- **WHEN** a client GETs `/v1/seasons?competition_id={segunda-division}` after a sync
+- **THEN** the response lists those 13 seasons, each with 22 clubs and 462 matches
+- **AND** 2025-26 is not listed, because its source stops after 131 results
 
 #### Scenario: League size changes between seasons
 
