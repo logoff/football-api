@@ -43,7 +43,7 @@ As for the other leagues: every `MISMATCH` from the integration run is reviewed 
 
 - **Real Valladolid v Girona, 2014-15:** openfootball has 2–1, the Wikipedia grid 1–0. Wikipedia's own league table (Girona W24 D10 L8, 63–35) only adds up with 2–1. A Wikipedia grid error.
 - **2013-14 table:** Wikipedia's table gives FC Barcelona B, Córdoba, Sabadell and Mirandés one goal more or less than its own grid, which agrees with openfootball on all 462 matches. A Wikipedia table error. Ponferradina and Girona also swap 15th and 16th. Four clubs finished on 51 points. In the mini-league between them, Ponferradina and Girona both have 9 points, and Ponferradina has the better goal difference (+2 to 0). That's our order, which follows the RFEF rule as written. Wikipedia puts Girona first on the result between the two. Left as reported.
-- **2018-19 table, Reus:** Wikipedia takes 21 points off Reus, citing only a news report of the expulsion. No official source for a points deduction was found, so `standings.yaml` gets no adjustment and the row stays a `MISMATCH`. Reus is last either way.
+- **2018-19 table, Reus:** LaLiga expelled Reus after the first half, and its 21 points were taken away. No official table turned up, but BDFutbol, both Wikipedias and the press agree, so `standings.yaml` has a −21 adjustment citing BDFutbol. The table then verifies 22 of 22.
 
 ### D5. UE Llagostera can't be verified
 
