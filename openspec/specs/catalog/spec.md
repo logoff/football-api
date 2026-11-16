@@ -80,7 +80,7 @@ The system SHALL track one or more seasons per competition. Each season has:
 - a start and end date
 - a status: `SCHEDULED`, `IN_PROGRESS`, `COMPLETED`
 
-The seasons ingested for each competition are those listed in its seed. The five domestic leagues list every season their source provides: Premier League 1992-93, Bundesliga 2010-11, La Liga 2012-13, Serie A 2013-14 and Ligue 1 2014-15, each up to 2026-27. Segunda División lists every season its source provides in full, 2012-13 to 2024-25. The domestic cups list every completed season their source provides in full: FA Cup, EFL Cup and DFB-Pokal 2018-19 to 2024-25, Copa del Rey and Coppa Italia 2020-21 to 2024-25, and Coupe de France 2024-25. The international competitions list every edition their source provides with a date for every match: UEFA Champions League 2011-12 to 2025-26, UEFA Europa League 2020-21 to 2024-25, UEFA Conference League 2021-22 to 2024-25, CONMEBOL Copa Libertadores 2012 to 2026, FIFA Club World Cup 2000 to 2025, FIFA World Cup 1930 to 2026, UEFA European Championship 1960 to 2024, and CONMEBOL Copa América 2011, 2021 and 2024. Editions in progress are included.
+The seasons ingested for each competition are those listed in its seed. The five domestic leagues list every season their source provides: Premier League 1992-93, Bundesliga 2010-11, La Liga 2012-13, Serie A 2013-14 and Ligue 1 2014-15, each up to 2026-27. Segunda División lists every season its source provides in full, 2012-13 to 2024-25. The domestic cups list every completed season their source provides in full: FA Cup, EFL Cup and DFB-Pokal 2018-19 to 2024-25, Copa del Rey and Coppa Italia 2020-21 to 2024-25, and Coupe de France 2024-25. The international competitions list every edition their source provides with a date for every match: UEFA Champions League 1955-56 to 2025-26 (the European Cup up to 1991-92; up to 2010-11 from English Wikipedia, see `season-sources`), UEFA Europa League 2020-21 to 2024-25, UEFA Conference League 2021-22 to 2024-25, CONMEBOL Copa Libertadores 2012 to 2026, FIFA Club World Cup 2000 to 2025, FIFA World Cup 1930 to 2026, UEFA European Championship 1960 to 2024, and CONMEBOL Copa América 2011, 2021 and 2024. Editions in progress are included.
 
 #### Scenario: Listing seasons for a competition
 
@@ -139,6 +139,13 @@ The seasons ingested for each competition are those listed in its seed. The five
 - **WHEN** the seeds are reviewed
 - **THEN** that edition is not listed, and the README names it as a known gap
 
+#### Scenario: European Cup history
+
+- **GIVEN** the Champions League is seeded with 1955-56 to 2010-11 from Wikipedia and 2011-12 onwards from openfootball
+- **WHEN** a client GETs `/v1/seasons?competition_id={champions-league}` after a sync
+- **THEN** the response lists every season from 1955-56, the 1955-56 one with 29 matches
+- **AND** seasons up to 1993-94 hold every round, since all of them were the competition proper, while from 1994-95 the qualifying rounds are left out
+
 ### Requirement: Team catalog
 
 The system SHALL maintain a catalog of teams of two kinds: `CLUB` (e.g. Real Madrid) and `NATIONAL` (e.g. Spain).
@@ -152,7 +159,7 @@ A team has:
 
 External identifiers for a team are stored exclusively in `external_ref`.
 
-Team identity is defined by the curated seed file `seeds/teams.yaml`, which lists each team's name, kind, country, Wikidata QID, and every Open Football spelling of its name. An entry is matched to its existing row through those external identifiers, so editing a name never creates a second team. Sync SHALL NOT create a team that is not in this file.
+Team identity is defined by the curated seed file `seeds/teams.yaml`, which lists each team's name, kind, country, Wikidata QID, and every Open Football spelling of its name. A team that appears only in seasons sourced from Wikipedia needs no spelling: its QID identifies it. An entry is matched to its existing row through those external identifiers, so editing a name never creates a second team. Sync SHALL NOT create a team that is not in this file.
 
 #### Scenario: Fetching a team by ID
 
@@ -171,6 +178,12 @@ Team identity is defined by the curated seed file `seeds/teams.yaml`, which list
 - **WHEN** sync runs
 - **THEN** sync fails with an error naming the file, line number, and unresolved name
 - **AND** no team row is created
+
+#### Scenario: Team known only from Wikipedia seasons
+
+- **GIVEN** a team seeded with name, kind, country and QID, and no Open Football spelling
+- **WHEN** the seeds load and a Wikipedia season linking its article syncs
+- **THEN** the load succeeds and the team takes part in that season
 
 ### Requirement: Player catalog
 
