@@ -126,6 +126,7 @@ type Match {
   referee: String
   attendance: Int
   coverage: MatchCoverage!
+  license: String!
   season: Season!
   competition: Competition
   homeTeam: Team
@@ -257,6 +258,7 @@ type Season {
   endsOn: Date
   status: SeasonStatus!
   coverage: SeasonCoverage!
+  source: SeasonSource!
   competition: Competition
   teams(kind: TeamKind = null, first: Int = null, after: String = null): TeamConnection
   matches(teamId: UUID = null, stage: Stage = null, from: Date = null, to: Date = null, verification: VerificationStatus = null, eventsVerification: VerificationStatus = null, first: Int = null, after: String = null): MatchConnection
@@ -285,6 +287,12 @@ type SeasonEdge {
   node: Season!
 }
 
+type SeasonSource {
+  publisher: String!
+  license: String!
+  pages: [SourcePage!]!
+}
+
 enum SeasonStatus {
   SCHEDULED
   IN_PROGRESS
@@ -294,6 +302,11 @@ enum SeasonStatus {
 enum Side {
   HOME
   AWAY
+}
+
+type SourcePage {
+  title: String!
+  url: String!
 }
 
 enum Stage {

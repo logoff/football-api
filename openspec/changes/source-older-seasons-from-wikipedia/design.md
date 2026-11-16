@@ -98,12 +98,12 @@
 
 ### D7. Source and license storage
 
-- **`season.source`:** a nullable JSON column, `{publisher, license, pages: [{title, url}]}`.
+- **`season.source`:** a JSON column, not null, `{publisher, license, pages: [{title, url}]}`.
   - openfootball seasons get `publisher: openfootball` and `license: CC0-1.0`, with the GitHub URL of each file read (`file`, `json`, `events`, squads).
   - Wikipedia seasons link `https://en.wikipedia.org/w/index.php?oldid=<revision>`, which also leads to the page history CC BY-SA attribution needs.
-  - The migration backfills every existing season as openfootball, and sync then fills in the pages.
-- **`match.license`:** a column set from the season during the match upsert.
-  - **Alternative: join through the season in every match query.** Rejected. Match lists, GraphQL batches and the team match pages would all need the join, while the column costs a few bytes per row.
+  - The migration backfills every existing season as openfootball with no pages. The code change alters every season's fingerprint, so the next sync fills in the pages.
+- **A match's license comes from its season.** Every match query already returns the match's season, which `coverage` needs, so `license` is read from `season.source` without a column on `match`.
+  - **Alternative: a `match.license` column.** Rejected during implementation: the proposal assumed match queries had no season, but they all have one, and a copy could drift from its season.
   - **Alternative: a license on the season only.** Rejected. A client paging `/v1/matches` across seasons would have to look up each season to know its terms.
 - **Standings** derive from a season's matches, and their response already names the season, so they carry no license field of their own. The README states that derived data follows the season's license.
 

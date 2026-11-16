@@ -11,6 +11,7 @@ bookkeeping of when each season was last synced and verified, never served.
 import uuid
 from datetime import date, datetime
 from enum import StrEnum
+from typing import Any
 
 from sqlalchemy import (
     CheckConstraint,
@@ -98,6 +99,8 @@ class Season(Base):
         _enum(Coverage, "coverage"), server_default=Coverage.NONE.value
     )
     cards_coverage: Mapped[Coverage] = mapped_column(_enum(Coverage, "coverage"), server_default=Coverage.NONE.value)
+    # Where the season's data comes from: `{publisher, license, pages: [{title, url}]}` (season-sources).
+    source: Mapped[dict[str, Any]] = mapped_column(JSONB)
 
 
 class Team(Base):

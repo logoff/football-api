@@ -94,6 +94,20 @@ class SeasonCoverage:
     cards: CoverageValue
 
 
+# Publisher and license are strings, not enums: SPDX identifiers (`CC0-1.0`) aren't valid GraphQL enum values.
+@strawberry.type
+class SourcePage:
+    title: str
+    url: str
+
+
+@strawberry.type
+class SeasonSource:
+    publisher: str
+    license: str
+    pages: list[SourcePage]
+
+
 @strawberry.type
 class Season:
     id: uuid.UUID
@@ -103,6 +117,7 @@ class Season:
     ends_on: date | None
     status: SeasonStatus
     coverage: SeasonCoverage
+    source: SeasonSource
     row: strawberry.Private[m.Season]
 
     @classmethod
@@ -120,6 +135,11 @@ class Season:
                 lineups=_coverage(s.lineups_coverage),
                 substitutions=_coverage(s.substitutions_coverage),
                 cards=_coverage(s.cards_coverage),
+            ),
+            source=SeasonSource(
+                publisher=s.source["publisher"],
+                license=s.source["license"],
+                pages=[SourcePage(title=p["title"], url=p["url"]) for p in s.source["pages"]],
             ),
             row=s,
         )
@@ -447,6 +467,7 @@ class Match:
     referee: str | None
     attendance: int | None
     coverage: MatchCoverage
+    license: str
     season_row: strawberry.Private[m.Season]
 
     @classmethod
@@ -481,6 +502,7 @@ class Match:
                 substitutions=_coverage(season.substitutions_coverage),
                 cards=_coverage(season.cards_coverage),
             ),
+            license=season.source["license"],
             season_row=season,
         )
 

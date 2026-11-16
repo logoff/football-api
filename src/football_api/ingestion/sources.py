@@ -3,23 +3,32 @@
 import logging
 import subprocess
 from pathlib import Path
+from typing import Any
 
-from football_api.ingestion.seeds import CompetitionSeed
+from football_api.domain.enums import License, Publisher
+from football_api.ingestion.seeds import CompetitionSeed, SeasonSource
 
 log = logging.getLogger(__name__)
 
 GITHUB = "https://github.com/openfootball"
 
 
+def season_files(season: SeasonSource) -> list[str]:
+    """Every openfootball file a season reads: its text file, then the JSON mirror, events and squads."""
+    paths = [season.file, *(p for p in (season.json_file, season.events) if p)]
+    if season.squads:
+        paths += season.squads.files
+    return paths
+
+
 def repos_for(competitions: list[CompetitionSeed]) -> list[str]:
-    repos: set[str] = set()
-    for comp in competitions:
-        for season in comp.seasons:
-            paths = [season.file, *(p for p in (season.json_file, season.events) if p)]
-            if season.squads:
-                paths += season.squads.files
-            repos |= {p.split("/", 1)[0] for p in paths}
-    return sorted(repos)
+    return sorted({p.split("/", 1)[0] for comp in competitions for season in comp.seasons for p in season_files(season)})
+
+
+def openfootball_source(season: SeasonSource) -> dict[str, Any]:
+    """The season's `source` (season-sources): openfootball, CC0, and a GitHub link to each file it reads."""
+    pages = [{"title": p, "url": f"{GITHUB}/{p.split('/', 1)[0]}/blob/master/{p.split('/', 1)[1]}"} for p in season_files(season)]
+    return {"publisher": Publisher.OPENFOOTBALL.value, "license": License.CC0.value, "pages": pages}
 
 
 def _git(*args: str) -> None:
