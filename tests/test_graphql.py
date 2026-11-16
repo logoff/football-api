@@ -254,7 +254,7 @@ VERIFICATION = "{ status reference checkedAt }"
 LINEUP = f"{{ formation entries {{ player {REF} name role line isCaptain }} }}"
 MATCH = f"""
   id competitionId seasonId stage matchday occurrence roundLabel kickoffUtc originalKickoffUtc status
-  homeTeamId awayTeamId venueId homeScore awayScore decidedBy homePens awayPens awarded referee attendance
+  homeTeamId awayTeamId venueId homeScore awayScore decidedBy homePens awayPens awarded played referee attendance
   coverage {{ scorers lineups substitutions cards }}
   verification {VERIFICATION} eventsVerification {VERIFICATION}
   homeTeam {{ {TEAM} }} awayTeam {{ {TEAM} }} venue {{ {VENUE} }}

@@ -14,6 +14,7 @@ from football_api.domain.enums import (
     DecidedBy,
     LineupRole,
     MatchStatus,
+    Played,
     SeasonStatus,
     Side,
     Stage,
@@ -207,6 +208,10 @@ class MatchOut(BaseModel):
     awarded: bool = Field(
         description="Decided off the pitch (forfeit or disciplinary decision), as the source marks it; the score is "
         "the one the source records, which can be the score when play stopped"
+    )
+    played: Played | None = Field(
+        description="How much of a COMPLETED match was played: FULL (to the end), PARTIAL (abandoned) or NONE (never "
+        "kicked off). Always FULL unless awarded; null for other statuses, and for an awarded match not yet curated"
     )
     referee: str | None = Field(description="Referee's name, when the source gives it", examples=["Alireza Faghani"])
     attendance: int | None = Field(description="Spectators, when the source gives it", examples=[81118])

@@ -36,6 +36,7 @@ from football_api.domain.enums import (
     EntityType,
     LineupRole,
     MatchStatus,
+    Played,
     SeasonStatus,
     Side,
     Stage,
@@ -180,6 +181,8 @@ class Match(Base):
     occurrence: Mapped[int] = mapped_column(SmallInteger, server_default=text("1"))
     # Decided off the pitch (forfeit or disciplinary decision); the score is whatever the source records.
     awarded: Mapped[bool] = mapped_column(server_default=text("false"))
+    # COMPLETED only: FULL unless awarded; an awarded match's value comes from seeds/awarded.yaml.
+    played: Mapped[Played | None] = mapped_column(_enum(Played, "played"))
     referee_name: Mapped[str | None] = mapped_column(String(128))
     attendance: Mapped[int | None]
 

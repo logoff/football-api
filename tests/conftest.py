@@ -21,7 +21,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 
 from football_api.infra import db as infra_db
 from football_api.infra.settings import get_settings
-from football_api.ingestion.seeds import CompetitionSeed, TeamSeed, load_competitions, load_teams
+from football_api.ingestion.seeds import CompetitionSeed, TeamSeed, load_awarded, load_competitions, load_teams
 
 FIXTURES = Path(__file__).parent / "fixtures"
 ROOT = Path(__file__).parent.parent
@@ -79,7 +79,8 @@ async def synced_db(fixture_competitions: list[CompetitionSeed], fixture_teams: 
 
     url = await create_database()
     point_app_at(url, FIXTURES / "sources")
-    await run_sync(competitions=fixture_competitions, teams=fixture_teams, refresh_sources=False)
+    awarded = load_awarded(FIXTURES / "seeds" / "awarded.yaml", fixture_competitions, fixture_teams)
+    await run_sync(competitions=fixture_competitions, teams=fixture_teams, awarded=awarded, refresh_sources=False)
     yield url
     await drop_database(url)
 
