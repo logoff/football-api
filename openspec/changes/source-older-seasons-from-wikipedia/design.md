@@ -5,7 +5,7 @@
 - **Sources today:** every stored match comes from openfootball (CC0), read from git clones under `SOURCES_DIR`. Wikipedia is only a verification reference. `ingestion/wikipedia.py` reads rendered articles through the REST API, parses match boxes (`MatchBox`: date, home and away article titles, score, shootout, awarded) and maps article titles to Wikidata QIDs. Its sub-article discovery takes every linked title that extends the season's own.
 - **UEFA's terms rule it out.** UEFA.com's terms (section 6.2) forbid automated collection and compiling a database from its content, and its competition regulations claim match data as UEFA's property. We use no UEFA data as a source.
 - **The spike, run on 2026-11-16 over 1955-56 to 2010-11:**
-  - Each season's boxes parse with a date for every match. The only ones without a result are five walkovers: Linfield v Vorwärts 1961-62, Derry City v Anderlecht 1965-66, Panathinaikos v CSKA Sofia 1972-73, Dynamo Kyiv v Tirana 1982-83 and Dynamo Kyiv v Panathinaikos 1995-96.
+  - Each season's boxes parse with a date for every match. Five have no result. Four are walkovers: Linfield v Vorwärts 1961-62, Derry City v Anderlecht 1965-66, Dynamo Kyiv v Tirana 1982-83 and Dynamo Kyiv v Panathinaikos 1995-96. The fifth, Panathinaikos v CSKA Sofia on 27 September 1972, is the original date of a second leg played on 26 October. Sync folds it into that match, as it does for openfootball's postponed fixtures, so 4,321 boxes give 4,320 matches.
   - Five boxes are awarded.
   - There are 4,321 boxes in all. They link 343 distinct clubs, and 189 of them aren't in `seeds/teams.yaml`. Every linked article has a QID.
   - Discovery wrongly pulls in `… European Cup Winners' Cup` articles from 1960-61 to 1991-92, which inflated a first count (1960-61: 51 European Cup boxes plus 16 Winners' Cup boxes, and one more awarded match, Hajduk Split v Marseille). The figures above leave them out. Handball articles add no boxes.
@@ -112,13 +112,14 @@
 
 - **Skipped:** `verification.py` already skips seasons that name no `wikipedia` article. The seed validation (D1) guarantees that a Wikipedia season names none, so no extra branch is needed.
 - **Standings verification** skips them too, for the same reason. Their tables are still computed from the stored matches and served.
-- **Group-stage rules from 1991-92** are added under the Champions League `standings` eras, with the points per win and tiebreakers in force each season, cited from UEFA's regulations of the time. Citing a rule isn't reusing UEFA data.
-  - Up to 1994-95, a win was worth 2 points.
-  - The eras are checked against Wikipedia's group tables while the seeds are written, as a one-off review that isn't stored.
+- **Group-stage rules from 1991-92** are added under the Champions League `standings` eras: 2 points for a win until 1994-95, then 3. Citing a rule isn't reusing UEFA data.
+  - **Tiebreakers:** head-to-head points, goal difference and away goals, then overall goal difference and goals. That's UEFA's article 7.06 as Wikipedia quotes it for 1999-2000 to 2010-11.
+  - **Before 1999-2000** no regulation text was found. Wikipedia's notes for 1997-98 and 1998-99 say goal difference comes first, but its own tables contradict that: Lens are above Arsenal in 1998-99, and Auxerre above Ajax in 1996-97, on head-to-head. The head-to-head order is used from 1991-92.
+  - **Check:** comparing every computed group table with Wikipedia's once, without storing anything, gave 142 out of 142 in agreement. That needed one curated deduction, Milan's 2 points in 1994-95.
 
 ## Risks / Trade-offs
 
 - **Wikipedia errors become our data.** There's no independent check yet (non-goal), and moving a pin is the only way to take a correction. The pinning tool's box diff keeps those moves reviewable. The README says these seasons aren't verified.
 - **Share-alike reaches derived data.** Standings and team match lists that include a 1955-2011 season carry CC BY-SA terms for that part. Clients that need CC0 only can filter by `license`. That's why the license is on every match.
 - **QIDs drift.** A club article can be merged or retargeted on Wikidata. Pinned revisions keep their link targets, but the title → QID lookup is live, which is why its result is cached with the revision. A new pin re-resolves the QIDs and fails loudly on an unknown one.
-- **Size:** the seed grows by 56 seasons with about 120 pins, and the database by 4,321 matches, about 9% more.
+- **Size:** the seed grows by 56 seasons with about 120 pins, and the database by 4,320 matches, about 9% more.

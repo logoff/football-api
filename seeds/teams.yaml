@@ -13,12 +13,22 @@
   openfootball:
     - "1. CfR Pforzheim"
 
+- name: "1. FC Brno"
+  kind: CLUB
+  country: "CZ"
+  wikidata: Q724832
+
 - name: "1. FC Düren"
   kind: CLUB
   country: "DE"
   wikidata: Q54801990
   openfootball:
     - "1. FC Düren"
+
+- name: "1. FC Frankfurt"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q286577
 
 - name: "1. FC Heidenheim 1846"
   kind: CLUB
@@ -138,6 +148,21 @@
     - "1899 Hoffenheim (GER)"
     - "TSG 1899 Hoffenheim"
     - "1899 Hoffenheim"
+
+- name: "AaB"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q11492669
+
+- name: "Aarau"
+  kind: CLUB
+  country: "CH"
+  wikidata: Q603271
+
+- name: "Aarhus Gymnastikforening"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q301431
 
 - name: "Aberdeen"
   kind: CLUB
@@ -304,6 +329,11 @@
   openfootball:
     - "Adelaide United (AUS)"
 
+- name: "Admira Wacker"
+  kind: CLUB
+  country: "AT"
+  wikidata: Q698702
+
 - name: "AEK Athens"
   kind: CLUB
   country: "GR"
@@ -317,6 +347,16 @@
   wikidata: Q291447
   openfootball:
     - "AEK Larnaca (CYP)"
+
+- name: "AEL Larissa"
+  kind: CLUB
+  country: "GR"
+  wikidata: Q275626
+
+- name: "AEL Limassol"
+  kind: CLUB
+  country: "CY"
+  wikidata: Q291471
 
 - name: "AF Bobigny"
   kind: CLUB
@@ -367,6 +407,11 @@
   openfootball:
     - "Aigles d'Or de Mana"
 
+- name: "AIK"
+  kind: CLUB
+  country: "SE"
+  wikidata: Q221602
+
 - name: "AJ Auxerre"
   kind: CLUB
   country: "FR"
@@ -374,6 +419,11 @@
   openfootball:
     - "AJ Auxerre"
     - "Auxerre"
+
+- name: "Akademisk Boldklub"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q287851
 
 - name: "Al Ahly"
   kind: CLUB
@@ -579,6 +629,16 @@
   openfootball:
     - "Apollon Limassol (CYP)"
 
+- name: "Ararat Yerevan"
+  kind: CLUB
+  country: "AM"
+  wikidata: Q332702
+
+- name: "Ards"
+  kind: CLUB
+  country: "GB-NIR"
+  wikidata: Q2007987
+
 - name: "Arenas Club de Getxo"
   kind: CLUB
   country: "ES"
@@ -600,6 +660,16 @@
   openfootball:
     - "AA Argentinos Juniors (ARG)"
     - "Argentinos Juniors (ARG)"
+
+- name: "Argeș"
+  kind: CLUB
+  country: "RO"
+  wikidata: Q841245
+
+- name: "Aris Bonnevoie"
+  kind: CLUB
+  country: "LU"
+  wikidata: Q663266
 
 - name: "Aris Limassol"
   kind: CLUB
@@ -859,6 +929,11 @@
   openfootball:
     - "Athletic Club B"
 
+- name: "Athlone Town"
+  kind: CLUB
+  country: "IE"
+  wikidata: Q755656
+
 - name: "Atlante"
   kind: CLUB
   country: "MX"
@@ -997,6 +1072,11 @@
   openfootball:
     - "Austria"
 
+- name: "Avenir Beggen"
+  kind: CLUB
+  country: "LU"
+  wikidata: Q1333583
+
 - name: "Avenir Mourenxois"
   kind: CLUB
   country: "FR"
@@ -1024,12 +1104,22 @@
   openfootball:
     - "AZ Alkmaar (NED)"
 
+- name: "B68 Toftir"
+  kind: CLUB
+  country: "FO"
+  wikidata: Q516425
+
 - name: "Banbury United"
   kind: CLUB
   country: "GB-ENG"
   wikidata: Q4854024
   openfootball:
     - "Banbury United FC"
+
+- name: "Baník Ostrava"
+  kind: CLUB
+  country: "CZ"
+  wikidata: Q329471
 
 - name: "Barakaldo CF"
   kind: CLUB
@@ -1077,6 +1167,11 @@
     - "Bayer Leverkusen"
     - "Bayer Leverkusen (GER)"
 
+- name: "Beitar Jerusalem"
+  kind: CLUB
+  country: "IL"
+  wikidata: Q223727
+
 - name: "Belgium"
   kind: NATIONAL
   country: "BE"
@@ -1097,6 +1192,11 @@
   wikidata: Q3325336
   openfootball:
     - "Bergantiños FC"
+
+- name: "Beroe Stara Zagora"
+  kind: CLUB
+  country: "BG"
+  wikidata: Q374254
 
 - name: "Beşiktaş"
   kind: CLUB
@@ -1168,6 +1268,11 @@
   openfootball:
     - "Blau-Weiß Lohne"
 
+- name: "Boavista"
+  kind: CLUB
+  country: "PT"
+  wikidata: Q219703
+
 - name: "Boca Juniors"
   kind: CLUB
   country: "AR"
@@ -1175,6 +1280,31 @@
   openfootball:
     - "CA Boca Juniors (ARG)"
     - "Boca Juniors (ARG)"
+
+- name: "Bohemian"
+  kind: CLUB
+  country: "IE"
+  wikidata: Q212708
+
+- name: "Bohemians 1905"
+  kind: CLUB
+  country: "CZ"
+  wikidata: Q849221
+
+- name: "Boldklubben 1903"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q797322
+
+- name: "Boldklubben 1909"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q654223
+
+- name: "Boldklubben 1913"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q1195591
 
 - name: "Bolivia"
   kind: NATIONAL
@@ -1263,6 +1393,11 @@
     - "Botafogo (BRA)"
     - "Botafogo FR (BRA)"
     - "Botafogo RJ (BRA)"
+
+- name: "Botev Plovdiv"
+  kind: CLUB
+  country: "BG"
+  wikidata: Q597250
 
 - name: "Bowers & Pitsea"
   kind: CLUB
@@ -1415,6 +1550,11 @@
   openfootball:
     - "Burnley"
     - "Burnley FC"
+
+- name: "Bursaspor"
+  kind: CLUB
+  country: "TR"
+  wikidata: Q203573
 
 - name: "Burton Albion"
   kind: CLUB
@@ -2595,6 +2735,11 @@
   openfootball:
     - "Cheltenham Town"
 
+- name: "Chemie Leipzig (1950)"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q19835069
+
 - name: "Chemnitzer"
   kind: CLUB
   country: "DE"
@@ -3031,6 +3176,11 @@
   openfootball:
     - "Colchester United"
 
+- name: "Coleraine"
+  kind: CLUB
+  country: "GB-NIR"
+  wikidata: Q1108181
+
 - name: "Colombia"
   kind: NATIONAL
   country: "CO"
@@ -3059,6 +3209,21 @@
   wikidata: Q2407595
   openfootball:
     - "CD Coquimbo Unido (CHI)"
+
+- name: "Cork Celtic"
+  kind: CLUB
+  country: "IE"
+  wikidata: Q2254157
+
+- name: "Cork City"
+  kind: CLUB
+  country: "IE"
+  wikidata: Q932284
+
+- name: "Cork Hibernians"
+  kind: CLUB
+  country: "IE"
+  wikidata: Q659110
 
 - name: "Coruxo"
   kind: CLUB
@@ -3156,6 +3321,11 @@
   openfootball:
     - "Croatia"
 
+- name: "Crusaders"
+  kind: CLUB
+  country: "GB-NIR"
+  wikidata: Q840567
+
 - name: "Cruz Azul"
   kind: CLUB
   country: "MX"
@@ -3235,6 +3405,11 @@
   openfootball:
     - "Saint-Denis FC"
 
+- name: "CS Universitatea Craiova"
+  kind: CLUB
+  country: "RO"
+  wikidata: Q16838020
+
 - name: "CSCyD El Nacional"
   kind: CLUB
   country: "EC"
@@ -3257,6 +3432,11 @@
   wikidata: Q249636
   openfootball:
     - "Macará (ECU)"
+
+- name: "Csepel"
+  kind: CLUB
+  country: "HU"
+  wikidata: Q871743
 
 - name: "Cuban"
   kind: NATIONAL
@@ -3294,6 +3474,11 @@
   openfootball:
     - "Cusco FC (PER)"
     - "Real Garcilaso (PER)"
+
+- name: "Cwmbrân Town"
+  kind: CLUB
+  country: "GB-WLS"
+  wikidata: Q1146848
 
 - name: "Czech Republic"
   kind: NATIONAL
@@ -3344,6 +3529,11 @@
   wikidata: Q909189
   openfootball:
     - "Darlington FC"
+
+- name: "Debreceni VSC"
+  kind: CLUB
+  country: "HU"
+  wikidata: Q205732
 
 - name: "Defensa y Justicia"
   kind: CLUB
@@ -3479,6 +3669,16 @@
     - "Derby County"
     - "Derby County FC"
 
+- name: "Derry City"
+  kind: CLUB
+  country: "GB-NIR"
+  wikidata: Q459622
+
+- name: "DHSC"
+  kind: CLUB
+  country: "NL"
+  wikidata: Q2127983
+
 - name: "Diables noirs de Combani"
   kind: CLUB
   country: "FR"
@@ -3492,6 +3692,11 @@
   wikidata: Q503317
   openfootball:
     - "Dijon FCO"
+
+- name: "Dinamo Bucharest"
+  kind: CLUB
+  country: "RO"
+  wikidata: Q204237
 
 - name: "Dinamo Kiev"
   kind: CLUB
@@ -3514,6 +3719,16 @@
   openfootball:
     - "Dinamo San Juan"
 
+- name: "Dinamo Tbilisi"
+  kind: CLUB
+  country: "GE"
+  wikidata: Q201006
+
+- name: "Dinamo Tirana"
+  kind: CLUB
+  country: "AL"
+  wikidata: Q34120
+
 - name: "Dinan-Léhon"
   kind: CLUB
   country: "FR"
@@ -3527,6 +3742,11 @@
   wikidata: Q622430
   openfootball:
     - "Djurgårdens IF (SWE)"
+
+- name: "Dnipro"
+  kind: CLUB
+  country: "UA"
+  wikidata: Q175687
 
 - name: "Doncaster Rovers"
   kind: CLUB
@@ -3550,6 +3770,16 @@
     - "Congo DR"
     - "Zaire"
 
+- name: "Drumcondra"
+  kind: CLUB
+  country: "IE"
+  wikidata: Q288791
+
+- name: "Dukla Prague"
+  kind: CLUB
+  country: "CZ"
+  wikidata: Q1199965
+
 - name: "Dulwich Hamlet"
   kind: CLUB
   country: "GB-ENG"
@@ -3563,6 +3793,16 @@
   wikidata: Q338557
   openfootball:
     - "Dundalk FC (IRL)"
+
+- name: "Dundee"
+  kind: CLUB
+  country: "GB-SCT"
+  wikidata: Q335483
+
+- name: "Dundee United"
+  kind: CLUB
+  country: "GB-SCT"
+  wikidata: Q192873
 
 - name: "Dutch East Indies"
   kind: NATIONAL
@@ -3578,6 +3818,11 @@
   country: "ES"
   openfootball:
     - "DUX Logroño"
+
+- name: "DWS"
+  kind: CLUB
+  country: "NL"
+  wikidata: Q478766
 
 - name: "Dynamo Dresden"
   kind: CLUB
@@ -3657,12 +3902,22 @@
     - "Eintracht Frankfurt"
     - "Eintracht Frankfurt (GER)"
 
+- name: "Ekranas"
+  kind: CLUB
+  country: "LT"
+  wikidata: Q192376
+
 - name: "El Salvador"
   kind: NATIONAL
   country: "SV"
   wikidata: Q188228
   openfootball:
     - "El Salvador"
+
+- name: "Elbasani"
+  kind: CLUB
+  country: "AL"
+  wikidata: Q846062
 
 - name: "Elche CF"
   kind: CLUB
@@ -3705,6 +3960,16 @@
   wikidata: Q2948398
   openfootball:
     - "Entente Feignies Aulnoye"
+
+- name: "EPA Larnaca"
+  kind: CLUB
+  country: "CY"
+  wikidata: Q2317850
+
+- name: "Erzgebirge Aue"
+  kind: CLUB
+  country: "DE"
+  wikidata: Q141882
 
 - name: "ES Beaumont Saint-Cyr"
   kind: CLUB
@@ -3762,6 +4027,11 @@
   openfootball:
     - "ESB Marboz"
 
+- name: "Esbjerg fB"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q389879
+
 - name: "Escuela Municipal Deportivo Binacional"
   kind: CLUB
   country: "PE"
@@ -3799,6 +4069,11 @@
   wikidata: Q786500
   openfootball:
     - "Estudiantes de Mérida (VEN)"
+
+- name: "Etar"
+  kind: CLUB
+  country: "BG"
+  wikidata: Q3655311
 
 - name: "Etoile Club Anstaing Chéreng"
   kind: CLUB
@@ -3848,6 +4123,11 @@
   wikidata: Q109507585
   openfootball:
     - "FA Illkirch Graffenstaden"
+
+- name: "FA Red Boys Differdange"
+  kind: CLUB
+  country: "LU"
+  wikidata: Q2298234
 
 - name: "Farnborough"
   kind: CLUB
@@ -4602,12 +4882,22 @@
   openfootball:
     - "FK Žalgiris (LTU)"
 
+- name: "Flamurtari"
+  kind: CLUB
+  country: "AL"
+  wikidata: Q60495
+
 - name: "Fleetwood Town"
   kind: CLUB
   country: "GB-ENG"
   wikidata: Q48941
   openfootball:
     - "Fleetwood Town"
+
+- name: "Floriana"
+  kind: CLUB
+  country: "MT"
+  wikidata: Q728557
 
 - name: "Fluminense"
   kind: CLUB
@@ -4653,12 +4943,22 @@
   openfootball:
     - "Fortuna Düsseldorf"
 
+- name: "Fram"
+  kind: CLUB
+  country: "IS"
+  wikidata: Q752278
+
 - name: "France"
   kind: NATIONAL
   country: "FR"
   wikidata: Q47774
   openfootball:
     - "France"
+
+- name: "Fredrikstad"
+  kind: CLUB
+  country: "NO"
+  wikidata: Q216131
 
 - name: "Frosinone Calcio"
   kind: CLUB
@@ -4853,6 +5153,16 @@
     - "Girona FC"
     - "Girona FC (ESP)"
 
+- name: "Glenavon"
+  kind: CLUB
+  country: "GB-NIR"
+  wikidata: Q1130432
+
+- name: "Glentoran"
+  kind: CLUB
+  country: "GB-NIR"
+  wikidata: Q249533
+
 - name: "GNK Dinamo Zagreb"
   kind: CLUB
   country: "HR"
@@ -4890,6 +5200,11 @@
   wikidata: Q3323135
   openfootball:
     - "GOAL FC"
+
+- name: "Grasshopper Club Zürich"
+  kind: CLUB
+  country: "CH"
+  wikidata: Q201360
 
 - name: "Greece"
   kind: NATIONAL
@@ -4948,6 +5263,21 @@
   openfootball:
     - "Guiseley AFC"
 
+- name: "Gwardia Warsaw"
+  kind: CLUB
+  country: "PL"
+  wikidata: Q770080
+
+- name: "Győri ETO"
+  kind: CLUB
+  country: "HU"
+  wikidata: Q276346
+
+- name: "Górnik Zabrze"
+  kind: CLUB
+  country: "PL"
+  wikidata: Q134255
+
 - name: "Haiti"
   kind: NATIONAL
   country: "HT"
@@ -4955,12 +5285,27 @@
   openfootball:
     - "Haiti"
 
+- name: "Hajduk Split"
+  kind: CLUB
+  country: "HR"
+  wikidata: Q181216
+
+- name: "Haka"
+  kind: CLUB
+  country: "FI"
+  wikidata: Q275138
+
 - name: "Hallescher"
   kind: CLUB
   country: "DE"
   wikidata: Q316855
   openfootball:
     - "Hallescher FC"
+
+- name: "Halmstads BK"
+  kind: CLUB
+  country: "SE"
+  wikidata: Q584858
 
 - name: "Hamburger SV"
   kind: CLUB
@@ -4989,6 +5334,11 @@
   wikidata: Q986529
   openfootball:
     - "Hapoel Be'er Sheva (ISR)"
+
+- name: "Hapoel Tel Aviv"
+  kind: CLUB
+  country: "IL"
+  wikidata: Q206585
 
 - name: "Harborough Town"
   kind: CLUB
@@ -5067,6 +5417,11 @@
   openfootball:
     - "Hednesford Town"
 
+- name: "Heerenveen"
+  kind: CLUB
+  country: "NL"
+  wikidata: Q200321
+
 - name: "Hekari United"
   kind: CLUB
   country: "PG"
@@ -5082,6 +5437,16 @@
     - "Hellas Verona FC"
     - "Hellas Verona"
 
+- name: "Helsingborgs IF"
+  kind: CLUB
+  country: "SE"
+  wikidata: Q207503
+
+- name: "Helsingin Palloseura"
+  kind: CLUB
+  country: "FI"
+  wikidata: Q670817
+
 - name: "Hereford"
   kind: CLUB
   country: "GB-ENG"
@@ -5096,12 +5461,27 @@
   openfootball:
     - "Hertha BSC"
 
+- name: "Hibernian"
+  kind: CLUB
+  country: "GB-SCT"
+  wikidata: Q192597
+
+- name: "Hibernians"
+  kind: CLUB
+  country: "MT"
+  wikidata: Q936187
+
 - name: "Hienghène Sport"
   kind: CLUB
   country: "FR"
   wikidata: Q5752976
   openfootball:
     - "Hienghène Sport (NCL)"
+
+- name: "HIFK"
+  kind: CLUB
+  country: "FI"
+  wikidata: Q11336634
 
 - name: "Hitchin Town"
   kind: CLUB
@@ -5151,6 +5531,11 @@
   openfootball:
     - "Houilles AC"
 
+- name: "Hradec Králové"
+  kind: CLUB
+  country: "CZ"
+  wikidata: Q581423
+
 - name: "Huddersfield Town"
   kind: CLUB
   country: "GB-ENG"
@@ -5178,6 +5563,11 @@
   country: "ES"
   openfootball:
     - "Huracán Melilla"
+
+- name: "Hvidovre IF"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q843097
 
 - name: "Hércules CF"
   kind: CLUB
@@ -5207,6 +5597,31 @@
   openfootball:
     - "IF Elfsborg (SWE)"
 
+- name: "IFK Göteborg"
+  kind: CLUB
+  country: "SE"
+  wikidata: Q201567
+
+- name: "IFK Malmö"
+  kind: CLUB
+  country: "SE"
+  wikidata: Q3146651
+
+- name: "IFK Norrköping"
+  kind: CLUB
+  country: "SE"
+  wikidata: Q329607
+
+- name: "IK Start"
+  kind: CLUB
+  country: "NO"
+  wikidata: Q737947
+
+- name: "Ilves"
+  kind: CLUB
+  country: "FI"
+  wikidata: Q2608062
+
 - name: "Independiente del Valle"
   kind: CLUB
   country: "EC"
@@ -5230,6 +5645,11 @@
   openfootball:
     - "Independiente Santa Fe (COL)"
     - "Santa Fe (COL)"
+
+- name: "Inter Bratislava"
+  kind: CLUB
+  country: "SK"
+  wikidata: Q677570
 
 - name: "Inter Miami"
   kind: CLUB
@@ -5341,6 +5761,11 @@
   openfootball:
     - "Jeonbuk Motors (KOR)"
 
+- name: "Jeunesse Esch"
+  kind: CLUB
+  country: "LU"
+  wikidata: Q433541
+
 - name: "Jeunesse Evolution"
   kind: CLUB
   country: "FR"
@@ -5415,6 +5840,11 @@
     - "Juventus"
     - "Juventus (ITA)"
 
+- name: "KA Akureyri"
+  kind: CLUB
+  country: "IS"
+  wikidata: Q571264
+
 - name: "KAA Gent"
   kind: CLUB
   country: "BE"
@@ -5443,6 +5873,11 @@
   openfootball:
     - "Kashiwa Reysol (JPN)"
 
+- name: "Keflavík"
+  kind: CLUB
+  country: "IS"
+  wikidata: Q835853
+
 - name: "Kettering Town"
   kind: CLUB
   country: "GB-ENG"
@@ -5456,6 +5891,11 @@
   wikidata: Q1718604
   openfootball:
     - "KF Ballkani (KOS)"
+
+- name: "KF Tirana"
+  kind: CLUB
+  country: "AL"
+  wikidata: Q210170
 
 - name: "KFC Uerdingen 05"
   kind: CLUB
@@ -5478,6 +5918,11 @@
   openfootball:
     - "Kidderminster Harriers"
 
+- name: "Kilmarnock"
+  kind: CLUB
+  country: "GB-SCT"
+  wikidata: Q210961
+
 - name: "King's Lynn"
   kind: CLUB
   country: "GB-ENG"
@@ -5492,6 +5937,26 @@
   openfootball:
     - "Kingstonian FC"
 
+- name: "Kispest-Honvéd"
+  kind: CLUB
+  country: "HU"
+  wikidata: Q275612
+
+- name: "Kjøbenhavns Boldklub"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q1359341
+
+- name: "Kokkolan Palloveikot"
+  kind: CLUB
+  country: "FI"
+  wikidata: Q574997
+
+- name: "KR Reykjavík"
+  kind: CLUB
+  country: "IS"
+  wikidata: Q221702
+
 - name: "KRC Genk"
   kind: CLUB
   country: "BE"
@@ -5499,12 +5964,27 @@
   openfootball:
     - "KRC Genk (BEL)"
 
+- name: "KSK Beveren"
+  kind: CLUB
+  country: "BE"
+  wikidata: Q849139
+
 - name: "KSV Baunatal"
   kind: CLUB
   country: "DE"
   wikidata: Q15822356
   openfootball:
     - "KSV Baunatal"
+
+- name: "Kuopion Palloseura"
+  kind: CLUB
+  country: "FI"
+  wikidata: Q382324
+
+- name: "Kuusysi"
+  kind: CLUB
+  country: "FI"
+  wikidata: Q960944
 
 - name: "Kuwait"
   kind: NATIONAL
@@ -5520,12 +6000,22 @@
   openfootball:
     - "KÍ Klaksvík (FRO)"
 
+- name: "Køge"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q1048007
+
 - name: "L'Union-Saint-Jean"
   kind: CLUB
   country: "FR"
   wikidata: Q112657653
   openfootball:
     - "L'Union Saint-Jean FC"
+
+- name: "La Chaux-de-Fonds"
+  kind: CLUB
+  country: "CH"
+  wikidata: Q669109
 
 - name: "La Roche VF"
   kind: CLUB
@@ -5540,6 +6030,11 @@
   wikidata: Q18380286
   openfootball:
     - "LAFC (USA)"
+
+- name: "Lahti"
+  kind: CLUB
+  country: "FI"
+  wikidata: Q476880
 
 - name: "Larne"
   kind: CLUB
@@ -5568,6 +6063,11 @@
   wikidata: Q189322
   openfootball:
     - "Latvia"
+
+- name: "Lausanne-Sport"
+  kind: CLUB
+  country: "CH"
+  wikidata: Q309456
 
 - name: "LDU de Quito"
   kind: CLUB
@@ -5660,6 +6160,11 @@
   openfootball:
     - "Levante UD"
 
+- name: "Levski Sofia"
+  kind: CLUB
+  country: "BG"
+  wikidata: Q144190
+
 - name: "Leyton Orient"
   kind: CLUB
   country: "GB-ENG"
@@ -5673,6 +6178,11 @@
   openfootball:
     - "Liancourt Clermont"
 
+- name: "Lierse SK"
+  kind: CLUB
+  country: "BE"
+  wikidata: Q725018
+
 - name: "Lille OSC"
   kind: CLUB
   country: "FR"
@@ -5681,6 +6191,16 @@
     - "Lille OSC"
     - "Lille OSC (FRA)"
     - "Lille"
+
+- name: "Lillestrøm"
+  kind: CLUB
+  country: "NO"
+  wikidata: Q214374
+
+- name: "Limerick"
+  kind: CLUB
+  country: "IE"
+  wikidata: Q1552212
 
 - name: "Linares Deportivo"
   kind: CLUB
@@ -5703,6 +6223,21 @@
   openfootball:
     - "Lincoln Red Imps (GIB)"
 
+- name: "Linfield"
+  kind: CLUB
+  country: "GB-NIR"
+  wikidata: Q244472
+
+- name: "Linz"
+  kind: CLUB
+  country: "AT"
+  wikidata: Q595792
+
+- name: "Lisburn Distillery"
+  kind: CLUB
+  country: "GB-NIR"
+  wikidata: Q312360
+
 - name: "Liverpool"
   kind: CLUB
   country: "GB-ENG"
@@ -5720,6 +6255,11 @@
   openfootball:
     - "Liverpool (URU)"
     - "Liverpool FC (URU)"
+
+- name: "Lokomotiv 1929 Sofia"
+  kind: CLUB
+  country: "BG"
+  wikidata: Q309025
 
 - name: "Lorca"
   kind: CLUB
@@ -5755,6 +6295,21 @@
   openfootball:
     - "Luton Town FC"
     - "Luton Town"
+
+- name: "Luzern"
+  kind: CLUB
+  country: "CH"
+  wikidata: Q223262
+
+- name: "Lyn"
+  kind: CLUB
+  country: "NO"
+  wikidata: Q737937
+
+- name: "Lyngby Boldklub"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q635654
 
 - name: "Maccabi Haifa"
   kind: CLUB
@@ -5861,6 +6416,11 @@
   openfootball:
     - "Marine AFC"
 
+- name: "Mechelen"
+  kind: CLUB
+  country: "BE"
+  wikidata: Q113000
+
 - name: "Melilla CD"
   kind: CLUB
   country: "ES"
@@ -5895,6 +6455,11 @@
   wikidata: Q164089
   openfootball:
     - "Mexico"
+
+- name: "MFK Vítkovice"
+  kind: CLUB
+  country: "CZ"
+  wikidata: Q1387864
 
 - name: "Middlesbrough"
   kind: CLUB
@@ -6025,12 +6590,22 @@
   openfootball:
     - "MOS Caen"
 
+- name: "Moss"
+  kind: CLUB
+  country: "NO"
+  wikidata: Q291163
+
 - name: "MSV Duisburg"
   kind: CLUB
   country: "DE"
   wikidata: Q154293
   openfootball:
     - "MSV Duisburg"
+
+- name: "MTK Budapest"
+  kind: CLUB
+  country: "HU"
+  wikidata: Q208406
 
 - name: "MTV Eintracht Celle"
   kind: CLUB
@@ -6060,6 +6635,11 @@
   wikidata: Q105081834
   openfootball:
     - "Móstoles CF"
+
+- name: "MŠK Žilina"
+  kind: CLUB
+  country: "SK"
+  wikidata: Q209640
 
 - name: "Nacional Potosí"
   kind: CLUB
@@ -6094,6 +6674,11 @@
   wikidata: Q47050
   openfootball:
     - "Netherlands"
+
+- name: "Neuchâtel Xamax"
+  kind: CLUB
+  country: "CH"
+  wikidata: Q335195
 
 - name: "New Zealand"
   kind: NATIONAL
@@ -6146,6 +6731,11 @@
   wikidata: Q210530
   openfootball:
     - "NK Maribor (SVN)"
+
+- name: "Norma Tallinn"
+  kind: CLUB
+  country: "EE"
+  wikidata: Q1341594
 
 - name: "North Korea"
   kind: NATIONAL
@@ -6240,6 +6830,11 @@
   openfootball:
     - "OC Cesson-Sévigné"
 
+- name: "Odense Boldklub"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q211912
+
 - name: "OGC Nice"
   kind: CLUB
   country: "FR"
@@ -6263,6 +6858,11 @@
   openfootball:
     - "Olimpija Ljubljana (SVN)"
 
+- name: "Olimpija Ljubljana (1945–2005)"
+  kind: CLUB
+  country: "SI"
+  wikidata: Q13363064
+
 - name: "Olympiacos"
   kind: CLUB
   country: "GR"
@@ -6270,6 +6870,11 @@
   openfootball:
     - "Olympiakos Piraeus (GRE)"
     - "PAE Olympiakos SFP (GRE)"
+
+- name: "Olympiakos Nicosia"
+  kind: CLUB
+  country: "CY"
+  wikidata: Q280814
 
 - name: "Olympique Alès"
   kind: CLUB
@@ -6337,6 +6942,11 @@
   wikidata: Q637427
   openfootball:
     - "Orihuela CF"
+
+- name: "Oulun Palloseura"
+  kind: CLUB
+  country: "FI"
+  wikidata: Q4354228
 
 - name: "Ourense CF"
   kind: CLUB
@@ -6442,6 +7052,11 @@
     - "Parma"
     - "Parma FC"
 
+- name: "Partizani Tirana"
+  kind: CLUB
+  country: "AL"
+  wikidata: Q845772
+
 - name: "Pays de Cassel"
   kind: CLUB
   country: "FR"
@@ -6474,6 +7089,21 @@
   wikidata: Q19495
   openfootball:
     - "Peterborough United"
+
+- name: "Petrolul Ploiești"
+  kind: CLUB
+  country: "RO"
+  wikidata: Q1322550
+
+- name: "Petržalka"
+  kind: CLUB
+  country: "SK"
+  wikidata: Q39877
+
+- name: "Pezoporikos Larnaca"
+  kind: CLUB
+  country: "CY"
+  wikidata: Q2277220
 
 - name: "Peña Sport"
   kind: CLUB
@@ -6547,6 +7177,11 @@
   openfootball:
     - "Poland"
 
+- name: "Polonia Bytom"
+  kind: CLUB
+  country: "PL"
+  wikidata: Q859458
+
 - name: "Pontevedra CF"
   kind: CLUB
   country: "ES"
@@ -6567,6 +7202,11 @@
   wikidata: Q48948
   openfootball:
     - "Port Vale FC"
+
+- name: "Portadown"
+  kind: CLUB
+  country: "GB-NIR"
+  wikidata: Q168660
 
 - name: "Portsmouth"
   kind: CLUB
@@ -6602,6 +7242,11 @@
   wikidata: Q19612
   openfootball:
     - "Preston North End"
+
+- name: "Progrès Niederkorn"
+  kind: CLUB
+  country: "LU"
+  wikidata: Q933046
 
 - name: "PSV"
   kind: CLUB
@@ -6653,6 +7298,11 @@
   country: "ES"
   openfootball:
     - "Quintanar del Rey"
+
+- name: "Rabat Ajax"
+  kind: CLUB
+  country: "MT"
+  wikidata: Q749073
 
 - name: "Racing Club"
   kind: CLUB
@@ -6724,6 +7374,11 @@
   wikidata: Q19597
   openfootball:
     - "Rangers FC (SCO)"
+
+- name: "Rapid București"
+  kind: CLUB
+  country: "RO"
+  wikidata: Q245162
 
 - name: "Rapid Wien"
   kind: CLUB
@@ -6970,6 +7625,11 @@
   openfootball:
     - "Red Star FC"
 
+- name: "Reipas Lahti"
+  kind: CLUB
+  country: "FI"
+  wikidata: Q11834079
+
 - name: "Republic of Ireland"
   kind: NATIONAL
   country: "IE"
@@ -6991,6 +7651,11 @@
   openfootball:
     - "Rochdale AFC"
 
+- name: "Roda JC Kerkrade"
+  kind: CLUB
+  country: "NL"
+  wikidata: Q24719
+
 - name: "Rodez AF"
   kind: CLUB
   country: "FR"
@@ -7004,6 +7669,11 @@
   wikidata: Q168397
   openfootball:
     - "Romania"
+
+- name: "Rosenborg"
+  kind: CLUB
+  country: "NO"
+  wikidata: Q186785
 
 - name: "Rostocker"
   kind: CLUB
@@ -7067,6 +7737,16 @@
   openfootball:
     - "RSV Meinerzhagen"
 
+- name: "Rubin Kazan"
+  kind: CLUB
+  country: "RU"
+  wikidata: Q170040
+
+- name: "Ruch Chorzów"
+  kind: CLUB
+  country: "PL"
+  wikidata: Q301726
+
 - name: "Ruffiac Malestroit Foot"
   kind: CLUB
   country: "FR"
@@ -7086,6 +7766,11 @@
   wikidata: Q726080
   openfootball:
     - "Russia"
+
+- name: "RWD Molenbeek"
+  kind: CLUB
+  country: "BE"
+  wikidata: Q2312558
 
 - name: "SA Mérignac"
   kind: CLUB
@@ -7186,6 +7871,11 @@
   wikidata: Q745246
   openfootball:
     - "Santos Laguna (MEX)"
+
+- name: "Sarajevo"
+  kind: CLUB
+  country: "BA"
+  wikidata: Q239663
 
 - name: "SAS Épinal"
   kind: CLUB
@@ -7560,6 +8250,11 @@
     - "Sheffield Wednesday"
     - "Sheffield Wednesday FC"
 
+- name: "Shelbourne"
+  kind: CLUB
+  country: "IE"
+  wikidata: Q394474
+
 - name: "Sheppey United"
   kind: CLUB
   country: "GB-ENG"
@@ -7581,6 +8276,11 @@
   openfootball:
     - "Silkeborg IF (DEN)"
 
+- name: "Sion"
+  kind: CLUB
+  country: "CH"
+  wikidata: Q321061
+
 - name: "Sivasspor"
   kind: CLUB
   country: "TR"
@@ -7596,12 +8296,22 @@
     - "SK Sturm Graz (AUT)"
     - "Sturm Graz (AUT)"
 
+- name: "Skeid"
+  kind: CLUB
+  country: "NO"
+  wikidata: Q775976
+
 - name: "Skelmersdale United"
   kind: CLUB
   country: "GB-ENG"
   wikidata: Q18462
   openfootball:
     - "Skelmersdale United"
+
+- name: "Skonto"
+  kind: CLUB
+  country: "LV"
+  wikidata: Q223823
 
 - name: "SL Benfica"
   kind: CLUB
@@ -7618,6 +8328,16 @@
   openfootball:
     - "Slavia Praha (CZE)"
     - "SK Slavia Praha (CZE)"
+
+- name: "Sliema Wanderers"
+  kind: CLUB
+  country: "MT"
+  wikidata: Q1289495
+
+- name: "Sligo Rovers"
+  kind: CLUB
+  country: "IE"
+  wikidata: Q244874
 
 - name: "Slough Town"
   kind: CLUB
@@ -7752,6 +8472,11 @@
   openfootball:
     - "SPAL 2013 Ferrara"
 
+- name: "Sparta Rotterdam"
+  kind: CLUB
+  country: "NL"
+  wikidata: Q209895
+
 - name: "Spartak Moscow"
   kind: CLUB
   country: "RU"
@@ -7759,12 +8484,22 @@
   openfootball:
     - "Spartak Moskva (RUS)"
 
+- name: "Spartak Plovdiv"
+  kind: CLUB
+  country: "BG"
+  wikidata: Q654407
+
 - name: "Spezia Calcio"
   kind: CLUB
   country: "IT"
   wikidata: Q8615
   openfootball:
     - "Spezia Calcio"
+
+- name: "Spora Luxembourg"
+  kind: CLUB
+  country: "LU"
+  wikidata: Q2329903
 
 - name: "Sport Boys Warnes"
   kind: CLUB
@@ -7929,6 +8664,11 @@
   openfootball:
     - "St. Albans City"
 
+- name: "St Patrick's Athletic"
+  kind: CLUB
+  country: "IE"
+  wikidata: Q394452
+
 - name: "St-Pierre de Milizac"
   kind: CLUB
   country: "FR"
@@ -7972,6 +8712,11 @@
   openfootball:
     - "Stade de Reims"
 
+- name: "Stade Dudelange"
+  kind: CLUB
+  country: "LU"
+  wikidata: Q2617045
+
 - name: "Stade Lavallois"
   kind: CLUB
   country: "FR"
@@ -8002,6 +8747,11 @@
     - "Rennes"
     - "Stade Rennais"
     - "Stade Rennais (FRA)"
+
+- name: "Stal Mielec"
+  kind: CLUB
+  country: "PL"
+  wikidata: Q1388790
 
 - name: "Standard Liège"
   kind: CLUB
@@ -8044,6 +8794,11 @@
   wikidata: Q7621995
   openfootball:
     - "Stratford Town"
+
+- name: "Strømsgodset"
+  kind: CLUB
+  country: "NO"
+  wikidata: Q7482049
 
 - name: "Stuttgarter Kickers"
   kind: CLUB
@@ -8180,6 +8935,11 @@
   openfootball:
     - "Swansea City"
 
+- name: "Swarovski Tirol"
+  kind: CLUB
+  country: "AT"
+  wikidata: Q697473
+
 - name: "Sweden"
   kind: NATIONAL
   country: "SE"
@@ -8209,6 +8969,11 @@
   openfootball:
     - "Sydney (AUS)"
 
+- name: "Szombierki Bytom"
+  kind: CLUB
+  country: "PL"
+  wikidata: Q586516
+
 - name: "São Paulo"
   kind: CLUB
   country: "BR"
@@ -8230,6 +8995,11 @@
   wikidata: Q7688813
   openfootball:
     - "Taunton Town"
+
+- name: "Tavriya Simferopol"
+  kind: CLUB
+  country: "UA"
+  wikidata: Q326156
 
 - name: "Team Wellington"
   kind: CLUB
@@ -8281,6 +9051,11 @@
   openfootball:
     - "Thouars Foot 79"
 
+- name: "Thun"
+  kind: CLUB
+  country: "CH"
+  wikidata: Q464775
+
 - name: "Tigres UANL"
   kind: CLUB
   country: "MX"
@@ -8324,6 +9099,11 @@
   openfootball:
     - "Torino FC"
     - "Torino"
+
+- name: "Torpedo Moscow"
+  kind: CLUB
+  country: "RU"
+  wikidata: Q324338
 
 - name: "Torquay United"
   kind: CLUB
@@ -8371,6 +9151,11 @@
   wikidata: Q695340
   openfootball:
     - "TP Mazembe (COD)"
+
+- name: "TPS Turku"
+  kind: CLUB
+  country: "FI"
+  wikidata: Q223813
 
 - name: "Trabzonspor"
   kind: CLUB
@@ -8526,6 +9311,11 @@
   wikidata: Q127274059
   openfootball:
     - "Türkgücü München"
+
+- name: "U Craiova 1948"
+  kind: CLUB
+  country: "RO"
+  wikidata: Q584629
 
 - name: "UB Conquense"
   kind: CLUB
@@ -8774,6 +9564,11 @@
   openfootball:
     - "Unami CP"
 
+- name: "Union Luxembourg"
+  kind: CLUB
+  country: "LU"
+  wikidata: Q730907
+
 - name: "Union Saint-Gilloise"
   kind: CLUB
   country: "BE"
@@ -8795,6 +9590,11 @@
   wikidata: Q20278773
   openfootball:
     - "Unionistas CF"
+
+- name: "Unirea Urziceni"
+  kind: CLUB
+  country: "RO"
+  wikidata: Q324596
 
 - name: "United States"
   kind: NATIONAL
@@ -9104,6 +9904,11 @@
   openfootball:
     - "USSA Vertou"
 
+- name: "UTA Arad"
+  kind: CLUB
+  country: "RO"
+  wikidata: Q680770
+
 - name: "Utebo"
   kind: CLUB
   country: "ES"
@@ -9146,12 +9951,37 @@
   openfootball:
     - "Valenciennes FC"
 
+- name: "Valletta"
+  kind: CLUB
+  country: "MT"
+  wikidata: Q331589
+
+- name: "Valur"
+  kind: CLUB
+  country: "IS"
+  wikidata: Q597715
+
 - name: "Vannes OC"
   kind: CLUB
   country: "FR"
   wikidata: Q870173
   openfootball:
     - "Vannes OC"
+
+- name: "Vardar"
+  kind: CLUB
+  country: "MK"
+  wikidata: Q335190
+
+- name: "Vasas"
+  kind: CLUB
+  country: "HU"
+  wikidata: Q255296
+
+- name: "Vejle Boldklub"
+  kind: CLUB
+  country: "DK"
+  wikidata: Q737936
 
 - name: "Velarde CF"
   kind: CLUB
@@ -9283,6 +10113,11 @@
   openfootball:
     - "Vierzon FC"
 
+- name: "Viking"
+  kind: CLUB
+  country: "NO"
+  wikidata: Q211177
+
 - name: "Viktoria Plzeň"
   kind: CLUB
   country: "CZ"
@@ -9327,12 +10162,32 @@
   openfootball:
     - "Vitória Guimarães (POR)"
 
+- name: "Vllaznia Shkodër"
+  kind: CLUB
+  country: "AL"
+  wikidata: Q81566
+
+- name: "Vojvodina"
+  kind: CLUB
+  country: "RS"
+  wikidata: Q207501
+
 - name: "VSG Altglienicke"
   kind: CLUB
   country: "DE"
   wikidata: Q445897
   openfootball:
     - "VSG Altglienicke"
+
+- name: "VSS Košice"
+  kind: CLUB
+  country: "SK"
+  wikidata: Q693909
+
+- name: "Vålerenga"
+  kind: CLUB
+  country: "NO"
+  wikidata: Q212819
 
 - name: "Vélez CF"
   kind: CLUB
@@ -9347,6 +10202,11 @@
   wikidata: Q1140538
   openfootball:
     - "Víkingur Reykjavík (ISL)"
+
+- name: "Wacker Innsbruck"
+  kind: CLUB
+  country: "AT"
+  wikidata: Q2291116
 
 - name: "Waitakere United"
   kind: CLUB
@@ -9368,6 +10228,11 @@
   wikidata: Q19644
   openfootball:
     - "Walsall FC"
+
+- name: "Waterford"
+  kind: CLUB
+  country: "IE"
+  wikidata: Q394466
 
 - name: "Watford"
   kind: CLUB
@@ -9436,6 +10301,16 @@
   openfootball:
     - "Whitby Town"
 
+- name: "Widzew Łódź"
+  kind: CLUB
+  country: "PL"
+  wikidata: Q244981
+
+- name: "Wiener Sport-Club"
+  kind: CLUB
+  country: "AT"
+  wikidata: Q266962
+
 - name: "Wigan Athletic"
   kind: CLUB
   country: "GB-ENG"
@@ -9443,12 +10318,22 @@
   openfootball:
     - "Wigan Athletic"
 
+- name: "Willem II"
+  kind: CLUB
+  country: "NL"
+  wikidata: Q332664
+
 - name: "Wimbledon"
   kind: CLUB
   country: "GB-ENG"
   wikidata: Q19482
   openfootball:
     - "Wimbledon FC"
+
+- name: "Wisła Kraków"
+  kind: CLUB
+  country: "PL"
+  wikidata: Q190943
 
 - name: "Woking"
   kind: CLUB
@@ -9579,6 +10464,11 @@
     # From 1993 the name means FR Yugoslavia, the later Serbia and Montenegro.
     - {name: "Yugoslavia", until: 1992}
 
+- name: "Zagłębie Lubin"
+  kind: CLUB
+  country: "PL"
+  wikidata: Q140497
+
 - name: "Zamora"
   kind: CLUB
   country: "VE"
@@ -9593,6 +10483,11 @@
   openfootball:
     - "Zamora CF"
 
+- name: "Zimbru Chișinău"
+  kind: CLUB
+  country: "MD"
+  wikidata: Q203513
+
 - name: "Zulia"
   kind: CLUB
   country: "VE"
@@ -9606,6 +10501,11 @@
   wikidata: Q9098124
   openfootball:
     - "Águilas FC"
+
+- name: "Åtvidabergs FF"
+  kind: CLUB
+  country: "SE"
+  wikidata: Q271349
 
 - name: "Étoile de Matoury"
   kind: CLUB
@@ -9627,6 +10527,46 @@
   openfootball:
     - "Étoile du Sahel (TUN)"
 
+- name: "ÍA Akranes"
+  kind: CLUB
+  country: "IS"
+  wikidata: Q291691
+
+- name: "ÍBV"
+  kind: CLUB
+  country: "IS"
+  wikidata: Q291716
+
+- name: "Örgryte IS"
+  kind: CLUB
+  country: "SE"
+  wikidata: Q297906
+
+- name: "Östers IF"
+  kind: CLUB
+  country: "SE"
+  wikidata: Q306787
+
+- name: "Újpest"
+  kind: CLUB
+  country: "HU"
+  wikidata: Q244595
+
+- name: "Ħamrun Spartans"
+  kind: CLUB
+  country: "MT"
+  wikidata: Q343030
+
+- name: "ŁKS Łódź"
+  kind: CLUB
+  country: "PL"
+  wikidata: Q345142
+
+- name: "Śląsk Wrocław"
+  kind: CLUB
+  country: "PL"
+  wikidata: Q328655
+
 - name: "ŠD NŠ Mura 05"
   kind: CLUB
   country: "SI"
@@ -9641,3 +10581,8 @@
   openfootball:
     - "ŠK Slovan Bratislava (SVK)"
     - "Slovan Bratislava (SVK)"
+
+- name: "Željezničar Sarajevo"
+  kind: CLUB
+  country: "BA"
+  wikidata: Q219929

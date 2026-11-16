@@ -8,7 +8,11 @@ context: |
   Task runner: just (justfile), not make.
 
   Data sources: openfootball/* GitHub repositories (CC0) as primary
-  data; Wikidata SPARQL for canonical identifiers. Team identity is
+  data; English Wikipedia match boxes (CC BY-SA 4.0) for seasons
+  openfootball lacks, pinned by revision ID (change
+  source-older-seasons-from-wikipedia; each season serves its source
+  and license, each match its license); Wikidata SPARQL for canonical
+  identifiers. Official archives (UEFA, LaLiga) forbid reuse. Team identity is
   hand-curated in seeds/teams.yaml (name, Wikidata QID, openfootball
   aliases). External IDs live only in external_ref; no source is
   privileged.
@@ -29,7 +33,7 @@ context: |
   TOURNAMENT. Super cups: no source data.
   International competitions (8): every edition openfootball has with
   a date for every match (change extend-international-history): UCL
-  2011-12+, UEL 2020-21+, UECL 2021-22+, Copa Libertadores 2012+, Club
+  1955-56+ (1955-56 to 2010-11 from Wikipedia, unverified), UEL 2020-21+, UECL 2021-22+, Copa Libertadores 2012+, Club
   World Cup 2000+, World Cup 1930+, Euro 1960+ (not 1984, 1992), Copa
   América 2011, 2021, 2024; not verified yet. Deferred: AFCON and FIFA
   Intercontinental Cup 2024 (no source data), Copa Sudamericana

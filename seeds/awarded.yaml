@@ -141,6 +141,46 @@ matches:
     reason: "Not played: cancelled on the day for safety reasons; the FFF held Tours responsible and gave it the match lost"
     source: https://www.fff.fr/article/13900-lorient-qualifie-pour-les-16es-de-finale.html
 
+  # --- UEFA Champions League (Q18756) ------------------------------------------------
+  # No official record found online; RSSSF's match details.
+  - competition: Q18756
+    season: "1990-91"
+    home: Q141931 # Dynamo Dresden
+    away: Q173009 # FK Crvena zvezda
+    played: PARTIAL
+    reason: "Abandoned after 78 minutes at 1-2 when supporters threw objects onto the pitch; awarded 0-3 to Red Star"
+    source: https://rsssf.org/ec/ec199091det.html
+  - competition: Q18756
+    season: "1990-91"
+    home: Q132885 # Olympique de Marseille
+    away: Q1543 # AC Milan
+    played: PARTIAL
+    reason: "A floodlight failed late on with Marseille 1-0 up, and Milan refused to come back out; awarded 3-0 to Marseille"
+    source: https://www.uefa.com/uefachampionsleague/news/0101-0e6a0d18f6a6-7526711e6abf-1000--1990-91-crvena-zvezda-win-bari-shoot-out/
+  # No official record found online; RSSSF's season page for Stuttgart.
+  - competition: Q18756
+    season: "1992-93"
+    home: Q1128631 # Leeds United
+    away: Q4512 # VfB Stuttgart
+    played: FULL
+    reason: "Leeds won 4-1, then were awarded 3-0 because Stuttgart had fielded a fourth foreign player; a play-off followed"
+    source: https://rsssf.org/tablesd/duitec-stuttgart93.html
+  - competition: Q18756
+    season: "2004-05"
+    home: Q2739 # AS Roma
+    away: Q179075 # Dinamo Kiev
+    played: PARTIAL
+    reason: "Abandoned at half-time with Dynamo 1-0 up after the referee was hit by an object thrown from the crowd; awarded 0-3"
+    source: https://www.uefa.com/uefachampionsleague/news/01a1-0e6b16a30c56-e755b7f91769-1000--dynamo-handed-victory
+  # No official record found online; RSSSF's season page.
+  - competition: Q18756
+    season: "2004-05"
+    home: Q631 # Inter Milan
+    away: Q1543 # AC Milan
+    played: PARTIAL
+    reason: "Abandoned in the second half with Milan 1-0 up after flares from the crowd hit goalkeeper Dida; awarded 0-3"
+    source: https://rsssf.org/ec/ec200405.html
+
   # --- UEFA Europa League (Q18760) ----------------------------------------------------
   - competition: Q18760
     season: "2020-21"
