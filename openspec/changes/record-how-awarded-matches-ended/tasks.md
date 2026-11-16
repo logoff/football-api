@@ -9,7 +9,7 @@
 ## 2. Curation
 
 - [x] 2.1 For each of the 21 awarded matches outside Segunda División, find an official source (league, federation or UEFA/CONMEBOL) for whether it was played in full, in part or not at all, and add the entry. Where none exists, cite the best source and say so in a comment. Verify that each draft value in proposal.md was confirmed or corrected.
-- [ ] 2.2 Once #47 is merged, add the Reus team entry from 19 January 2019. Verify 21 `NONE` and 21 `FULL` after a sync.
+- [x] 2.2 Once #47 is merged, add the Reus team entry from 19 January 2019. Verify 21 `NONE` and 21 `FULL` after a sync.
 
 ## 3. API
 
