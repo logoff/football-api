@@ -610,7 +610,8 @@ async def test_resynced_season_is_verified_again(
 ) -> None:
     competitions, ref, _ = premier_league
     await verify(competitions, fixture_teams, ref)
-    path = fresh_db / competitions[0].seasons[0].file
+    assert (file := competitions[0].seasons[0].file)
+    path = fresh_db / file
     path.write_bytes(path.read_bytes() + b"\n")
     ref.requests.clear()
     await verify(competitions, fixture_teams, ref)

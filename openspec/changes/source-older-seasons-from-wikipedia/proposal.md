@@ -47,6 +47,6 @@ openfootball (CC0) is our only data source, and its history is short: the Champi
   - A new Wikipedia season reader that turns match boxes into the parsed matches sync already stores.
   - Seed models, sync, `season_check`, REST schemas, GraphQL types and `schema.graphql`.
 - **Seeds:** 56 seasons with pins in `competitions.yaml`, 189 teams, the group-stage rules from 1991-92, and 5 awarded entries.
-- **Tooling:** a `just` recipe that writes or moves a season's pins and lists the box changes between the old and new revisions.
+- **Tooling:** a `just` recipe that prints a season's pins at the current revisions and lists the box changes from the seeded ones.
 - **Docs:** README sources, coverage and license sections, and the `openspec/config.yaml` context.
 - **Load on Wikipedia:** about 120 page revisions, fetched once and then cached.

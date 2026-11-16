@@ -63,8 +63,9 @@ def squad_paths(src: SeasonSource, sources: Path) -> list[list[Path]]:
 
 
 def season_inputs(src: SeasonSource, sources: Path) -> list[str]:
-    """Every source file the season's sync reads, relative to `sources`."""
-    files = [src.file, *(f for f in (src.json_file, src.events) if f)]
+    """Every source file the season's sync reads, relative to `sources`; none for a Wikipedia season,
+    whose pins are in its seed entry."""
+    files = [f for f in (src.file, src.json_file, src.events) if f]
     return files + [str(p.relative_to(sources)) for paths in squad_paths(src, sources) for p in paths]
 
 

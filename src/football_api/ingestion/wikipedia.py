@@ -32,6 +32,8 @@ _SCORE = re.compile(r"^(\d+)\s*[–−-]\s*(\d+)$")
 _BOX_SCORE = re.compile(r"^(\d+)\s*[–−-]\s*(\d+)\b")
 _BOX_PENS = re.compile(r"\(\s*(\d+)\s*[–−-]\s*(\d+)\s*p\s*\)")
 _BOX_AWARDED = re.compile(r"\bawd\.|\bawarded\b", re.I)
+_BOX_EXTRA_TIME = re.compile(r"\ba\.?\s?e\.?\s?t\b", re.I)
+_HEADING = re.compile(r"^h[2-6]$")
 
 
 class WikipediaUnavailable(Exception):
@@ -129,6 +131,9 @@ class MatchBox:
     awarded: bool = False
     # The line-up table after the box, home side first; None when there is none.
     lineups: tuple[tuple[LineupRow, ...], tuple[LineupRow, ...]] | None = field(default=None, compare=False)
+    extra_time: bool = field(default=False, compare=False)  # the score cell says `a.e.t.`
+    # The headings of the sections the box sits in, outermost first: ("First round", "First leg").
+    heading: tuple[str, ...] = field(default=(), compare=False)
 
 
 _MONTHS = {m: i for i, m in enumerate(
@@ -214,8 +219,9 @@ def _collapsible_box(table: Tag, linked: Linked) -> MatchBox | None:
     home, away = _team_title(cells[1], linked), _team_title(cells[3], linked)
     if home is None or away is None:
         return None
-    score, shootout, awarded = _box_result(cells[2].get_text(" ", strip=True))
-    return MatchBox(_box_day(cells[0]), home, away, score, shootout, awarded)
+    text = cells[2].get_text(" ", strip=True)
+    score, shootout, awarded = _box_result(text)
+    return MatchBox(_box_day(cells[0]), home, away, score, shootout, awarded, extra_time=bool(_BOX_EXTRA_TIME.search(text)))
 
 
 def _football_box(box: Tag, linked: Linked) -> MatchBox | None:
@@ -232,8 +238,22 @@ def _football_box(box: Tag, linked: Linked) -> MatchBox | None:
         if tr.get_text(strip=True).lower().startswith("penalties"):
             middle = _cells(rows[i + 1])
             shootout_text = middle[1].get_text(" ", strip=True) if len(middle) == 3 else None
-    score, shootout, awarded = _box_result(score_cell.get_text(" ", strip=True), shootout_text)
-    return MatchBox(_box_day(box), home, away, score, shootout, awarded)
+    text = score_cell.get_text(" ", strip=True)
+    score, shootout, awarded = _box_result(text, shootout_text)
+    return MatchBox(_box_day(box), home, away, score, shootout, awarded, extra_time=bool(_BOX_EXTRA_TIME.search(text)))
+
+
+def _heading(node: Tag) -> tuple[str, ...]:
+    """The headings of the `<section>`s enclosing `node`, outermost first. Parsoid opens each section
+    with its heading, bare or inside a `div.mw-heading`."""
+    out: list[str] = []
+    for section in node.find_parents("section"):
+        first = section.find(_HEADING, recursive=False)
+        if first is None and isinstance(wrap := section.find("div", class_="mw-heading", recursive=False), Tag):
+            first = wrap.find(_HEADING)
+        if isinstance(first, Tag):
+            out.append(first.get_text(" ", strip=True))
+    return tuple(reversed(out))
 
 
 _MINUTE = re.compile(r"^\s*(\d+)(?:\s*\+\s*(\d+))?")
@@ -376,7 +396,7 @@ def parse_match_boxes(html: str) -> list[MatchBox]:
         if box is not None:
             if node.name == "div":
                 box = replace(box, lineups=_lineups_after(node, nodes[i + 1] if i + 1 < len(nodes) else None))
-            boxes.append(box)
+            boxes.append(replace(box, heading=_heading(node)))
     return boxes
 
 
@@ -385,7 +405,10 @@ def parse_match_boxes(html: str) -> list[MatchBox]:
 # `UEFA Euro 2024 qualifying` or `2026 FIFA World Cup qualification` are other tournaments.
 _QUALIFYING = re.compile(r"qualif", re.I)
 _SKIP_SUBARTICLE = re.compile(
-    r"qualification|squad|femenin|futsal|\bbids?\b|statistic|broadcast|official|controvers|seeding|ceremon|disciplin|record",
+    r"qualification|squad|femenin|futsal|\bbids?\b|statistic|broadcast|official|controvers|seeding|ceremon|disciplin|record"
+    # Another competition or sport whose title extends this one's: `1960–61 European Cup Winners' Cup`,
+    # `1956–57 European Cup (handball)`.
+    r"|winners'? cup|\(",
     re.I,
 )
 
@@ -614,6 +637,13 @@ class WikipediaClient:
             self._recording[title] = revision
         return html
 
+    async def revision_html(self, title: str, revision: int) -> str:
+        """One revision of a page, rendered; never cached here (callers keep it, design D2)."""
+        resp = await self._get(f"{self._rest}/page/html/{quote(title.replace(' ', '_'), safe='')}/{revision}")
+        if resp.status_code != 200:
+            raise WikipediaUnavailable(f"{title} revision {revision}: HTTP {resp.status_code}")
+        return resp.text
+
     async def _season_pages(self, title: str, *, qualifying: bool = False) -> list[str]:
         """The season article, then the sub-articles it links (groups, knockout phase, qualifying
         stages when asked). Missing article → unavailable; a missing sub-article is skipped."""
@@ -625,6 +655,12 @@ class WikipediaClient:
             except WikipediaUnavailable:
                 continue
         return pages
+
+    async def season_titles(self, title: str) -> list[str]:
+        """The season article's canonical title, then the sub-articles `match_boxes` reads (no qualifying)."""
+        html = await self._page_html(title)
+        main = page_title(html) or title
+        return [main, *parse_subarticle_titles(html, main)]
 
     async def results_grid(self, title: str) -> ResultsGrid | None:
         """The article's results grid; None when the article has none. Missing article → unavailable."""

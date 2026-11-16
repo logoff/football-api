@@ -15,7 +15,7 @@ GITHUB = "https://github.com/openfootball"
 
 def season_files(season: SeasonSource) -> list[str]:
     """Every openfootball file a season reads: its text file, then the JSON mirror, events and squads."""
-    paths = [season.file, *(p for p in (season.json_file, season.events) if p)]
+    paths = [p for p in (season.file, season.json_file, season.events) if p]
     if season.squads:
         paths += season.squads.files
     return paths

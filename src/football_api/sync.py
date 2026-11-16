@@ -20,8 +20,8 @@ import logging
 import sys
 import uuid
 from collections import defaultdict
-from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncGenerator, Iterable
+from contextlib import AsyncExitStack, asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
@@ -69,6 +69,14 @@ from football_api.ingestion.seeds import (
 from football_api.ingestion.sources import ensure_sources, openfootball_source
 from football_api.ingestion.wikidata import WikidataUnavailable, verify_qids
 from football_api.ingestion.wikipedia import WikipediaClient
+from football_api.ingestion.wikipedia_season import (
+    WIKIPEDIA,
+    RevisionClient,
+    RevisionStore,
+    WikipediaSeasons,
+    seeded_qids,
+    source_of,
+)
 from football_api.season_check import (
     record_sync,
     season_fingerprint,
@@ -251,6 +259,8 @@ class SeasonContext:
     scorer_names_capitalised: bool
     squads: dict[uuid.UUID, list[tuple[Player, str]]]  # team_id → [(player, display)]
     awarded: AwardedSeeds = field(default_factory=AwardedSeeds)
+    ref_source: str = OPENFOOTBALL  # external_ref source of the season's matches: openfootball or wikipedia
+    clubs: dict[str, str] = field(default_factory=lambda: dict[str, str]())  # Wikipedia: QID → club article
     seen: set[uuid.UUID] = field(default_factory=lambda: set[uuid.UUID]())  # matches this sync matched or created
 
 
@@ -272,6 +282,19 @@ async def resolve_team(session: AsyncSession, path: str, line_no: int, name: str
         if parsed and parsed[0] == name and (parsed[1] is None or year >= parsed[1]) and (parsed[2] is None or year <= parsed[2]):
             return entity_id
     raise UnknownTeamError(path, line_no, name)
+
+
+async def resolve_side(
+    session: AsyncSession, src: SeasonSource, path: str, line_no: int, name: str, clubs: dict[str, str]
+) -> uuid.UUID:
+    """The team a match side names: an openfootball spelling, or for a Wikipedia season the QID of
+    the club article its box links (design D5)."""
+    if src.wikipedia_source is None:
+        return await resolve_team(session, path, line_no, name, src.start_year)
+    team_id = await lookup_ref(session, EntityType.TEAM, WIKIDATA, name)
+    if team_id is None:
+        raise UnknownTeamError(path, line_no, f"{clubs.get(name, '?')} ({name})")
+    return team_id
 
 
 def kickoff_utc(m: ParsedMatch, tz: str, path: str) -> datetime:
@@ -415,8 +438,8 @@ def occurrences(matches: list[ParsedMatch], team_of: dict[str, uuid.UUID]) -> li
 
 
 async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, path: str, occurrence: int) -> Match:
-    home_id = await resolve_team(session, path, m.line_no, m.home, ctx.src.start_year)
-    away_id = await resolve_team(session, path, m.line_no, m.away, ctx.src.start_year)
+    home_id = await resolve_side(session, ctx.src, path, m.line_no, m.home, ctx.clubs)
+    away_id = await resolve_side(session, ctx.src, path, m.line_no, m.away, ctx.clubs)
     stage, matchday = normalize_stage(m.round_label)
     kickoff = kickoff_utc(m, ctx.src.tz, path)
     key = f"{path}#{stage.value}#{m.home}#{m.away}" + (f"#{occurrence}" if occurrence > 1 else "")
@@ -450,13 +473,13 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
                 delete(ExternalRef).where(
                     ExternalRef.entity_type == EntityType.MATCH,
                     ExternalRef.entity_id == match.id,
-                    ExternalRef.source == OPENFOOTBALL,
+                    ExternalRef.source == ctx.ref_source,
                 )
             )
     if match is None:
         # The same listing, now resolving to another team (an alias moved to its own club in
         # teams.yaml): the match follows it and keeps its UUID.
-        listed = await lookup_ref(session, EntityType.MATCH, OPENFOOTBALL, key)
+        listed = await lookup_ref(session, EntityType.MATCH, ctx.ref_source, key)
         if listed is not None and listed not in ctx.seen:
             match = await session.get(Match, listed)
         if match is not None:
@@ -491,7 +514,7 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
     match.home_pens = score.home_pens if score else None
     match.away_pens = score.away_pens if score else None
     await session.flush()
-    await ensure_ref(session, EntityType.MATCH, match.id, OPENFOOTBALL, key)
+    await ensure_ref(session, EntityType.MATCH, match.id, ctx.ref_source, key)
     ctx.seen.add(match.id)
     if m.goals_listed:
         await sync_goals(session, ctx, match, m)
@@ -637,6 +660,7 @@ async def sync_events(session: AsyncSession, ctx: SeasonContext, synced: dict[Ma
 
 
 def read_matches(seed: CompetitionSeed, s: SeasonSource, sources: Path) -> tuple[list[ParsedMatch], str]:
+    assert s.file, f"{seed.name} {s.label} has no openfootball file"
     text_matches = parse_file(sources / s.file, start_year=s.start_year, display_path=s.file)
     if s.json_file:
         if not (sources / s.json_file).exists():
@@ -650,10 +674,22 @@ def read_matches(seed: CompetitionSeed, s: SeasonSource, sources: Path) -> tuple
 
 
 async def sync_season(
-    session: AsyncSession, seed: CompetitionSeed, src: SeasonSource, sources: Path, awarded: AwardedSeeds | None = None
+    session: AsyncSession,
+    seed: CompetitionSeed,
+    src: SeasonSource,
+    sources: Path,
+    awarded: AwardedSeeds | None = None,
+    wikipedia: WikipediaSeasons | None = None,
 ) -> int:
     comp = await upsert_competition(session, seed)
-    matches, path = read_matches(seed, src, sources)
+    clubs: dict[str, str] = {}
+    if src.wikipedia_source:
+        if wikipedia is None:
+            raise SyncError(f"{seed.name} {src.label}: sourced from Wikipedia, but no Wikipedia reader was given")
+        read = await wikipedia.read(src)
+        matches, path, clubs = read.matches, read.path, read.clubs
+    else:
+        matches, path = read_matches(seed, src, sources)
     season = await session.scalar(select(Season).where(Season.competition_id == comp.id, Season.label == src.label))
     if season is None:
         season = Season(competition_id=comp.id, label=src.label)
@@ -667,14 +703,15 @@ async def sync_season(
     )
     season.scorers_coverage = Coverage.FULL if any(m.goals_listed for m in matches) else Coverage.NONE
     season.players_coverage = Coverage.FULL if src.squads else Coverage.NONE
-    season.source = openfootball_source(src)
+    season.source = source_of(src) if src.wikipedia_source else openfootball_source(src)
     await session.flush()
-    await ensure_ref(session, EntityType.SEASON, season.id, OPENFOOTBALL, src.file)
+    ref_source = WIKIPEDIA if src.wikipedia_source else OPENFOOTBALL
+    await ensure_ref(session, EntityType.SEASON, season.id, ref_source, src.file or path)
 
     team_of: dict[str, uuid.UUID] = {}
     for m in matches:
-        team_of[m.home] = await resolve_team(session, path, m.line_no, m.home, src.start_year)
-        team_of[m.away] = await resolve_team(session, path, m.line_no, m.away, src.start_year)
+        team_of[m.home] = await resolve_side(session, src, path, m.line_no, m.home, clubs)
+        team_of[m.away] = await resolve_side(session, src, path, m.line_no, m.away, clubs)
     for team_id in set(team_of.values()):
         if await session.get(TeamSeason, (team_id, season.id)) is None:
             session.add(TeamSeason(team_id=team_id, season_id=season.id))
@@ -692,6 +729,8 @@ async def sync_season(
         scorer_names_capitalised=squads_style == "more",
         squads=defaultdict(list),
         awarded=awarded or AwardedSeeds(),
+        ref_source=ref_source,
+        clubs=clubs,
     )
     await sync_squads(session, ctx)
     synced: dict[MatchKey, list[Match]] = defaultdict(list)
@@ -775,6 +814,7 @@ async def run_sync(
     verify: bool = False,
     full: bool = False,
     reference: ResultsReference | None = None,
+    wikipedia: RevisionClient | None = None,
 ) -> SyncReport:
     """Sync every season of `competitions`; a failing season is logged and reported, not raised.
 
@@ -782,6 +822,8 @@ async def run_sync(
     With `verify`, the seasons that synced or were unchanged and name a reference are then
     verified against it (`reference` defaults to English Wikipedia), each only when something
     it depends on changed, unless `full`. Verification never fails the run.
+    Seasons sourced from Wikipedia read their pinned revisions through `wikipedia` (default: English
+    Wikipedia, opened only when a revision isn't cached yet).
     """
     settings = get_settings()
     competitions = competitions if competitions is not None else load_competitions()
@@ -790,7 +832,10 @@ async def run_sync(
     sources = settings.sources_dir
     await check_schema()
     report = SyncReport()
-    async with run_lock():
+    async with run_lock(), AsyncExitStack() as stack:
+        if wikipedia is None:
+            wikipedia = _LazyWikipedia(stack, settings.wikipedia_rest, settings.wikipedia_api)
+        wiki_seasons = WikipediaSeasons(RevisionStore(sources / "wikipedia", wikipedia), seeded_qids(teams))
         if refresh_sources:
             ensure_sources(sources, competitions)
 
@@ -818,7 +863,7 @@ async def run_sync(
                         targets.append((comp_seed, src))
                         continue
                     async with maker() as session, session.begin():
-                        count = await sync_season(session, comp_seed, src, sources, awarded)
+                        count = await sync_season(session, comp_seed, src, sources, awarded, wiki_seasons)
                         synced_id = await season_id(session, comp_seed, src)
                         assert synced_id is not None
                         await record_sync(session, synced_id, fingerprint, datetime.now(UTC))
@@ -837,6 +882,26 @@ async def run_sync(
                 async with WikipediaClient(rest=settings.wikipedia_rest, api=settings.wikipedia_api) as wiki:
                     await verify_seasons(targets, wiki, changed=changed)
     return report
+
+
+class _LazyWikipedia:
+    """English Wikipedia, connected on the first revision that isn't cached: a run whose pins are
+    all cached opens no connection."""
+
+    def __init__(self, stack: AsyncExitStack, rest: str, api: str) -> None:
+        self._stack, self._rest, self._api = stack, rest, api
+        self._client: WikipediaClient | None = None
+
+    async def _get(self) -> WikipediaClient:
+        if self._client is None:
+            self._client = await self._stack.enter_async_context(WikipediaClient(rest=self._rest, api=self._api))
+        return self._client
+
+    async def revision_html(self, title: str, revision: int) -> str:
+        return await (await self._get()).revision_html(title, revision)
+
+    async def qids(self, titles: Iterable[str]) -> dict[str, str]:
+        return await (await self._get()).qids(titles)
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
