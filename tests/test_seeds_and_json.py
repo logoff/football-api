@@ -18,8 +18,8 @@ FIXTURE_SEEDS = Path(__file__).parent / "fixtures" / "seeds"
 def test_real_seed_files_are_valid() -> None:
     competitions = load_competitions()
     teams = load_teams()  # also rejects duplicate aliases and QIDs
-    assert len(competitions) == 19
-    assert len({c.wikidata for c in competitions}) == 19
+    assert len(competitions) == 20
+    assert len({c.wikidata for c in competitions}) == 20
     # Only amateur cup clubs with no unambiguous Wikidata item go without a QID (add-domestic-cups D4).
     without_qid = [t for t in teams if not t.wikidata]
     assert all(t.kind is TeamKind.CLUB for t in without_qid) and len(without_qid) <= 64
