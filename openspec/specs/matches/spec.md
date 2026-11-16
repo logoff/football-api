@@ -19,6 +19,7 @@ The system SHALL store each match with:
 - home and away scores at the end of play, including extra time (nullable until `COMPLETED`); for an awarded match, the score the source records
 - the referee's name and the attendance, both nullable (see `match-events`)
 - `awarded`: `true` when the result was decided off the pitch (forfeit or disciplinary decision), as the source marks it; otherwise `false`
+- `played`: how much of the match was played, for a `COMPLETED` match: `FULL` (to the end), `PARTIAL` (abandoned) or `NONE` (never kicked off). A match that isn't awarded is `FULL`. An awarded match takes the value curated in `seeds/awarded.yaml`, and is null while it isn't curated. Null for any other status.
 - `decided_by`: `REGULAR`, `EXTRA_TIME`, or `PENALTIES` (nullable until `COMPLETED`)
 - home and away penalty-shootout scores (null unless `decided_by` is `PENALTIES`)
 - a stage: `QUALIFYING`, `PRELIMINARY`, `ROUND`, `LEAGUE`, `GROUP`, `PLAYOFF`, `R32`, `R16`, `QF`, `SF`, `THIRD_PLACE`, `FIFTH_PLACE`, or `FINAL`; an optional matchday number, which for `ROUND` is the round's number; and the source's round label
@@ -104,7 +105,37 @@ The system SHALL store each match with:
 #### Scenario: Match played normally
 
 - **WHEN** a client GETs a match with no `[awarded]` tag in the source
-- **THEN** `awarded` is `false`
+- **THEN** `awarded` is `false` and `played` is `FULL`
+
+#### Scenario: Awarded match played to the end
+
+- **GIVEN** Union Berlin v Bochum 2024-25 is awarded in the source and curated as `FULL`
+- **WHEN** a client GETs it
+- **THEN** `awarded` is `true` and `played` is `FULL`
+
+#### Scenario: Abandoned match
+
+- **GIVEN** Bastia v Lyon 2016-17 is awarded in the source and curated as `PARTIAL`
+- **WHEN** a client GETs it
+- **THEN** `awarded` is `true`, `played` is `PARTIAL`, and the score is the 0–0 at abandonment
+
+#### Scenario: Forfeits after an expulsion
+
+- **GIVEN** a team-wide entry for CF Reus Deportiu in Segunda División 2018-19, from 19 January 2019, curated as `NONE`
+- **WHEN** Segunda División 2018-19 is synced
+- **THEN** Reus's 21 awarded matches from that date have `played` `NONE`
+- **AND** its 21 earlier matches have `awarded` `false` and `played` `FULL`
+
+#### Scenario: Awarded match not yet curated
+
+- **GIVEN** the source tags a match `[awarded]` and `seeds/awarded.yaml` has no entry for it
+- **WHEN** it is synced
+- **THEN** it is stored with `awarded` `true` and `played` null, sync logs a warning naming the match, and sync carries on
+
+#### Scenario: Match not completed
+
+- **WHEN** a client GETs a `SCHEDULED`, `POSTPONED` or `CANCELLED` match
+- **THEN** `played` is null
 
 #### Scenario: Fifth-place match
 
