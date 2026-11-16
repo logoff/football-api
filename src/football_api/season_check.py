@@ -9,12 +9,13 @@ inputs always produce the same rows, so an equal fingerprint means re-syncing ch
 import hashlib
 import json
 import uuid
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 from functools import cache
 from pathlib import Path
 
+from pydantic import BaseModel
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -67,13 +68,17 @@ def season_inputs(src: SeasonSource, sources: Path) -> list[str]:
     return files + [str(p.relative_to(sources)) for paths in squad_paths(src, sources) for p in paths]
 
 
-def season_fingerprint(seed: CompetitionSeed, src: SeasonSource, teams: str, sources: Path) -> str:
-    """D1: code, seed entries, team seeds (`teams_fingerprint`) and source files."""
+def season_fingerprint(
+    seed: CompetitionSeed, src: SeasonSource, teams: str, sources: Path, awarded: Sequence[BaseModel] = ()
+) -> str:
+    """D1: code, seed entries, team seeds (`teams_fingerprint`), the season's awarded.yaml entries
+    and source files."""
     parts = [
         code_fingerprint().encode(),
         _canonical(seed.model_dump(mode="json", exclude={"seasons"})),
         _canonical(src.model_dump(mode="json", by_alias=True)),
         teams.encode(),
+        _canonical([e.model_dump(mode="json", by_alias=True) for e in awarded]),
     ]
     for name in season_inputs(src, sources):
         path = sources / name

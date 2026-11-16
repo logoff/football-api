@@ -121,6 +121,14 @@ async def test_awarded_flag(client: httpx.AsyncClient) -> None:
         2,
     )
     assert awarded["status"] == "COMPLETED"
+    assert awarded["played"] == "FULL"  # curated in the fixture awarded.yaml
+
+
+async def test_played(client: httpx.AsyncClient) -> None:
+    """matches spec: `played` is FULL for a match that isn't awarded, null unless COMPLETED."""
+    matches = (await get(client, "/v1/matches?limit=200"))["data"]
+    assert {m["played"] for m in matches if m["status"] == "COMPLETED" and not m["awarded"]} == {"FULL"}
+    assert {m["played"] for m in matches if m["status"] != "COMPLETED"} == {None}
 
 
 async def test_seasons(client: httpx.AsyncClient) -> None:

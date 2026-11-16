@@ -369,6 +369,7 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
             home_pens=m.home_pens,
             away_pens=m.away_pens,
             awarded=m.awarded,
+            played=m.played,
             referee=m.referee_name,
             attendance=m.attendance,
             coverage=MatchCoverage(

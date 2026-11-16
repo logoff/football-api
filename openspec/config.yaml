@@ -34,7 +34,9 @@ context: |
   (incomplete source data).
 
   Data depth: entities + schedule + final scores (incl. extra time and
-  penalty shootouts). Goal scorers and squads: full for WC, Euro,
+  penalty shootouts); awarded matches flagged, with how much was played
+  (FULL/PARTIAL/NONE) curated in seeds/awarded.yaml
+  (record-how-awarded-matches-ended). Goal scorers and squads: full for WC, Euro,
   Copa América, Club World Cup; none elsewhere. Lineups, substitutions,
   cards, referee and attendance (change add-match-events): every World
   Cup and Club World Cup, and the 2025-26 seasons of the five leagues,

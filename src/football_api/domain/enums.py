@@ -33,6 +33,14 @@ class MatchStatus(StrEnum):
     POSTPONED = "POSTPONED"
 
 
+class Played(StrEnum):
+    """How much of a completed match was played: to the end, until it was abandoned, or not at all."""
+
+    FULL = "FULL"
+    PARTIAL = "PARTIAL"
+    NONE = "NONE"
+
+
 class DecidedBy(StrEnum):
     REGULAR = "REGULAR"
     EXTRA_TIME = "EXTRA_TIME"

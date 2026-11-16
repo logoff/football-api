@@ -1,0 +1,196 @@
+# How much of each awarded match was played (record-how-awarded-matches-ended).
+#
+# matches: one awarded match, keyed like standings.yaml awards (competition, season, home and
+#   away QIDs).
+# teams: every awarded match of a team on or after `from` (an expelled club's remaining
+#   fixtures). A match entry wins over a team entry.
+# played: FULL (played to the end, result changed afterwards), PARTIAL (abandoned) or NONE
+#   (never kicked off).
+#
+# Every entry names an official source where one exists. Teams are Wikidata QIDs, as in teams.yaml.
+
+matches:
+  # --- Bundesliga (Q82595) ------------------------------------------------------------
+  - competition: Q82595
+    season: "2024-25"
+    home: Q141971 # 1. FC Union Berlin
+    away: Q105861 # VfL Bochum
+    played: FULL
+    reason: "Played to a 1-1 draw after Bochum's goalkeeper was hit by a lighter; the DFB sports court awarded Bochum a 2-0 win"
+    source: https://www.dfb.de/news/dfb-sportgericht-wertet-bundesligaspiel-in-berlin-fuer-bochum
+
+  # --- Serie A (Q15804) ---------------------------------------------------------------
+  # No official communiqué found online; press report of the Giudice Sportivo decision.
+  - competition: Q15804
+    season: "2016-17"
+    home: Q8603 # US Sassuolo Calcio
+    away: Q2710 # Delfino Pescara 1936
+    played: FULL
+    reason: "Sassuolo won 2-1, then lost 0-3 for fielding Antonino Ragusa, whose registration the league hadn't been notified of"
+    source: https://www.tuttosport.com/news/calcio/serie-a/2016/08/30-14888987/giudice_sportivo_sassuolo-pescara_0-3_a_tavolino
+  # No official communiqué found online; press report quoting it.
+  - competition: Q15804
+    season: "2020-21"
+    home: Q8639 # Hellas Verona
+    away: Q2739 # AS Roma
+    played: FULL
+    reason: "Played to a 0-0 draw; Roma lost 0-3 for fielding Amadou Diawara, who wasn't on its squad list as an over-22"
+    source: https://www.calcioefinanza.it/2020/09/22/roma-ufficiale-3-0-tavolino-hellas-caso-diawara/
+
+  # --- Ligue 1 (Q13394) ---------------------------------------------------------------
+  - competition: Q13394
+    season: "2016-17"
+    home: Q208399 # SC Bastia
+    away: Q704 # Olympique Lyonnais
+    played: PARTIAL
+    reason: "Abandoned at half-time at 0-0 after Bastia supporters attacked Lyon players"
+    source: https://ma-api.ligue1.fr/championship-standings/1/general?season=2016
+  - competition: Q13394
+    season: "2024-25"
+    home: Q19513 # Montpellier HSC
+    away: Q19521 # AS Saint-Étienne
+    played: PARTIAL
+    reason: "Abandoned in the 57th minute at 0-2 after Montpellier supporters threw flares; the LFP gave the match lost to Montpellier"
+    source: https://ligue1.com/fr/articles/l1_article_2269-
+
+  # --- EFL Cup (Q11152) ---------------------------------------------------------------
+  # The EFL's statement, as published by Tottenham.
+  - competition: Q11152
+    season: "2020-21"
+    home: Q19595 # Leyton Orient
+    away: Q18741 # Tottenham Hotspur
+    played: NONE
+    reason: "Not played: a council order after Covid-19 cases at Orient; Orient forfeited the tie and Tottenham went through"
+    source: https://www.tottenhamhotspur.com/news/2020/september/efl-statement-leyton-orient-v-tottenham-hotspur/
+
+  # --- Copa del Rey (Q483794) ---------------------------------------------------------
+  # No official RFEF decision found online; press report.
+  - competition: Q483794
+    season: "2023-24"
+    home: Q698403 # Arosa SC
+    away: Q8812 # Granada CF
+    played: FULL
+    reason: "Granada won 0-3, then lost the tie for fielding goalkeeper Adri López, registered with its reserve side"
+    source: https://www.football-espana.net/2023/11/07/granada-ejected-from-copa-del-rey-for-fielding-ineligible-player-during-arosa-sc-victory
+
+  # --- DFB-Pokal (Q150880) ------------------------------------------------------------
+  - competition: Q150880
+    season: "2021-22"
+    home: Q316865 # SC Preußen Münster
+    away: Q101859 # VfL Wolfsburg
+    played: FULL
+    reason: "Wolfsburg won 3-1 after extra time, then lost 2-0 for making six substitutions"
+    source: https://www.dfb.de/en/news/detail/dfb-sustain-muensters-objection-to-first-round-dfb-pokal-result-230875
+
+  # --- Coppa Italia (Q169918) ---------------------------------------------------------
+  # No official communiqué found online; FBref records the played match and the award.
+  - competition: Q169918
+    season: "2020-21"
+    home: Q289707 # AC Reggiana 1919
+    away: Q1865284 # SS Monopoli 1966
+    played: FULL
+    reason: "Reggiana won on penalties after a 2-2 draw, then lost 0-3 for fielding an ineligible player"
+    source: https://fbref.com/en/comps/529/10894/schedule/2020-2021-Coppa-Italia-Scores-and-Fixtures
+  # No official communiqué found online; best available source.
+  - competition: Q169918
+    season: "2020-21"
+    home: Q6651 # Brescia Calcio
+    away: Q2114224 # FC Trapani 1905
+    played: NONE
+    reason: "Not played: Trapani didn't turn up"
+    source: https://en.wikipedia.org/wiki/2020%E2%80%9321_Coppa_Italia
+  # No official communiqué found online; press report.
+  - competition: Q169918
+    season: "2020-21"
+    home: Q6703 # Empoli
+    away: Q6651 # Brescia Calcio
+    played: NONE
+    reason: "Not played: Brescia refused to travel after four Covid-19 cases"
+    source: https://sport.sky.it/calcio/coppa-italia/2020/11/25/coppa-italia-oggi-partite-risultati
+  # Press report quoting the Giudice Sportivo's communiqué.
+  - competition: Q169918
+    season: "2020-21"
+    home: Q2739 # AS Roma
+    away: Q8615 # Spezia Calcio
+    played: FULL
+    reason: "Spezia won 4-2 after extra time; Roma lost 0-3 for making six substitutions"
+    source: https://sport.sky.it/calcio/coppa-italia/2021/01/22/roma-spezia-coppa-italia-0-3-tavolino-sostituzioni
+
+  # --- Coupe de France (Q212412) ------------------------------------------------------
+  # No official FFF decision found online; press report.
+  - competition: Q212412
+    season: "2024-25"
+    home: Q119947321 # Étoile Maritime
+    away: Q16682015 # USSA Vertou
+    played: FULL
+    reason: "Étoile Maritime won on penalties after 0-0, then lost the tie over a player's non-compliant licence"
+    source: https://sports.orange.fr/football/coupe-de-france/article/coupe-de-france-un-voyage-a-la-reunion-pour-vertou-finalement-qualifie-sur-tapis-vert-exclu-CNT000002gow0i.html
+  # No official FFF decision found online; press report.
+  - competition: Q212412
+    season: "2024-25"
+    home: Q3076521 # FC Marmande
+    away: Q3558032 # Vierzon
+    played: FULL
+    reason: "Vierzon won on penalties after 2-2, then lost the tie over a fraudulent licence"
+    source: https://sports.orange.fr/football/coupe-de-france/article/coupe-de-france-32es-de-finale-un-petit-poucet-repeche-exclu-CNT000002gDAKs.html
+  - competition: Q212412
+    season: "2024-25"
+    home: Q822021 # Tours FC
+    away: Q48911 # FC Lorient
+    played: NONE
+    reason: "Not played: cancelled on the day for safety reasons; the FFF held Tours responsible and gave it the match lost"
+    source: https://www.fff.fr/article/13900-lorient-qualifie-pour-les-16es-de-finale.html
+
+  # --- UEFA Europa League (Q18760) ----------------------------------------------------
+  - competition: Q18760
+    season: "2020-21"
+    home: Q12297 # Villarreal
+    away: Q723476 # Qarabağ
+    played: NONE
+    reason: "Not played: Qarabağ lacked the minimum number of players after Covid-19 cases; UEFA declared it forfeited"
+    source: https://www.uefa.com/news-media/news/0264-111ec5a43f08-60d12c855894-1000--cedb-villarreal-cf-v-qarabag-fk/
+
+  # --- UEFA Conference League (Q59365764) ---------------------------------------------
+  - competition: Q59365764
+    season: "2021-22"
+    home: Q18741 # Tottenham Hotspur
+    away: Q19509 # Stade Rennais
+    played: NONE
+    reason: "Not played: postponed after Covid-19 cases at Tottenham and never rescheduled; UEFA declared it forfeited"
+    source: https://www.uefa.com/uefaconferenceleague/news/0270-14009a873227-d729fc1f988d-1000--tottenham-vs-rennes-forfeited/
+
+  # --- CONMEBOL Copa Libertadores (Q184795) -------------------------------------------
+  # No official CONMEBOL decision found online; press report.
+  - competition: Q184795
+    season: "2015"
+    home: Q170703 # Boca Juniors
+    away: Q15799 # CA River Plate
+    played: PARTIAL
+    reason: "Abandoned at half-time at 0-0 after River players were attacked with an irritant in the tunnel; Boca disqualified"
+    source: https://www.t13.cl/noticia/deportes13/futbol-internacional/conmebol-descalifica-a-boca-juniors-de-la-copa-libertadores-por-incidentes-ante-river
+  # No official CONMEBOL decision found online; press report.
+  - competition: Q184795
+    season: "2017"
+    home: Q324589 # Club Atlético Lanús
+    away: Q2536715 # Associação Chapecoense de Futebol
+    played: FULL
+    reason: "Chapecoense won 1-2, then lost 3-0 for fielding the suspended Luiz Otávio"
+    source: https://elgrafico.com.ar/articulo/conmebol-libertadores/23327/conmebol-confirmo-la-mala-inclusion-de-chapecoense-ante-lanus
+  # No official CONMEBOL decision found online; press report.
+  - competition: Q184795
+    season: "2025"
+    home: Q207373 # CSD Colo-Colo
+    away: Q188841 # Fortaleza
+    played: PARTIAL
+    reason: "Abandoned at 0-0 in the second half after two fans died outside the stadium and others invaded the pitch"
+    source: https://www.cnnbrasil.com.br/esportes/futebol/futebol-internacional/libertadores-da-america/colo-colo-0-x-3-fortaleza-conmebol-da-vitoria-ao-leao-em-jogo-cancelado/
+  # No official CONMEBOL decision found online; press report.
+  - competition: Q184795
+    season: "2026"
+    home: Q332527 # Deportivo Independiente Medellín
+    away: Q17479 # CR Flamengo
+    played: PARTIAL
+    reason: "Abandoned within the first minutes after Medellín supporters threw flares and objects onto the pitch"
+    source: https://elgrafico.com.ar/articulo/conmebol-libertadores/100114/conmebol-le-dio-por-ganado-el-partido-cancelado-a-flamengo-ante-dim-el-panorama-de-estudiantes
+
+teams: []

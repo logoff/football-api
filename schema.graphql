@@ -122,6 +122,7 @@ type Match {
   homePens: Int
   awayPens: Int
   awarded: Boolean!
+  played: Played
   referee: String
   attendance: Int
   coverage: MatchCoverage!
@@ -179,6 +180,12 @@ type PageInfo {
 
   """Pass as `after` to get the next page"""
   endCursor: String
+}
+
+enum Played {
+  FULL
+  PARTIAL
+  NONE
 }
 
 type Player {

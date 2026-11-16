@@ -19,6 +19,7 @@ from football_api.domain.enums import (
     DecidedBy,
     LineupRole,
     MatchStatus,
+    Played,
     SeasonStatus,
     Side,
     Stage,
@@ -30,7 +31,7 @@ from football_api.domain.enums import (
 from football_api.infra import models as m
 from football_api.season_tables import season_tables
 
-for _enum in (CardKind, CompetitionFormat, CompetitionScope, DecidedBy, LineupRole, MatchStatus, SeasonStatus, Side, Stage, TeamKind, VerificationStatus):
+for _enum in (CardKind, CompetitionFormat, CompetitionScope, DecidedBy, LineupRole, MatchStatus, Played, SeasonStatus, Side, Stage, TeamKind, VerificationStatus):
     strawberry.enum(_enum)
 
 # Maps `datetime` in the schema (`StrawberryConfig.scalar_map`): REST's `Z` format.
@@ -442,6 +443,7 @@ class Match:
     home_pens: int | None
     away_pens: int | None
     awarded: bool
+    played: Played | None
     referee: str | None
     attendance: int | None
     coverage: MatchCoverage
@@ -470,6 +472,7 @@ class Match:
             home_pens=x.home_pens,
             away_pens=x.away_pens,
             awarded=x.awarded,
+            played=x.played,
             referee=x.referee_name,
             attendance=x.attendance,
             coverage=MatchCoverage(
