@@ -2,9 +2,9 @@
 
 ## 1. Source and license model
 
-- [ ] 1.1 Add `season.source` (JSON) and `match.license` with an Alembic migration that backfills openfootball and `CC0-1.0` (design D7). Verify that `just migrate` upgrades and downgrades cleanly.
-- [ ] 1.2 Fill `season.source` and `match.license` in sync for openfootball seasons, with the GitHub URL of every file read. Verify with sync tests.
-- [ ] 1.3 Serve `source` on seasons and `license` on matches in REST and GraphQL, and regenerate `schema.graphql`. Verify with API and GraphQL tests.
+- [x] 1.1 Add `season.source` (JSON) with an Alembic migration that backfills openfootball and `CC0-1.0` (design D7). Verify that `just migrate` upgrades and downgrades cleanly.
+- [x] 1.2 Fill `season.source` in sync for openfootball seasons, with the GitHub URL of every file read. Verify with tests.
+- [x] 1.3 Serve `source` on seasons and `license` on matches in REST and GraphQL, and regenerate `schema.graphql`. Verify with API and GraphQL tests.
 
 ## 2. Wikipedia as a season source
 

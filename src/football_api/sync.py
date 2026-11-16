@@ -66,7 +66,7 @@ from football_api.ingestion.seeds import (
     load_teams,
     parse_scoped_key,
 )
-from football_api.ingestion.sources import ensure_sources
+from football_api.ingestion.sources import ensure_sources, openfootball_source
 from football_api.ingestion.wikidata import WikidataUnavailable, verify_qids
 from football_api.ingestion.wikipedia import WikipediaClient
 from football_api.season_check import (
@@ -667,6 +667,7 @@ async def sync_season(
     )
     season.scorers_coverage = Coverage.FULL if any(m.goals_listed for m in matches) else Coverage.NONE
     season.players_coverage = Coverage.FULL if src.squads else Coverage.NONE
+    season.source = openfootball_source(src)
     await session.flush()
     await ensure_ref(session, EntityType.SEASON, season.id, OPENFOOTBALL, src.file)
 

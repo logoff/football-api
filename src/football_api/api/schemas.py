@@ -12,9 +12,11 @@ from football_api.domain.enums import (
     CompetitionScope,
     Coverage,
     DecidedBy,
+    License,
     LineupRole,
     MatchStatus,
     Played,
+    Publisher,
     SeasonStatus,
     Side,
     Stage,
@@ -64,6 +66,20 @@ class SeasonCoverage(BaseModel):
     )
 
 
+_LICENSE = "SPDX identifier of the license this data is served under; see the README's data sources section"
+
+
+class SourcePage(BaseModel):
+    title: str = Field(examples=["england/2024-25/1-premierleague.txt"])
+    url: str = Field(description="The page or file read; for Wikipedia, the exact revision")
+
+
+class SeasonSourceOut(BaseModel):
+    publisher: Publisher
+    license: License = Field(description=_LICENSE)
+    pages: list[SourcePage] = Field(description="What the season was read from")
+
+
 class SeasonOut(_Out):
     id: uuid.UUID
     competition_id: uuid.UUID
@@ -72,6 +88,7 @@ class SeasonOut(_Out):
     ends_on: date | None
     status: SeasonStatus
     coverage: SeasonCoverage
+    source: SeasonSourceOut
 
 
 class TeamSeasonOut(BaseModel):
@@ -216,6 +233,7 @@ class MatchOut(BaseModel):
     referee: str | None = Field(description="Referee's name, when the source gives it", examples=["Alireza Faghani"])
     attendance: int | None = Field(description="Spectators, when the source gives it", examples=[81118])
     coverage: MatchCoverage
+    license: License = Field(description=f"The license of the match's season. {_LICENSE}")
     verification: MatchVerificationOut | None = Field(
         description="Score check against an independent open reference; null when the match isn't verified. "
         "Only the outcome is shown, never the reference's own values"

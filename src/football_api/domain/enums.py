@@ -41,6 +41,20 @@ class Played(StrEnum):
     NONE = "NONE"
 
 
+class Publisher(StrEnum):
+    """Who publishes a season's source data."""
+
+    OPENFOOTBALL = "openfootball"
+    WIKIPEDIA = "Wikipedia"
+
+
+class License(StrEnum):
+    """SPDX identifier of the license a season's data is served under."""
+
+    CC0 = "CC0-1.0"
+    CC_BY_SA = "CC-BY-SA-4.0"
+
+
 class DecidedBy(StrEnum):
     REGULAR = "REGULAR"
     EXTRA_TIME = "EXTRA_TIME"

@@ -41,7 +41,7 @@ openfootball (CC0) is our only data source, and its history is short: the Champi
 
 ## Impact
 
-- **Database:** a nullable `source` JSON column on `season` and a `license` column on `match`, with an Alembic migration that backfills openfootball and `CC0-1.0`.
+- **Database:** a `source` JSON column on `season`, with an Alembic migration that backfills openfootball and `CC0-1.0`. A match's license is read from its season.
 - **Code:**
   - `ingestion/wikipedia.py`: fetching pinned revisions, an on-disk cache, and headings for each match box.
   - A new Wikipedia season reader that turns match boxes into the parsed matches sync already stores.

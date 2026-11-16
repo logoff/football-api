@@ -142,6 +142,27 @@ async def test_seasons(client: httpx.AsyncClient) -> None:
     assert (wc["starts_on"], wc["status"], wc["coverage"]) == ("2022-11-20", "COMPLETED", {"scorers": "full", "players": "full", "lineups": "full", "substitutions": "full", "cards": "full"})
 
 
+async def test_season_source_and_match_license(client: httpx.AsyncClient) -> None:
+    """season-sources spec: every season names its source and license, and every match carries that license."""
+    pl = await get(client, f"/v1/seasons/{await season_id(client, 'Premier League')}")
+    assert pl["source"] == {
+        "publisher": "openfootball",
+        "license": "CC0-1.0",
+        "pages": [
+            {
+                "title": "england/2024-25/1-premierleague.txt",
+                "url": "https://github.com/openfootball/england/blob/master/2024-25/1-premierleague.txt",
+            },
+            {
+                "title": "football.json/2024-25/en.1.json",
+                "url": "https://github.com/openfootball/football.json/blob/master/2024-25/en.1.json",
+            },
+        ],
+    }
+    matches = (await get(client, "/v1/matches?limit=200"))["data"]
+    assert matches and {m["license"] for m in matches} == {"CC0-1.0"}
+
+
 async def test_teams(client: httpx.AsyncClient) -> None:
     united = await find(client, "/v1/teams?expand=seasons", "Manchester United")
     assert (united["country"], united["kind"]) == ("GB-ENG", "CLUB")

@@ -29,6 +29,7 @@ from football_api.api.schemas import (
     PlayerRef,
     SeasonCoverage,
     SeasonOut,
+    SeasonSourceOut,
     StandingAdjustmentOut,
     StandingRowOut,
     StandingsOut,
@@ -127,6 +128,7 @@ def _season_out(season: Season) -> SeasonOut:
             substitutions=season.substitutions_coverage,
             cards=season.cards_coverage,
         ),
+        source=SeasonSourceOut.model_validate(season.source),
     )
 
 
@@ -378,6 +380,7 @@ async def _matches_out(session: AsyncSession, rows: Sequence[MatchRow], expands:
                 substitutions=season.substitutions_coverage,
                 cards=season.cards_coverage,
             ),
+            license=season.source["license"],
             verification=verification_out(checks.get((m.id, VerificationAspect.RESULT))),
             events_verification=verification_out(checks.get((m.id, VerificationAspect.EVENTS))),
         )

@@ -161,7 +161,7 @@ async def test_unknown_lookup_is_null(client: httpx.AsyncClient) -> None:
 
 COMPETITION = "id name country teamKind scope format"
 COVERAGE = "coverage { scorers players lineups substitutions cards }"
-SEASON = f"id competitionId label startsOn endsOn status {COVERAGE}"
+SEASON = f"id competitionId label startsOn endsOn status {COVERAGE} source {{ publisher license pages {{ title url }} }}"
 TEAM = "id name country kind"
 PLAYER = "id displayName fullName givenName familyName birthYear dob nationality position"
 VENUE = "id name city country"
@@ -255,7 +255,7 @@ LINEUP = f"{{ formation entries {{ player {REF} name role line isCaptain }} }}"
 MATCH = f"""
   id competitionId seasonId stage matchday occurrence roundLabel kickoffUtc originalKickoffUtc status
   homeTeamId awayTeamId venueId homeScore awayScore decidedBy homePens awayPens awarded played referee attendance
-  coverage {{ scorers lineups substitutions cards }}
+  coverage {{ scorers lineups substitutions cards }} license
   verification {VERIFICATION} eventsVerification {VERIFICATION}
   homeTeam {{ {TEAM} }} awayTeam {{ {TEAM} }} venue {{ {VENUE} }}
   scorers {{ ordinal side player {REF} name minute addedMinute isPenalty isOwnGoal }}
