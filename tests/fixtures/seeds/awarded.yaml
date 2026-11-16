@@ -1,0 +1,8 @@
+matches:
+  - competition: Q82595
+    season: "2024-25"
+    home: Q141971 # 1. FC Union Berlin
+    away: Q105861 # VfL Bochum
+    played: FULL
+    reason: "Played to a 1-1 draw; awarded to Bochum after its goalkeeper was hit by a lighter"
+    source: https://example.org/fixture

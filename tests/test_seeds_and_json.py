@@ -1,4 +1,5 @@
 import re
+from datetime import date
 from dataclasses import replace
 from pathlib import Path
 
@@ -8,7 +9,15 @@ from pydantic import ValidationError
 from football_api.domain.enums import DecidedBy, TeamKind
 from football_api.ingestion.openfootball.json_reader import is_current, read_json
 from football_api.ingestion.openfootball.text_parser import ParsedScore, parse_file
-from football_api.ingestion.seeds import CompetitionSeed, StandingsEra, load_competitions, load_standings, load_teams
+from football_api.ingestion.seeds import (
+    AwardedSeeds,
+    CompetitionSeed,
+    StandingsEra,
+    load_awarded,
+    load_competitions,
+    load_standings,
+    load_teams,
+)
 
 SOURCES = Path(__file__).parent / "fixtures" / "sources"
 SEEDS = Path(__file__).parent.parent / "seeds"
@@ -160,6 +169,50 @@ def test_standings_entry_must_name_known_things(tmp_path: Path, entry: str, erro
     text = f"adjustments:\n  - {entry}\n    points: -1\n    reason: r\n    source: https://example.org\n"
     with pytest.raises(ValueError, match=error):
         load_standings(_standings_file(tmp_path, text), load_competitions(FIXTURE_SEEDS / "competitions.yaml"), load_teams(FIXTURE_SEEDS / "teams.yaml"))
+
+
+_MATCH = "competition: Q9448\n    season: '2024-25'\n    home: Q9617\n    away: Q18711\n"
+_TEAM = "competition: Q9448\n    season: '2024-25'\n    team: Q9617\n    from: 2025-01-01\n"
+
+
+def _awarded(tmp_path: Path, text: str) -> AwardedSeeds:
+    path = tmp_path / "awarded.yaml"
+    path.write_text(text, encoding="utf-8")
+    return load_awarded(path, load_competitions(FIXTURE_SEEDS / "competitions.yaml"), load_teams(FIXTURE_SEEDS / "teams.yaml"))
+
+
+def _entry(head: str, played: str = "NONE") -> str:
+    return f"  - {head}    played: {played}\n    reason: r\n    source: https://example.org\n"
+
+
+@pytest.mark.parametrize(
+    ("text", "error"),
+    [
+        ("matches:\n" + _entry(_MATCH.replace("Q9448", "Q0")), "no season"),
+        ("matches:\n" + _entry(_MATCH.replace("2024-25", "1900-01")), "no season"),
+        ("matches:\n" + _entry(_MATCH.replace("Q18711", "Q0")), "not in teams.yaml"),
+        ("teams:\n" + _entry(_TEAM.replace("Q9617", "Q0")), "not in teams.yaml"),
+        ("matches:\n" + _entry(_MATCH) + _entry(_MATCH, "FULL"), "listed twice"),
+        ("teams:\n" + _entry(_TEAM) + _entry(_TEAM, "FULL"), "listed twice"),
+        ("teams:\n" + _entry(_TEAM) + "matches:\n" + _entry(_MATCH), "repeats the team entry"),
+    ],
+)
+def test_awarded_entries_are_checked(tmp_path: Path, text: str, error: str) -> None:
+    with pytest.raises(ValueError, match=error):
+        _awarded(tmp_path, text)
+
+
+def test_awarded_match_entry_wins_over_team_entry(tmp_path: Path) -> None:
+    seeds = _awarded(tmp_path, "teams:\n" + _entry(_TEAM) + "matches:\n" + _entry(_MATCH, "PARTIAL"))
+    assert seeds.played_for("Q9448", "2024-25", "Q9617", "Q18711", date(2025, 2, 1)) == "PARTIAL"
+    assert seeds.played_for("Q9448", "2024-25", "Q18711", "Q9617", date(2025, 2, 1)) == "NONE"  # the team entry
+    assert seeds.played_for("Q9448", "2024-25", "Q18711", "Q9617", date(2024, 12, 31)) is None  # before `from`
+    assert seeds.played_for("Q9448", "2024-25", "Q162251", "Q141971", date(2025, 2, 1)) is None
+
+
+def test_real_awarded_seed() -> None:
+    seeds = load_awarded(SEEDS / "awarded.yaml", load_competitions(SEEDS / "competitions.yaml"), load_teams(SEEDS / "teams.yaml"))
+    assert all(e.source.startswith("https://") for e in [*seeds.matches, *seeds.teams])
 
 
 def test_unknown_tie_breaker_is_rejected() -> None:

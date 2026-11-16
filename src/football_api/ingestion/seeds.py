@@ -192,6 +192,83 @@ class StandingsSeeds(_Seed):
         return self
 
 
+PlayedValue = Literal["FULL", "PARTIAL", "NONE"]
+
+
+class AwardedMatch(_Seed):
+    """How much of one awarded match was played (record-how-awarded-matches-ended D2)."""
+
+    competition: str
+    season: str
+    home: str = Field(description="Home team's QID")
+    away: str = Field(description="Away team's QID")
+    played: PlayedValue
+    reason: str
+    source: str
+
+
+class AwardedTeam(_Seed):
+    """How much was played of every awarded match of a team from a date on: an expelled club's
+    remaining fixtures."""
+
+    competition: str
+    season: str
+    team: str = Field(description="Team's QID")
+    start: date = Field(alias="from")
+    played: PlayedValue
+    reason: str
+    source: str
+
+
+class AwardedSeeds(_Seed):
+    matches: list[AwardedMatch] = Field(default_factory=list[AwardedMatch])
+    teams: list[AwardedTeam] = Field(default_factory=list[AwardedTeam])
+
+    def check(self, competitions: list[CompetitionSeed], teams: list[TeamSeed]) -> "AwardedSeeds":
+        """Every entry names a seeded competition, season and team; no match is listed twice, and a
+        match entry doesn't repeat the value of a team entry for one of its teams."""
+        seasons = {(c.wikidata, s.label) for c in competitions for s in c.seasons}
+        qids = {t.wikidata for t in teams if t.wikidata}
+        entries = [(m.competition, m.season, [m.home, m.away]) for m in self.matches]
+        entries += [(t.competition, t.season, [t.team]) for t in self.teams]
+        for competition, season, team_qids in entries:
+            if (competition, season) not in seasons:
+                raise ValueError(f"awarded.yaml: no season {season!r} of competition {competition}")
+            for qid in team_qids:
+                if qid not in qids:
+                    raise ValueError(f"awarded.yaml: team {qid} is not in teams.yaml")
+        seen: set[tuple[str, str, str, str]] = set()
+        for m in self.matches:
+            key = (m.competition, m.season, m.home, m.away)
+            if key in seen:
+                raise ValueError(f"awarded.yaml: {m.home} v {m.away} ({m.competition} {m.season}) listed twice")
+            seen.add(key)
+        team_values = {(t.competition, t.season, t.team): t.played for t in self.teams}
+        if len(team_values) != len(self.teams):
+            raise ValueError("awarded.yaml: a team is listed twice for one season")
+        for m in self.matches:
+            for qid in (m.home, m.away):
+                if team_values.get((m.competition, m.season, qid)) == m.played:
+                    raise ValueError(f"awarded.yaml: {m.home} v {m.away} repeats the team entry for {qid}")
+        return self
+
+    def played_for(
+        self, competition: str, season: str, home: str | None, away: str | None, day: date
+    ) -> PlayedValue | None:
+        """The curated value for an awarded match: its own entry, else a team entry from `day` on."""
+        for m in self.matches:
+            if (m.competition, m.season, m.home, m.away) == (competition, season, home, away):
+                return m.played
+        for t in self.teams:
+            if (t.competition, t.season) == (competition, season) and t.team in (home, away) and day >= t.start:
+                return t.played
+        return None
+
+    def season_entries(self, competition: str, season: str) -> list[_Seed]:
+        """The entries of one season, for its sync fingerprint."""
+        return [e for e in [*self.matches, *self.teams] if (e.competition, e.season) == (competition, season)]
+
+
 def _load(path: Path) -> object:
     with path.open(encoding="utf-8") as fh:
         return yaml.safe_load(fh)
@@ -247,6 +324,19 @@ def load_standings(
     path = path or seeds_dir / "standings.yaml"
     data: object = _load(path) if path.exists() else None
     seeds = StandingsSeeds.model_validate(data or {})
+    return seeds.check(
+        competitions if competitions is not None else load_competitions(),
+        teams if teams is not None else load_teams(),
+    )
+
+
+def load_awarded(
+    path: Path | None = None, competitions: list[CompetitionSeed] | None = None, teams: list[TeamSeed] | None = None
+) -> AwardedSeeds:
+    """`seeds/awarded.yaml`, checked against the competition and team seeds."""
+    path = path or get_settings().seeds_dir / "awarded.yaml"
+    data: object = _load(path) if path.exists() else None
+    seeds = AwardedSeeds.model_validate(data or {})
     return seeds.check(
         competitions if competitions is not None else load_competitions(),
         teams if teams is not None else load_teams(),

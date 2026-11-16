@@ -123,7 +123,7 @@ Segunda División 2025-26 is not included: openfootball stopped updating it afte
 
 Ligue 1 2019-20 was stopped after 279 matches; its 101 unplayed fixtures are listed as `CANCELLED`.
 
-Matches decided off the pitch (a forfeit or a disciplinary decision) have `awarded: true` and keep the score the source records. That's usually the awarded score (Union Berlin v Bochum 2024-25, `0-2`), but for SC Bastia v Olympique Lyonnais 2016-17 it's the 0–0 at abandonment: the LFP credited Lyon with the win and no goals.
+Matches decided off the pitch (a forfeit or a disciplinary decision) have `awarded: true` and keep the score the source records. That's usually the awarded score (Union Berlin v Bochum 2024-25, `0-2`), but for SC Bastia v Olympique Lyonnais 2016-17 it's the 0–0 at abandonment: the LFP credited Lyon with the win and no goals. `played` says how much of the match took place: `FULL` (played to the end and overturned afterwards, as Union Berlin v Bochum was), `PARTIAL` (abandoned, as Bastia v Lyon was) or `NONE` (never kicked off, as Tottenham v Rennes in the Conference League 2021-22). Matches that weren't awarded are always `FULL`. For awarded matches the value is curated in `seeds/awarded.yaml`, with a source for each one. `played` is null for matches that aren't `COMPLETED`, and for an awarded match that hasn't been curated yet.
 
 Line-ups, substitutions and cards come from openfootball's `-full` files, for every World Cup and Club World Cup and for the 2025-26 seasons of the five leagues (about 3,000 matches). Request them with `expand=lineups,substitutions,cards` on `/v1/matches` and `/v1/matches/{id}`; every match also has `referee` and `attendance` (null where the source doesn't give them). Where they're incomplete:
 

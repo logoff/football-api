@@ -10,11 +10,11 @@ import logging
 import pytest
 from sqlalchemy import func, select, text
 
-from football_api.domain.enums import Coverage, DecidedBy, MatchStatus, Stage, VerificationAspect, VerificationReference, VerificationStatus
+from football_api.domain.enums import Coverage, DecidedBy, MatchStatus, Played, Stage, VerificationAspect, VerificationReference, VerificationStatus
 from football_api.infra.db import get_sessionmaker
 from football_api.infra.models import Competition, ExternalRef, Goal, Match, MatchVerification, Player, PlayerTeamSeason, Season, SeasonCheck, Team, TeamSeason
 from football_api.ingestion.openfootball.squads import parse_more_squads, parse_per_team_squad
-from football_api.ingestion.seeds import CompetitionSeed, ScopedSpelling, SeasonSource, TeamSeed
+from football_api.ingestion.seeds import AwardedSeeds, CompetitionSeed, ScopedSpelling, SeasonSource, TeamSeed
 from football_api.sync import SyncReport, UnknownTeamError, run_sync
 
 pytestmark = pytest.mark.db
@@ -528,3 +528,49 @@ async def test_season_check_goes_with_its_season(
             await session.execute(text(f"DELETE FROM {table}"))
     async with get_sessionmaker()() as session:
         assert await session.scalar(select(func.count()).select_from(SeasonCheck)) == 0
+
+
+def _awarded_seeds(**entries: list[dict[str, str]]) -> AwardedSeeds:
+    return AwardedSeeds.model_validate(
+        {kind: [{"competition": "Q82595", "season": "2024-25", "reason": "r", "source": "https://example.org", **e} for e in es]
+         for kind, es in entries.items()}
+    )
+
+
+async def test_played(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed], caplog: pytest.LogCaptureFixture
+) -> None:
+    """matches spec: `played` is FULL unless awarded, else curated, else null with a warning."""
+    path = fresh_db / "deutschland/2024-25/1-bundesliga.txt"
+    text = path.read_text(encoding="utf-8")
+    text = text.replace("Bayer 04 Leverkusen      0-2 (0-2)", "Bayer 04 Leverkusen      0-2    [awarded]")
+    text = text.replace("SV Werder Bremen         0-2 (0-1)", "SV Werder Bremen         0-2    [awarded]")
+    path.write_text(text, encoding="utf-8")
+    awarded = _awarded_seeds(
+        matches=[{"home": "Q141971", "away": "Q105861", "played": "FULL"}],  # Union Berlin v Bochum
+        teams=[{"team": "Q15755", "from": "2024-12-01", "played": "NONE"}],  # FC Augsburg
+    )
+    with caplog.at_level(logging.WARNING, logger="football_api.sync"):
+        report = await run_sync(competitions=fixture_competitions, teams=fixture_teams, awarded=awarded, refresh_sources=False)
+    assert not report.failed
+    assert (await match_by("1. FC Union Berlin", "VfL Bochum", Stage.LEAGUE)).played is Played.FULL
+    assert (await match_by("FC Augsburg", "Bayer 04 Leverkusen", Stage.LEAGUE)).played is Played.NONE
+    assert (await match_by("SC Freiburg", "VfL Wolfsburg", Stage.LEAGUE)).played is Played.FULL
+    st_pauli = await match_by("FC St. Pauli", "SV Werder Bremen", Stage.LEAGUE)
+    assert (st_pauli.awarded, st_pauli.played) == (True, None)
+    assert "FC St. Pauli 1910 v SV Werder Bremen is not in awarded.yaml" in caplog.text
+    async with get_sessionmaker()() as session:
+        played = set(await session.scalars(select(Match.played).where(Match.status != MatchStatus.COMPLETED)))
+    assert played == {None}
+
+
+async def test_awarded_entry_change_resyncs_its_season(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    union_bochum = {"home": "Q141971", "away": "Q105861"}
+    first = _awarded_seeds(matches=[{**union_bochum, "played": "FULL"}])
+    await run_sync(competitions=fixture_competitions, teams=fixture_teams, awarded=first, refresh_sources=False)
+    changed = _awarded_seeds(matches=[{**union_bochum, "played": "PARTIAL"}])
+    report = await run_sync(competitions=fixture_competitions, teams=fixture_teams, awarded=changed, refresh_sources=False)
+    assert _labels(report.synced) == ["Bundesliga"]
+    assert (await match_by("1. FC Union Berlin", "VfL Bochum", Stage.LEAGUE)).played is Played.PARTIAL

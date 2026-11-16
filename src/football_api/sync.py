@@ -33,7 +33,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from football_api.domain.enums import Coverage, EntityType, MatchStatus, SeasonStatus, Side, Stage, TeamKind
+from football_api.domain.enums import Coverage, EntityType, MatchStatus, Played, SeasonStatus, Side, Stage, TeamKind
 from football_api.infra.db import get_engine, get_sessionmaker
 from football_api.infra.models import (
     Card,
@@ -57,9 +57,11 @@ from football_api.ingestion.openfootball.names import fold, short_name_matches, 
 from football_api.ingestion.openfootball.squads import SquadPlayer, parse_more_squads, parse_per_team_squad
 from football_api.ingestion.openfootball.text_parser import ParsedMatch, normalize_stage, parse_file
 from football_api.ingestion.seeds import (
+    AwardedSeeds,
     CompetitionSeed,
     SeasonSource,
     TeamSeed,
+    load_awarded,
     load_competitions,
     load_teams,
     parse_scoped_key,
@@ -248,6 +250,7 @@ class SeasonContext:
     sources: Path
     scorer_names_capitalised: bool
     squads: dict[uuid.UUID, list[tuple[Player, str]]]  # team_id → [(player, display)]
+    awarded: AwardedSeeds = field(default_factory=AwardedSeeds)
     seen: set[uuid.UUID] = field(default_factory=lambda: set[uuid.UUID]())  # matches this sync matched or created
 
 
@@ -479,6 +482,7 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
     match.kickoff_utc = kickoff
     match.matchday, match.round_label, match.status = matchday, m.round_label, m.status
     match.awarded = m.awarded
+    match.played = await played(session, ctx, m, home_id, away_id, path)
     match.venue_id = await upsert_venue(session, m.venue_name, m.venue_city)
     score = m.score
     match.home_score = score.home if score else None
@@ -492,6 +496,31 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
     if m.goals_listed:
         await sync_goals(session, ctx, match, m)
     return match
+
+
+async def played(
+    session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, home_id: uuid.UUID, away_id: uuid.UUID, path: str
+) -> Played | None:
+    """FULL for a completed match that isn't awarded; an awarded one's value from seeds/awarded.yaml,
+    or None with a warning while it isn't curated (record-how-awarded-matches-ended D3)."""
+    if m.status is not MatchStatus.COMPLETED:
+        return None
+    if not m.awarded:
+        return Played.FULL
+    home, away = await team_qid(session, home_id), await team_qid(session, away_id)
+    value = ctx.awarded.played_for(ctx.seed.wikidata, ctx.src.label, home, away, m.day)
+    if value is None:
+        log.warning("%s:%d: awarded %s v %s is not in awarded.yaml; played left unknown", path, m.line_no, m.home, m.away)
+        return None
+    return Played(value)
+
+
+async def team_qid(session: AsyncSession, team_id: uuid.UUID) -> str | None:
+    return await session.scalar(
+        select(ExternalRef.source_id).where(
+            ExternalRef.entity_type == EntityType.TEAM, ExternalRef.entity_id == team_id, ExternalRef.source == WIKIDATA
+        )
+    )
 
 
 # --- events (match-events) ------------------------------------------------------------
@@ -620,7 +649,9 @@ def read_matches(seed: CompetitionSeed, s: SeasonSource, sources: Path) -> tuple
     return text_matches, s.file
 
 
-async def sync_season(session: AsyncSession, seed: CompetitionSeed, src: SeasonSource, sources: Path) -> int:
+async def sync_season(
+    session: AsyncSession, seed: CompetitionSeed, src: SeasonSource, sources: Path, awarded: AwardedSeeds | None = None
+) -> int:
     comp = await upsert_competition(session, seed)
     matches, path = read_matches(seed, src, sources)
     season = await session.scalar(select(Season).where(Season.competition_id == comp.id, Season.label == src.label))
@@ -652,7 +683,15 @@ async def sync_season(session: AsyncSession, seed: CompetitionSeed, src: SeasonS
     )
 
     squads_style = src.squads.style if src.squads else None
-    ctx = SeasonContext(seed, src, season, sources, scorer_names_capitalised=squads_style == "more", squads=defaultdict(list))
+    ctx = SeasonContext(
+        seed,
+        src,
+        season,
+        sources,
+        scorer_names_capitalised=squads_style == "more",
+        squads=defaultdict(list),
+        awarded=awarded or AwardedSeeds(),
+    )
     await sync_squads(session, ctx)
     synced: dict[MatchKey, list[Match]] = defaultdict(list)
     for m, occurrence in zip(matches, occurrences(matches, team_of), strict=True):
@@ -730,6 +769,7 @@ async def run_sync(
     *,
     competitions: list[CompetitionSeed] | None = None,
     teams: list[TeamSeed] | None = None,
+    awarded: AwardedSeeds | None = None,
     refresh_sources: bool = True,
     verify: bool = False,
     full: bool = False,
@@ -745,6 +785,7 @@ async def run_sync(
     settings = get_settings()
     competitions = competitions if competitions is not None else load_competitions()
     teams = teams if teams is not None else load_teams()
+    awarded = awarded if awarded is not None else load_awarded()
     sources = settings.sources_dir
     await check_schema()
     report = SyncReport()
@@ -766,7 +807,9 @@ async def run_sync(
             for src in comp_seed.seasons:
                 # One transaction per competition-season: a bad file leaves no partial writes.
                 try:
-                    fingerprint = season_fingerprint(comp_seed, src, teams_fp, sources)
+                    fingerprint = season_fingerprint(
+                        comp_seed, src, teams_fp, sources, awarded.season_entries(comp_seed.wikidata, src.label)
+                    )
                     last = stored.get((comp_seed.wikidata, src.label))
                     if not full and last is not None and last.source_fingerprint == fingerprint:
                         log.info("%s %s: unchanged, %d matches", comp_seed.name, src.label, last.matches)
@@ -774,7 +817,7 @@ async def run_sync(
                         targets.append((comp_seed, src))
                         continue
                     async with maker() as session, session.begin():
-                        count = await sync_season(session, comp_seed, src, sources)
+                        count = await sync_season(session, comp_seed, src, sources, awarded)
                         synced_id = await season_id(session, comp_seed, src)
                         assert synced_id is not None
                         await record_sync(session, synced_id, fingerprint, datetime.now(UTC))
