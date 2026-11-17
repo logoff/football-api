@@ -1,0 +1,179 @@
+## MODIFIED Requirements
+
+### Requirement: Match record
+
+The system SHALL store each match with:
+
+- a UUID
+- a reference to its season
+- references to home and away teams
+- an optional reference to a venue
+- a kickoff timestamp in UTC, null when the source gives no date for the match, and an optional `original_kickoff_utc` set when the kickoff is first observed to change
+- a status: `SCHEDULED`, `COMPLETED`, `CANCELLED`, `POSTPONED`
+- home and away scores at the end of play, including extra time (nullable until `COMPLETED`); for an awarded match, the score the source records
+- the referee's name and the attendance, both nullable (see `match-events`)
+- `awarded`: `true` when the result was decided off the pitch (forfeit or disciplinary decision), as the source marks it; otherwise `false`
+- `played`: how much of the match was played, for a `COMPLETED` match: `FULL` (to the end), `PARTIAL` (abandoned) or `NONE` (never kicked off). A match that isn't awarded is `FULL`. An awarded match takes the value curated in `seeds/awarded.yaml`, and is null while it isn't curated. Null for any other status.
+- `decided_by`: `REGULAR`, `EXTRA_TIME`, or `PENALTIES` (nullable until `COMPLETED`)
+- home and away penalty-shootout scores (null unless `decided_by` is `PENALTIES`)
+- a stage: `QUALIFYING`, `PRELIMINARY`, `ROUND`, `LEAGUE`, `GROUP`, `PLAYOFF`, `R32`, `R16`, `QF`, `SF`, `THIRD_PLACE`, `FIFTH_PLACE`, or `FINAL`; an optional matchday number, which for `ROUND` is the round's number; and the source's round label
+- an `occurrence`: 1 for a pairing's first game in a stage, 2 for a further game with the same home team in that stage, and so on in source order. A further listing counts as a new game only when the previous one has a score; otherwise it is the same game rescheduled
+
+#### Scenario: Filtering matches by competition and season
+
+- **WHEN** a client GETs `/v1/matches?season_id={premier-league-2024-25}`
+- **THEN** the API responds 200 with all matches of that competition-season
+
+#### Scenario: Filtering matches by team
+
+- **WHEN** a client GETs `/v1/matches?team_id={real-madrid}&competition_id={la-liga}`
+- **THEN** the API responds 200 with all matches where the team appears as home or away
+
+#### Scenario: Expanding related resources
+
+- **WHEN** a client GETs `/v1/matches/{id}?expand=teams,venue,scorers`
+- **THEN** the response embeds the home/away team objects, the venue object (when present), and the array of goal records
+
+#### Scenario: Coverage on a match
+
+- **WHEN** a client GETs any match
+- **THEN** its `coverage` has `scorers`, `lineups`, `substitutions` and `cards`, each `full` or `none`, with its season's values
+
+#### Scenario: Match decided on penalties
+
+- **GIVEN** the source line `Argentina 3-3 a.e.t. (2-2, 2-0), 4-2 pen. France`
+- **WHEN** the match is ingested
+- **THEN** `home_score`=3, `away_score`=3, `decided_by`=`PENALTIES`, `home_pens`=4, `away_pens`=2
+- **AND** the shootout kicks are not stored as goals
+
+#### Scenario: Postponed match keeps a single row
+
+- **GIVEN** a match previously synced with kickoff `2025-01-11T15:00:00Z`
+- **WHEN** the source moves it to `2025-02-05T19:30:00Z` and sync runs
+- **THEN** the same match UUID now has `kickoff_utc` `2025-02-05T19:30:00Z` and `original_kickoff_utc` `2025-01-11T15:00:00Z`
+- **AND** no second row exists for that `(season, stage, home, away, occurrence)`
+
+#### Scenario: Same pairing in two stages of one season
+
+- **GIVEN** Arsenal v Paris Saint-Germain in both the UCL 2024-25 league phase and semi-final
+- **WHEN** sync runs
+- **THEN** two distinct matches exist, one with stage `LEAGUE` and one with stage `SF`
+
+#### Scenario: Numbered cup round
+
+- **GIVEN** a DFB-Pokal file with the round header `1. Round`
+- **WHEN** it is synced
+- **THEN** its matches have stage `ROUND`, matchday 1 and round label `1. Round`
+
+#### Scenario: Same pairing twice with the same home team
+
+- **GIVEN** FA Cup 2023-24 Round 1 lists Scarborough Athletic v Forest Green Rovers on 4 November (1–1) and again on 12 December (2–4)
+- **WHEN** it is synced
+- **THEN** two matches exist, with `occurrence` 1 and 2 and their own scores
+- **AND** a later sync keeps both UUIDs
+
+#### Scenario: Two-legged tie
+
+- **GIVEN** a two-legged semi-final, each leg with the other club at home
+- **WHEN** it is synced
+- **THEN** two matches exist with stage `SF`, each with `occurrence` 1
+
+#### Scenario: Postponed game listed twice
+
+- **GIVEN** a source that lists a pairing as `[postponed]` and later lists the same pairing in the same stage at a new date
+- **WHEN** it is synced
+- **THEN** one match exists, with `occurrence` 1, the new kickoff and the first kickoff as `original_kickoff_utc`
+
+#### Scenario: Awarded match with the awarded score
+
+- **GIVEN** the source line `1. FC Union Berlin v VfL Bochum 1848 0-2 [awarded]`
+- **WHEN** the match is ingested
+- **THEN** it is `COMPLETED` with `home_score`=0, `away_score`=2 and `awarded`=`true`
+
+#### Scenario: Awarded match with only the played score
+
+- **GIVEN** the source line `SC Bastia v Olympique Lyonnais 0-0 [awarded]`
+- **WHEN** the match is ingested
+- **THEN** it is `COMPLETED` with `home_score`=0, `away_score`=0 and `awarded`=`true`
+
+#### Scenario: Match played normally
+
+- **WHEN** a client GETs a match with no `[awarded]` tag in the source
+- **THEN** `awarded` is `false` and `played` is `FULL`
+
+#### Scenario: Awarded match played to the end
+
+- **GIVEN** Union Berlin v Bochum 2024-25 is awarded in the source and curated as `FULL`
+- **WHEN** a client GETs it
+- **THEN** `awarded` is `true` and `played` is `FULL`
+
+#### Scenario: Abandoned match
+
+- **GIVEN** Bastia v Lyon 2016-17 is awarded in the source and curated as `PARTIAL`
+- **WHEN** a client GETs it
+- **THEN** `awarded` is `true`, `played` is `PARTIAL`, and the score is the 0–0 at abandonment
+
+#### Scenario: Forfeits after an expulsion
+
+- **GIVEN** a team-wide entry for CF Reus Deportiu in Segunda División 2018-19, from 19 January 2019, curated as `NONE`
+- **WHEN** Segunda División 2018-19 is synced
+- **THEN** Reus's 21 awarded matches from that date have `played` `NONE`
+- **AND** its 21 earlier matches have `awarded` `false` and `played` `FULL`
+
+#### Scenario: Awarded match not yet curated
+
+- **GIVEN** the source tags a match `[awarded]` and `seeds/awarded.yaml` has no entry for it
+- **WHEN** it is synced
+- **THEN** it is stored with `awarded` `true` and `played` null, sync logs a warning naming the match, and sync carries on
+
+#### Scenario: Match not completed
+
+- **WHEN** a client GETs a `SCHEDULED`, `POSTPONED` or `CANCELLED` match
+- **THEN** `played` is null
+
+#### Scenario: Fifth-place match
+
+- **GIVEN** a FIFA Club World Cup round headed `Match for fifth place` or `5th Place`
+- **WHEN** it is synced
+- **THEN** its match has stage `FIFTH_PLACE`
+
+#### Scenario: Match without a date
+
+- **GIVEN** La Liga 1929, read from a results grid that gives no dates
+- **WHEN** a client GETs one of its matches
+- **THEN** `kickoff_utc` is null and `matchday` is null, and the match has its score and status `COMPLETED`
+
+### Requirement: Date and timezone semantics
+
+The system SHALL store and emit all timestamps in UTC, ISO 8601 format with a `Z` suffix. A match whose source gives no date SHALL have a null kickoff; no date is estimated for it.
+
+Source kickoff times are converted to UTC using, in order: an explicit offset on the match line, else the time zone configured for the source file. Sync SHALL fail for a match line with neither.
+
+#### Scenario: Explicit offset on the line
+
+- **GIVEN** the line `Sat Jun 14 20:00 UTC-4 @ Miami Stadium, Miami`
+- **WHEN** the match is ingested
+- **THEN** `kickoff_utc` is `2025-06-15T00:00:00Z`
+
+#### Scenario: File-level time zone
+
+- **GIVEN** `england/2024-25/1-premierleague.txt` is configured as `Europe/London` and contains `Fri Aug 16 2024 20:00`
+- **WHEN** the match is ingested
+- **THEN** `kickoff_utc` is `2024-08-16T19:00:00Z`
+
+#### Scenario: Filtering by date range
+
+- **WHEN** a client GETs `/v1/matches?from=2024-08-01&to=2024-09-01`
+- **THEN** the API responds 200 with matches whose `kickoff_utc` falls within the inclusive date range
+
+#### Scenario: Date range leaves out matches without a date
+
+- **GIVEN** La Liga 1950-51, whose matches have no date
+- **WHEN** a client GETs `/v1/matches?from=1950-09-01&to=1951-06-30`
+- **THEN** none of those matches are listed
+
+#### Scenario: Matches without a date sort last
+
+- **GIVEN** a team with matches from La Liga 2011-12, without dates, and from La Liga 2012-13, with dates
+- **WHEN** a client pages through `/v1/matches?team_id={team}` to the end
+- **THEN** every dated match comes before every match without a date, and each match appears exactly once across the pages
