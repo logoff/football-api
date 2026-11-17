@@ -168,7 +168,7 @@ def test_euro_city_only_venue_uses_header_stadium_table() -> None:
 def test_copa_inline_offsets_and_own_goal_flags() -> None:
     matches = parse("copa-america/2024--usa/copa.txt", 2024)
     assert all(m.utc_offset is not None for m in matches)
-    assert all(m.day.year == 2024 for m in matches)
+    assert all(m.day is not None and m.day.year == 2024 for m in matches)
     opener = find(matches, "Argentina", "Canada")
     assert opener.utc_offset == timedelta(hours=-4)
     assert (opener.venue_name, opener.venue_city) == ("Mercedes-Benz Stadium", "Atlanta")

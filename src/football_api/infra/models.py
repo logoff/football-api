@@ -9,7 +9,7 @@ bookkeeping of when each season was last synced and verified, never served.
 """
 
 import uuid
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from enum import StrEnum
 from typing import Any
 
@@ -18,6 +18,7 @@ from sqlalchemy import (
     Date,
     DateTime,
     ForeignKey,
+    Index,
     MetaData,
     SmallInteger,
     String,
@@ -157,11 +158,18 @@ class PlayerTeamSeason(Base):
     shirt_number: Mapped[int | None] = mapped_column(SmallInteger)
 
 
+# Listings sort on coalesce(kickoff_utc, NO_KICKOFF_SQL), so matches without a date come last; the
+# expression index `ix_match_kickoff_sort` (migration 6a2d4c8e1f30) is on the same text.
+NO_KICKOFF = datetime(9999, 12, 31, 23, 59, 59, tzinfo=UTC)
+NO_KICKOFF_SQL = "'9999-12-31 23:59:59+00'::timestamptz"
+
+
 class Match(Base):
     __tablename__ = "match"
     __table_args__ = (
         UniqueConstraint("season_id", "stage", "home_team_id", "away_team_id", "occurrence"),
         CheckConstraint("home_team_id <> away_team_id", name="distinct_teams"),
+        Index("ix_match_kickoff_sort", text(f"coalesce(kickoff_utc, {NO_KICKOFF_SQL})"), "id"),
     )
 
     id: Mapped[uuid.UUID] = _uuid_pk()
@@ -169,7 +177,8 @@ class Match(Base):
     home_team_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("team.id"), index=True)
     away_team_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("team.id"), index=True)
     venue_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("venue.id"))
-    kickoff_utc: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
+    # Null when the source gives no date (a results grid); no date is ever estimated.
+    kickoff_utc: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
     original_kickoff_utc: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     status: Mapped[MatchStatus] = mapped_column(_enum(MatchStatus, "match_status"))
     home_score: Mapped[int | None] = mapped_column(SmallInteger)

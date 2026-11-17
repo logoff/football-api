@@ -43,6 +43,11 @@ async def wikidata_ids(session: AsyncSession, entity: EntityType, ids: Sequence[
     return {entity_id: qid for entity_id, qid in rows}
 
 
+class UndatedSeasonError(ValueError):
+    """A table as of a date was asked for a season with matches without one (standings spec,
+    `Standings endpoint`): they can't be placed before or after it."""
+
+
 @dataclass
 class SeasonTable:
     key: TableKey
@@ -74,8 +79,11 @@ async def season_tables(session: AsyncSession, season: Season, as_of: date | Non
         )
     ).all()
 
+    if as_of is not None and any(m.kickoff_utc is None for m in stored):
+        raise UndatedSeasonError(f"season {season.label} has matches without a date, so it has no table as of a date")
+
     def counted(m: Match) -> bool:
-        return as_of is None or m.kickoff_utc.astimezone(zone).date() <= as_of
+        return as_of is None or (m.kickoff_utc is not None and m.kickoff_utc.astimezone(zone).date() <= as_of)
 
     team_ids = sorted({t for m in stored for t in (m.home_team_id, m.away_team_id)})
     names = {t.id: t.name for t in await session.scalars(select(Team).where(Team.id.in_(team_ids)))}

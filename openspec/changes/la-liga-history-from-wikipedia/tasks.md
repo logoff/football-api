@@ -2,11 +2,11 @@
 
 ## 1. Matches without a date
 
-- [ ] 1.1 Make `match.kickoff_utc` nullable with an Alembic migration, and add the expression index on `(coalesce(kickoff_utc, 'infinity'), id)` (design D1, D2). Verify that `just migrate` upgrades, and that the downgrade succeeds on today's data.
-- [ ] 1.2 Make `ParsedMatch.day` optional. Sync stores a null kickoff, sets no `original_kickoff_utc` for it, and gives `season.starts_on` and `ends_on` from dated matches only, or null (D1). Verify with sync tests on a fixture season without dates and one with a mix.
-- [ ] 1.3 Sort and page `/v1/matches` and the GraphQL connection on the coalesced key, and leave dateless matches out of `from` and `to` (D2). Verify with API tests for spec scenarios `Matches without a date sort last` and `Date range leaves out matches without a date`.
-- [ ] 1.4 Make `kickoff_utc` nullable in the REST schemas and GraphQL types, regenerate `schema.graphql`, and add a README note on dateless matches (D1). Verify that the OpenAPI and GraphQL schemas mark it nullable, and that mdformat leaves no changes.
-- [ ] 1.5 Make the standings sorts handle a null kickoff, and refuse `as_of` with 422 for a season with dateless matches (D3). Verify with tests for spec scenarios `Season without dates` and `Past date on a season without dates`, and check that today's standings tests still pass.
+- [x] 1.1 Make `match.kickoff_utc` nullable with an Alembic migration, and add the expression index on `(coalesce(kickoff_utc, <sentinel>), id)` (design D1, D2). Verify that `just migrate` upgrades, and that the downgrade succeeds on today's data.
+- [x] 1.2 Make `ParsedMatch.day` optional. Sync stores a null kickoff, sets no `original_kickoff_utc` for it, and gives `season.starts_on` and `ends_on` from dated matches only, or null (D1). Verify with sync tests on a fixture season without dates and one with a mix.
+- [x] 1.3 Sort and page `/v1/matches` and the GraphQL connection on the coalesced key, and leave dateless matches out of `from` and `to` (D2). Verify with API tests for spec scenarios `Matches without a date sort last` and `Date range leaves out matches without a date`.
+- [x] 1.4 Make `kickoff_utc` nullable in the REST schemas and GraphQL types, regenerate `schema.graphql`, and add a README note on dateless matches (D1). Verify that the OpenAPI and GraphQL schemas mark it nullable, and that mdformat leaves no changes.
+- [x] 1.5 Make the standings sorts handle a null kickoff, and refuse `as_of` with 422 for a season with dateless matches (D3). Verify with tests for spec scenarios `Season without dates` and `Past date on a season without dates`, and check that today's standings tests still pass.
 
 ## 2. Results grids as a Wikipedia source
 

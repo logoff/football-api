@@ -14,7 +14,7 @@ from datetime import date, datetime
 from typing import Annotated, Any, cast
 
 from fastapi import Query
-from sqlalchemy import Select, tuple_
+from sqlalchemy import ColumnElement, Select, tuple_
 from sqlalchemy.orm import InstrumentedAttribute
 
 from football_api.api.errors import ApiError
@@ -23,6 +23,8 @@ DEFAULT_LIMIT = 50
 MAX_LIMIT = 200
 
 Limit = Annotated[int, Query(ge=1, le=MAX_LIMIT, description="Page size")]
+type SortKey = InstrumentedAttribute[Any] | ColumnElement[Any]  # a column, or an expression such as a coalesce
+
 Cursor = Annotated[str | None, Query(description="Opaque cursor from a previous page's `next_cursor`")]
 
 
@@ -34,7 +36,7 @@ def _encode_value(value: object) -> object:
     return value
 
 
-def _decode_value(raw: object, column: InstrumentedAttribute[Any]) -> object:
+def _decode_value(raw: object, column: SortKey) -> object:
     python_type: type = column.type.python_type
     if raw is None:
         return None
@@ -52,7 +54,7 @@ def encode_cursor(values: Sequence[object]) -> str:
     return base64.urlsafe_b64encode(payload.encode()).decode().rstrip("=")
 
 
-def decode_cursor(cursor: str, columns: Sequence[InstrumentedAttribute[Any]]) -> list[object]:
+def decode_cursor(cursor: str, columns: Sequence[SortKey]) -> list[object]:
     try:
         padded = cursor + "=" * (-len(cursor) % 4)
         raw: object = json.loads(base64.urlsafe_b64decode(padded))
@@ -67,7 +69,7 @@ def decode_cursor(cursor: str, columns: Sequence[InstrumentedAttribute[Any]]) ->
 
 
 def apply_keyset[*Ts](
-    stmt: Select[*Ts], columns: Sequence[InstrumentedAttribute[Any]], limit: int, cursor: str | None
+    stmt: Select[*Ts], columns: Sequence[SortKey], limit: int, cursor: str | None
 ) -> Select[*Ts]:
     if cursor:
         after = decode_cursor(cursor, columns)

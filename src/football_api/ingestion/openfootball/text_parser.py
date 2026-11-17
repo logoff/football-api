@@ -78,7 +78,7 @@ class ParsedGoal:
 class ParsedMatch:
     line_no: int
     round_label: str
-    day: date
+    day: date | None  # None: the source gives no date (a Wikipedia results grid)
     kickoff: time | None
     utc_offset: timedelta | None
     home: str

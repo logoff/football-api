@@ -32,6 +32,11 @@ def not_found(resource: str, id_: object) -> ApiError:
     return ApiError(404, "not_found", f"{resource} {id_} not found", {"resource": resource, "id": str(id_)})
 
 
+def undated_season(exc: Exception) -> ApiError:
+    """`as_of` on a season whose matches have no date (standings spec, `Standings endpoint`)."""
+    return ApiError(422, "season_without_dates", str(exc))
+
+
 def _envelope(status: int, code: str, message: str, details: dict[str, Any] | None = None) -> JSONResponse:
     body = ErrorEnvelope(error=ErrorBody(code=code, message=message, details=details or {}))
     return JSONResponse(status_code=status, content=body.model_dump(mode="json"))

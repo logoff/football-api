@@ -110,7 +110,11 @@ type Match {
   matchday: Int
   occurrence: Int!
   roundLabel: String!
-  kickoffUtc: DateTime!
+
+  """
+  Null when the source gives no date for the match; such matches list last
+  """
+  kickoffUtc: DateTime
   originalKickoffUtc: DateTime
   status: MatchStatus!
   homeTeamId: UUID!
