@@ -252,6 +252,7 @@ async def _record_events(
         if status is VerificationStatus.SOURCE_BEHIND:
             log.warning("%s: SOURCE_BEHIND events %s v %s: stored none, wikipedia has line-ups", label, home, away)
     else:
+        assert match.kickoff_utc is not None  # line-ups only come with seasons verified against boxes, which are dated
         diffs = compare_match(*stored, lineups, year=match.kickoff_utc.year)
         found = [f"{team}: {d}" for team, side in ((home, diffs[0]), (away, diffs[1])) for d in side]
         status = VerificationStatus.MISMATCH if found else VerificationStatus.VERIFIED
@@ -305,16 +306,20 @@ async def _stores_qualifying(seed: CompetitionSeed, src: SeasonSource) -> bool:
         return stage is not None
 
 
+def _day(match: Match) -> date | None:
+    return match.kickoff_utc.date() if match.kickoff_utc else None
+
+
 def _pair(stored: list[Match], boxes: list[MatchBox]) -> list[tuple[Match, MatchBox]]:
     """Pair the stored matches and boxes of one (home, away) pairing (design D2): alone, they pair;
     otherwise by date (allowing a day for kickoffs stored after midnight UTC), then in date order."""
     if len(stored) == 1 and len(boxes) == 1:
         return [(stored[0], boxes[0])]
     pairs: list[tuple[Match, MatchBox]] = []
-    left_matches, left_boxes = sorted(stored, key=lambda m: m.kickoff_utc), sorted(boxes, key=lambda b: b.day or date.max)
+    left_matches, left_boxes = sorted(stored, key=lambda m: _day(m) or date.max), sorted(boxes, key=lambda b: b.day or date.max)
     for match in list(left_matches):
-        day = match.kickoff_utc.date()
-        box = next((b for b in left_boxes if b.day and abs(b.day - day) <= timedelta(days=1)), None)
+        day = _day(match)
+        box = next((b for b in left_boxes if day and b.day and abs(b.day - day) <= timedelta(days=1)), None)
         if box is not None:
             pairs.append((match, box))
             left_matches.remove(match)
@@ -374,11 +379,11 @@ async def apply_boxes(
     # At neutral venues the sources may name the teams the other way round: a match left over pairs
     # with the one unused box of the reversed pairing on its date, compared with the box flipped.
     for match in left:
-        day = match.kickoff_utc.date()
+        day = _day(match)
         reverse = [
             b
             for b in by_pairing.get((match.away_team_id, match.home_team_id), [])
-            if id(b) not in used and b.day and abs(b.day - day) <= timedelta(days=1)
+            if id(b) not in used and day and b.day and abs(b.day - day) <= timedelta(days=1)
         ]
         if len(reverse) == 1:
             box = reverse[0]

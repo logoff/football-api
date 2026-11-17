@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from football_api.api import queries
-from football_api.api.errors import ERROR_RESPONSES, ApiError, not_found
+from football_api.api.errors import ERROR_RESPONSES, ApiError, not_found, undated_season
 from football_api.api.pagination import DEFAULT_LIMIT, Cursor, Limit
 from football_api.api.queries import MatchRow
 from football_api.api.schemas import (
@@ -58,7 +58,7 @@ from football_api.infra.models import (
     Team,
     Venue,
 )
-from football_api.season_tables import season_tables
+from football_api.season_tables import UndatedSeasonError, season_tables
 
 router = APIRouter(prefix="/v1", responses=ERROR_RESPONSES)
 Session = Annotated[AsyncSession, Depends(session_dependency)]
@@ -162,7 +162,10 @@ async def get_standings(session: Session, id: uuid.UUID, as_of: AsOf = None, exp
     season = await session.get(Season, id)
     if season is None:
         raise not_found("season", id)
-    tables = await season_tables(session, season, as_of)
+    try:
+        tables = await season_tables(session, season, as_of)
+    except UndatedSeasonError as exc:
+        raise undated_season(exc) from exc
     checks = {} if as_of is not None else await queries.standing_checks(session, season.id)
     team_out = (
         {

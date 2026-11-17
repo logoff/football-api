@@ -447,7 +447,7 @@ async def cup_statuses(aspect: VerificationAspect = VerificationAspect.RESULT) -
             .join(away, away.c.id == Match.away_team_id)
             .where(MatchVerification.aspect == aspect)
         )
-        return {(h, a, k.date()): s for h, a, k, s in rows}
+        return {(h, a, k.date()): s for h, a, k, s in rows if k is not None}
 
 
 async def test_tournament_season_verified_from_match_boxes(

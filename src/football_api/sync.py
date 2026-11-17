@@ -297,11 +297,14 @@ async def resolve_side(
     return team_id
 
 
-def kickoff_utc(m: ParsedMatch, tz: str, path: str) -> datetime:
+def kickoff_utc(m: ParsedMatch, tz: str, path: str) -> datetime | None:
     """Line offset first, then the file's configured zone (design.md, "Kickoff time zones").
 
     A match with a date but no time keeps its date: midnight UTC on that day, whatever the zone.
+    A match without a date has no kickoff; none is estimated (la-liga-history-from-wikipedia D1).
     """
+    if m.day is None:
+        return None
     if m.kickoff is None:
         return date_only_kickoff(m.day)
     local = datetime.combine(m.day, m.kickoff)
@@ -452,7 +455,7 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
             Match.occurrence == occurrence,
         )
     )
-    if match is None:
+    if match is None and kickoff is not None:
         # The source may have relabelled the round (`10. Runde` → `Round of 32`): reuse the match of
         # the same teams and date this sync hasn't matched yet, so it keeps its UUID.
         match = await session.scalar(
@@ -496,11 +499,17 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
         )
         session.add(match)
     else:
-        # A time appearing for a date-only fixture on the same day is not a move.
-        moved = match.kickoff_utc != kickoff and not is_date_only(match.kickoff_utc, m.day, ctx.src.tz)
+        # A time appearing for a date-only fixture on the same day is not a move, and neither is a
+        # date appearing for a match that had none.
+        moved = (
+            match.kickoff_utc is not None
+            and m.day is not None
+            and match.kickoff_utc != kickoff
+            and not is_date_only(match.kickoff_utc, m.day, ctx.src.tz)
+        )
         if moved and match.original_kickoff_utc is None:
             match.original_kickoff_utc = match.kickoff_utc
-        elif match.original_kickoff_utc is not None and is_date_only(match.original_kickoff_utc, m.day, ctx.src.tz):
+        elif m.day is not None and match.original_kickoff_utc is not None and is_date_only(match.original_kickoff_utc, m.day, ctx.src.tz):
             match.original_kickoff_utc = None  # recorded by earlier syncs for such a time appearing
     match.kickoff_utc = kickoff
     match.matchday, match.round_label, match.status = matchday, m.round_label, m.status
@@ -548,7 +557,7 @@ async def team_qid(session: AsyncSession, team_id: uuid.UUID) -> str | None:
 
 # --- events (match-events) ------------------------------------------------------------
 
-type MatchKey = tuple[date, uuid.UUID, uuid.UUID]  # (day as listed, home team, away team)
+type MatchKey = tuple[date | None, uuid.UUID, uuid.UUID]  # (day as listed, home team, away team)
 
 
 async def link_events(
@@ -690,12 +699,14 @@ async def sync_season(
         matches, path, clubs = read.matches, read.path, read.clubs
     else:
         matches, path = read_matches(seed, src, sources)
+    if not matches:
+        raise SyncError(f"{path}: no matches in the source")
     season = await session.scalar(select(Season).where(Season.competition_id == comp.id, Season.label == src.label))
     if season is None:
         season = Season(competition_id=comp.id, label=src.label)
         session.add(season)
-    days: list[date] = [m.day for m in matches]
-    season.starts_on, season.ends_on = min(days), max(days)
+    days = [m.day for m in matches if m.day is not None]
+    season.starts_on, season.ends_on = (min(days), max(days)) if days else (None, None)
     season.status = (
         SeasonStatus.COMPLETED
         if all(m.status is not MatchStatus.SCHEDULED for m in matches)

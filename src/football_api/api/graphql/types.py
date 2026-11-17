@@ -9,6 +9,7 @@ import strawberry
 from strawberry import Info
 
 from football_api.api import queries
+from football_api.api.errors import undated_season
 from football_api.api.graphql.connection import Connection, PageInfo, connection, edges_of, page_size
 from football_api.api.graphql.context import Context
 from football_api.domain.enums import (
@@ -29,7 +30,7 @@ from football_api.domain.enums import (
     VerificationStatus,
 )
 from football_api.infra import models as m
-from football_api.season_tables import season_tables
+from football_api.season_tables import UndatedSeasonError, season_tables
 
 for _enum in (CardKind, CompetitionFormat, CompetitionScope, DecidedBy, LineupRole, MatchStatus, Played, SeasonStatus, Side, Stage, TeamKind, VerificationStatus):
     strawberry.enum(_enum)
@@ -190,7 +191,10 @@ class Season:
     @strawberry.field(description="Tables computed from the season's results; `asOf` in the season's time zone")
     async def standings(self, info: GInfo, as_of: date | None = None) -> "Standings":
         async with info.context.db() as s:
-            tables = await season_tables(s, self.row, as_of)
+            try:
+                tables = await season_tables(s, self.row, as_of)
+            except UndatedSeasonError as exc:
+                raise undated_season(exc) from exc
             checks = {} if as_of is not None else await queries.standing_checks(s, self.id)
         return Standings(
             season_id=self.id,
@@ -451,7 +455,7 @@ class Match:
     matchday: int | None
     occurrence: int
     round_label: str
-    kickoff_utc: datetime
+    kickoff_utc: datetime | None = strawberry.field(description="Null when the source gives no date for the match; such matches list last")
     original_kickoff_utc: datetime | None
     status: MatchStatus
     home_team_id: uuid.UUID

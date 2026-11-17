@@ -9,7 +9,7 @@ import uuid
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from fractions import Fraction
 
 from football_api.domain.enums import Stage
@@ -30,7 +30,7 @@ class TableMatch:
     away: TeamId
     home_score: int | None
     away_score: int | None
-    kickoff_utc: datetime
+    kickoff_utc: datetime | None  # None: the source gives no date
     stage: Stage
     round_label: str | None
     winner: TeamId | None = None  # an awarded match with a level score that names a winner (standings.yaml)
@@ -38,6 +38,14 @@ class TableMatch:
     @property
     def played(self) -> bool:
         return self.home_score is not None and self.away_score is not None
+
+
+_NO_DATE = datetime.max.replace(tzinfo=UTC)
+
+
+def _when(m: TableMatch) -> datetime:
+    """A match's kickoff for ordering; matches without a date come last."""
+    return m.kickoff_utc or _NO_DATE
 
 
 @dataclass(frozen=True)
@@ -117,7 +125,7 @@ def _without_play_offs(matches: list[TableMatch]) -> list[TableMatch]:
         return matches
     seen: set[frozenset[TeamId]] = set()
     kept: list[TableMatch] = []
-    for m in sorted(matches, key=lambda m: m.kickoff_utc):
+    for m in sorted(matches, key=_when):
         pair = frozenset((m.home, m.away))
         if pair not in seen:
             seen.add(pair)
@@ -141,7 +149,7 @@ def _components(matches: list[TableMatch]) -> list[list[TableMatch]]:
     groups: dict[TeamId, list[TableMatch]] = defaultdict(list)
     for m in matches:
         groups[find(m.home)].append(m)
-    return sorted(groups.values(), key=lambda ms: (min(m.kickoff_utc for m in ms), sorted(str(t) for m in ms for t in (m.home, m.away))))
+    return sorted(groups.values(), key=lambda ms: (min(_when(m) for m in ms), sorted(str(t) for m in ms for t in (m.home, m.away))))
 
 
 @dataclass

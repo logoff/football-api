@@ -35,7 +35,7 @@ def _result(m: ParsedMatch) -> str:
 
 def rows(read: WikipediaSeason) -> set[Row]:
     return {
-        (m.round_label, m.day.isoformat(), read.clubs.get(m.home, m.home), read.clubs.get(m.away, m.away), _result(m))
+        (m.round_label, m.day.isoformat() if m.day else "no date", read.clubs.get(m.home, m.home), read.clubs.get(m.away, m.away), _result(m))
         for m in read.matches
     }
 

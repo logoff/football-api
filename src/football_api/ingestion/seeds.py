@@ -292,14 +292,14 @@ class AwardedSeeds(_Seed):
         return self
 
     def played_for(
-        self, competition: str, season: str, home: str | None, away: str | None, day: date
+        self, competition: str, season: str, home: str | None, away: str | None, day: date | None
     ) -> PlayedValue | None:
         """The curated value for an awarded match: its own entry, else a team entry from `day` on."""
         for m in self.matches:
             if (m.competition, m.season, m.home, m.away) == (competition, season, home, away):
                 return m.played
         for t in self.teams:
-            if (t.competition, t.season) == (competition, season) and t.team in (home, away) and day >= t.start:
+            if (t.competition, t.season) == (competition, season) and t.team in (home, away) and day is not None and day >= t.start:
                 return t.played
         return None
 

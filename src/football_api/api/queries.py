@@ -9,7 +9,7 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time, timedelta
 
-from sqlalchemy import Select, exists, or_, select
+from sqlalchemy import DateTime, Select, exists, func, literal_column, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from football_api.api.pagination import apply_keyset, encode_cursor
@@ -29,6 +29,8 @@ from football_api.infra.models import (
     Competition,
     Goal,
     LineupEntry,
+    NO_KICKOFF,
+    NO_KICKOFF_SQL,
     Match,
     MatchVerification,
     Player,
@@ -208,8 +210,10 @@ async def matches(
                     MatchVerification.status == status,
                 )
             )
-    rows = (await session.execute(apply_keyset(stmt, [Match.kickoff_utc, Match.id], limit, cursor))).all()
-    return _listing(rows, limit, lambda r: (r[0].kickoff_utc, r[0].id))
+    # Matches without a date sort last (la-liga-history-from-wikipedia D2); `from`/`to` leave them out.
+    kickoff = func.coalesce(Match.kickoff_utc, literal_column(NO_KICKOFF_SQL, DateTime(timezone=True)))
+    rows = (await session.execute(apply_keyset(stmt, [kickoff, Match.id], limit, cursor))).all()
+    return _listing(rows, limit, lambda r: (r[0].kickoff_utc or NO_KICKOFF, r[0].id))
 
 
 async def match(session: AsyncSession, id: uuid.UUID) -> MatchRow | None:

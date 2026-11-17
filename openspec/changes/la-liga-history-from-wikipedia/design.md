@@ -50,11 +50,11 @@
 
 ### D2. Listing and paging dateless matches
 
-- **Sort key:** `/v1/matches` and the GraphQL connection sort on `(coalesce(kickoff_utc, 'infinity'), id)`, so dateless matches come last and keep a total order by `id`. `id` is a UUIDv7 inserted in grid order.
-- **Cursors:** a cursor encodes `infinity` for a dateless row.
+- **Sort key:** `/v1/matches` and the GraphQL connection sort on `(coalesce(kickoff_utc, '9999-12-31 23:59:59+00'), id)`, so dateless matches come last and keep a total order by `id`. `id` is a UUIDv7 inserted in grid order.
+- **Cursors:** a cursor encodes the sentinel for a dateless row. A sentinel was picked over Postgres's `infinity` because it is an ordinary `datetime` on the Python side, so cursors and drivers need no special case. No real kickoff comes near it.
 - **Index:** an expression index on the sort key keeps the listing indexed. The plain index on `kickoff_utc` stays for date filters.
 - **Date filters:** `from` and `to` compare `kickoff_utc`, so they leave nulls out with no extra code.
-- **Alternative: `NULLS LAST` with a cursor branch for nulls.** Rejected. A row tuple that contains a null doesn't compare in Postgres, so the keyset would need two predicates. With `infinity` it stays one tuple comparison.
+- **Alternative: `NULLS LAST` with a cursor branch for nulls.** Rejected. A row tuple that contains a null doesn't compare in Postgres, so the keyset would need two predicates. With a sentinel it stays one tuple comparison.
 
 ### D3. Standings without dates
 

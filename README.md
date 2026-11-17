@@ -119,6 +119,8 @@ Cups start where the source does: the FA Cup at Round 1 (the first round proper)
 
 The Premier League's 1992-93 to 1997-98 and 1999-00 seasons have dates but no kickoff times in the source; their `kickoff_utc` is midnight UTC on the match date.
 
+A match whose source gives no date at all has `kickoff_utc: null` (`kickoffUtc` in GraphQL). No date is estimated for it. Listings put these matches after every dated one, in a stable order, and the `from` and `to` filters leave them out. Their season's `starts_on` and `ends_on` cover only its dated matches, so they are null when the season has none.
+
 Segunda División 2025-26 is not included: openfootball stopped updating it after 131 of its 462 results. The promotion play-offs aren't in the source, and in 2024-25 the source is missing 9 last-day results. English Wikipedia redirects UE Llagostera (2014-15 and 2015-16) to its successor club's article, so its matches and those seasons' tables can't be verified.
 
 The Champions League's 1955-56 to 2010-11 seasons, the European Cup until 1991-92, come from the match boxes of English Wikipedia's season articles and their group and knockout sub-articles, each pinned to a revision (see [Data sources and licenses](#data-sources-and-licenses)). Up to 1993-94 every round is included, since all of them were the competition proper; from 1994-95 the qualifying rounds are left out, as they are from 2011-12. These matches have dates but no kickoff times (`kickoff_utc` is midnight UTC). A replay or play-off has the stage of its tie. Four ties a club withdrew from or was expelled from, such as Linfield v Vorwärts Berlin in 1961-62, are listed as `CANCELLED` without a score. These seasons aren't verified: Wikipedia is their source, so it can't also be their check.
@@ -164,7 +166,7 @@ A season is checked again only when something it depends on changed: its data wa
 
 - **Rows:** played, won, drawn, lost, goals, goal difference and points per team.
 - **Ranking:** the competition's own rules for that era. That means two points for a win before the 1990s in tournaments, goal average in the 1960s, head-to-head first in La Liga, Serie A and UEFA groups, and points per game for Ligue 1 2019-20.
-- **Options:** `as_of=YYYY-MM-DD` gives the table on any date, and `expand=teams` embeds the teams.
+- **Options:** `as_of=YYYY-MM-DD` gives the table on any date, and `expand=teams` embeds the teams. A season with matches without a date counts them in its tables, but answers `as_of` with 422 (`season_without_dates`), since those matches can't be placed before or after a date.
 
 ```sh
 curl "localhost:8000/v1/seasons/{id}/standings?as_of=2023-12-31&expand=teams"

@@ -211,7 +211,7 @@ class MatchOut(BaseModel):
         examples=[1],
     )
     round_label: str = Field(description="Round as written in the source", examples=["First stage / Group A"])
-    kickoff_utc: UtcDatetime
+    kickoff_utc: UtcDatetime | None = Field(description="Null when the source gives no date for the match; such matches list last")
     original_kickoff_utc: UtcDatetime | None = Field(description="Set when a later sync observed the kickoff move")
     status: MatchStatus
     home_team_id: uuid.UUID
