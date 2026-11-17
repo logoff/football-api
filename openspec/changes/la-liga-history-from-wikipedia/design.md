@@ -64,16 +64,16 @@
 
 ### D4. Results grids in the reader
 
-- **Parser:** `parse_results_grids(html)` returns every grid with its heading path, using the section walk `_heading` already gives boxes. Each cell keeps its row and column index.
+- **Parser:** `parse_season_grids(html)` returns every grid with its heading path, using the section walk `_heading` already gives boxes. Each cell keeps its row and column index.
   - `parse_results_grid`, used by verification, stays as it is: the first grid, paired by title. Its output for today's verified seasons doesn't change.
 - **Which pages are read:** a Wikipedia season of a `LEAGUE` competition reads grids, and the others read boxes. The competition's format already says which shape the season has. A league page's boxes are play-offs, which are out of scope.
-- **Sections:** a new optional season field, `wikipedia_grids: [<section>, …]`. It's only valid with `wikipedia_source` on a `LEAGUE` competition (spec `Grid sections`). Without it, a page must have exactly one grid.
+- **Sections:** a new optional season field, `wikipedia_grids: [<section>, …]`. It's only valid with `wikipedia_source` on a `LEAGUE` competition (spec `Grid sections`). Without it, a page must have exactly one grid. A grid matches a seeded section by its top-level heading only. In 1950-51 the relegation group's grid sits under `Relegation group / Results`, so the league's `Results` mustn't select it.
 - **Pairing by position:**
   - Row *i* and column *i* must resolve to the same QID, or the season fails.
   - Cell (*i*, *j*) with *i* ≠ *j* is row *i*'s club at home against column *j*'s club away.
   - QIDs come from `RevisionStore.qids` over both row and column titles, as for boxes.
 - **Labels and stages:**
-  - A grid under `Results` or `Regular season` gets round label `League`, stage `LEAGUE`.
+  - A grid under `Results`, `Results table` or `Regular season` gets round label `League`, stage `LEAGUE`. The spike found `Results table` on 16 pages.
   - A grid under `<Name> group` gets `<Name> group`, stage `GROUP` and group name `<Name>`. `normalize_stage` and `group_of` learn that form, anchored at the end of the label so `First group stage` is unaffected.
   - Any other section fails the season, as an unknown box heading does.
 - **Cells:** a score gives `COMPLETED`, `REGULAR`. A league match has no extra time. An empty cell gives `CANCELLED` without a score, like a walkover box. `line_no` is the cell's position, row-major, for error messages.

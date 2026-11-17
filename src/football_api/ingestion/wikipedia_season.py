@@ -1,5 +1,6 @@
 """English Wikipedia as a season's source: the match boxes of pinned page revisions
-(source-older-seasons-from-wikipedia, design D1–D5).
+(source-older-seasons-from-wikipedia, design D1–D5), or for a league their results grids
+(la-liga-history-from-wikipedia D4).
 
 Unlike `wikipedia.py`'s verification reads, what is read here is stored and served, under
 CC BY-SA 4.0 (season-sources). Each revision and the QIDs of the clubs it links are fetched once
@@ -7,6 +8,7 @@ and kept under the sources directory, so a season whose pins haven't moved needs
 """
 
 import json
+import re
 from collections.abc import Iterable
 from dataclasses import dataclass, replace
 from pathlib import Path
@@ -15,7 +17,7 @@ from typing import Any, Protocol
 from football_api.domain.enums import DecidedBy, License, MatchStatus, Publisher
 from football_api.ingestion.openfootball.text_parser import ParsedMatch, ParsedScore, normalize_stage
 from football_api.ingestion.seeds import SeasonSource, TeamSeed, WikipediaPin
-from football_api.ingestion.wikipedia import MatchBox, merge_boxes, parse_match_boxes
+from football_api.ingestion.wikipedia import MatchBox, SeasonGrid, merge_boxes, parse_match_boxes, parse_season_grids
 
 WIKIPEDIA = "wikipedia"  # external_ref source of the seasons and matches read here
 REVISION_URL = "https://en.wikipedia.org/w/index.php?oldid={}"
@@ -74,6 +76,7 @@ class WikipediaSeason:
     matches: list[ParsedMatch]  # home and away are Wikidata QIDs
     path: str  # the season article: where errors and match references point
     clubs: dict[str, str]  # QID → the club article that linked it, for error messages
+    from_grids: bool = False  # read from results grids, which can't mark a match awarded (D5)
 
 
 def source_of(src: SeasonSource) -> dict[str, Any]:
@@ -158,6 +161,75 @@ async def read_season(src: SeasonSource, store: RevisionStore, seeded: dict[str,
     return WikipediaSeason(matches, main, clubs)
 
 
+# Headings that only wrap a league's grid; any other heading must name a group.
+_LEAGUE_HEADINGS = {"results", "results table", "regular season", "league", "season", "first phase", "first stage"}
+_NAMED_GROUP = re.compile(r"^[A-Z][\w-]* group$")
+_NO_RESULT = {"", "—", "–", "-"}
+
+
+def grid_label(heading: tuple[str, ...]) -> str | None:
+    """`Results` or `Regular season / Results` → `League`; `Championship group / Results` →
+    `Championship group`; None for a heading that names neither."""
+    parts = [h for h in heading if h.lower() not in _LEAGUE_HEADINGS]
+    if not parts:
+        return "League"
+    return parts[-1] if len(parts) == 1 and _NAMED_GROUP.match(parts[-1]) else None
+
+
+def _selected(grids: list[tuple[SeasonGrid, WikipediaPin]], sections: list[str] | None) -> list[tuple[SeasonGrid, WikipediaPin]]:
+    """The grids a season reads: its only one, or those whose top-level section is one of the seeded
+    ones (spec `Grid sections`). Only the top level counts: in 1950-51 the relegation group's grid
+    sits under `Relegation group / Results`, which isn't the league's `Results`."""
+    if sections is None:
+        if len(grids) != 1:
+            found = "; ".join(f"{pin.title} (revision {pin.revision}): {' / '.join(g.heading) or 'no heading'}" for g, pin in grids)
+            raise WikipediaSourceError(f"{len(grids)} results grids and no `wikipedia_grids` to choose from: {found or 'none'}")
+        return grids
+    wanted = {s.lower() for s in sections}
+    chosen = [(g, pin) for g, pin in grids if g.heading and g.heading[0].lower() in wanted]
+    for section in sections:
+        if not any(g.heading[0].lower() == section.lower() for g, _ in chosen):
+            raise WikipediaSourceError(f"no results grid under the section {section!r}")
+    return chosen
+
+
+async def read_grid_season(src: SeasonSource, store: RevisionStore, seeded: dict[str, str]) -> WikipediaSeason:
+    """A league season from the results grids of its pinned revisions (D4): one match per cell, the
+    row's club at home. Rows and columns pair by position, and must resolve to the same club."""
+    pins = src.wikipedia_source
+    assert pins, f"{src.label} has no Wikipedia pins"
+    found = [(g, pin) for pin in pins for g in parse_season_grids(await store.html(pin))]
+    matches: list[ParsedMatch] = []
+    clubs: dict[str, str] = {}
+    for grid, pin in _selected(found, src.wikipedia_grids):
+        where = f"{pin.title} (revision {pin.revision})"
+        label = grid_label(grid.heading)
+        if label is None:
+            raise WikipediaSourceError(f"{where}: heading {' / '.join(grid.heading)!r} names no league or group")
+        qid_of = await store.qids(pin, set(grid.rows) | set(grid.columns))
+        sides: list[str] = []
+        for title in grid.rows + grid.columns:
+            if title not in qid_of:
+                raise WikipediaSourceError(f"{where}: club article {title!r} has no Wikidata QID")
+        for i, (row, column) in enumerate(zip(grid.rows, grid.columns, strict=True)):
+            home, away = seeded.get(qid_of[row], qid_of[row]), seeded.get(qid_of[column], qid_of[column])
+            if home != away:
+                raise WikipediaSourceError(f"{where}: row {i + 1} is {row!r} ({home}) but column {i + 1} is {column!r} ({away})")
+            clubs.setdefault(home, row)
+            sides.append(home)
+        for cell in grid.cells:
+            home, away = sides[cell.row], sides[cell.column]
+            line_no = len(matches) + 1
+            if cell.score is not None:
+                score = ParsedScore(*cell.score, DecidedBy.REGULAR)
+                matches.append(ParsedMatch(line_no, label, None, None, None, home, away, score))
+            elif cell.text in _NO_RESULT:  # a match without a result, such as one annulled
+                matches.append(ParsedMatch(line_no, label, None, None, None, home, away, None, status=MatchStatus.CANCELLED))
+            else:
+                raise WikipediaSourceError(f"{where}: {clubs[home]} v {clubs[away]} reads {cell.text!r}, not a score")
+    return WikipediaSeason(matches, pins[0].title, clubs, from_grids=True)
+
+
 @dataclass(frozen=True)
 class WikipediaSeasons:
     """What sync needs to read Wikipedia seasons: the revision store and the seeded QIDs."""
@@ -165,5 +237,8 @@ class WikipediaSeasons:
     store: RevisionStore
     seeded: dict[str, str]
 
-    async def read(self, src: SeasonSource) -> WikipediaSeason:
+    async def read(self, src: SeasonSource, *, grids: bool = False) -> WikipediaSeason:
+        """The season from its match boxes, or with `grids` (a league) from its results grids."""
+        if grids:
+            return await read_grid_season(src, self.store, self.seeded)
         return await read_season(src, self.store, self.seeded)

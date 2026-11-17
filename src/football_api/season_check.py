@@ -77,7 +77,8 @@ def season_fingerprint(
     parts = [
         code_fingerprint().encode(),
         _canonical(seed.model_dump(mode="json", exclude={"seasons"})),
-        _canonical(src.model_dump(mode="json", by_alias=True)),
+        # Left out while unset, so adding the field didn't change every season's fingerprint.
+        _canonical(src.model_dump(mode="json", by_alias=True, exclude=None if src.wikipedia_grids else {"wikipedia_grids"})),
         teams.encode(),
         _canonical([e.model_dump(mode="json", by_alias=True) for e in awarded]),
     ]

@@ -1,6 +1,7 @@
 """Wikipedia as a season source: headings, pinned revisions and their cache, boxes to matches
 (ingestion spec: Wikipedia season source, Pinned revisions are cached, Stage from section headings,
-Walkovers; design D2–D5)."""
+Walkovers, Results grid cells, Grid sections, Awarded matches in grids; design D2–D5, and
+la-liga-history-from-wikipedia D4, D5)."""
 
 from collections.abc import Iterable
 from datetime import date
@@ -9,15 +10,23 @@ from pathlib import Path
 import pytest
 from sqlalchemy import func, select
 
-from football_api.domain.enums import DecidedBy, EntityType, MatchStatus, Stage, TeamKind
+from football_api.domain.enums import DecidedBy, EntityType, MatchStatus, Played, Stage, TeamKind
 from football_api.infra.db import get_sessionmaker
 from football_api.infra.models import ExternalRef, Match, Season, Team, TeamSeason
 from football_api.ingestion.openfootball.text_parser import normalize_stage
-from football_api.ingestion.seeds import CompetitionSeed, SeasonSource, TeamSeed, WikipediaPin
-from football_api.ingestion.wikipedia import WikipediaUnavailable, parse_match_boxes, parse_subarticle_titles
+from football_api.ingestion.seeds import AwardedSeeds, CompetitionSeed, SeasonSource, TeamSeed, WikipediaPin
+from football_api.ingestion.wikipedia import (
+    WikipediaUnavailable,
+    parse_match_boxes,
+    parse_results_grid,
+    parse_season_grids,
+    parse_subarticle_titles,
+)
 from football_api.ingestion.wikipedia_season import (
     RevisionStore,
     WikipediaSourceError,
+    grid_label,
+    read_grid_season,
     read_season,
     round_label,
     seeded_qids,
@@ -287,3 +296,197 @@ async def test_pins_tool_lists_box_changes(tmp_path: Path) -> None:
         "+ First round | 1960-09-14 | Alpha F.C. | Beta F.C. | 2–0 REGULAR",
     ]
     assert pins_yaml([WikipediaPin(title=MAIN, revision=100)]) == 'wikipedia_source:\n  - {title: "1960–61 European Cup", revision: 100}'
+
+
+# --- league seasons from results grids (la-liga-history-from-wikipedia) ------------------------
+LIGA = "1979–80 La Liga"
+GRID_QIDS = {"Alpha CF": "Q1", "Beta CF": "Q2", "Gamma CF": "Q3", "Old Gamma": "Q3", "Delta CF": "Q4"}
+
+
+def grid(rows: list[str], cells: list[list[str]], columns: list[str] | None = None) -> str:
+    """A results grid: `rows` link the home clubs, `columns` (default: the same) the away clubs."""
+    head = "<tr><th>Home \\ Away</th>" + "".join(f"<th>{club(c)}</th>" for c in columns or rows) + "</tr>"
+    body = "".join(
+        f"<tr><th>{club(r)}</th>" + "".join(f"<td>{'—' if i == j else c}</td>" for j, c in enumerate(row)) + "</tr>"
+        for i, (r, row) in enumerate(zip(rows, cells, strict=True))
+    )
+    return f'<table class="wikitable">{head}{body}</table>'
+
+
+THREE = ["Alpha CF", "Beta CF", "Gamma CF"]
+SCORES = [["", "2–1", "1–1"], ["0–0", "", "3–2"], ["1–0", "", ""]]  # Gamma v Beta has no result
+LIGA_HTML = section("Results", grid(THREE, SCORES)) + section("Relegation play-off", "<p>no grid here</p>")
+
+
+def grid_page(*sections: str) -> str:
+    return f"<html><head><title>{LIGA}</title></head><body>{''.join(sections)}</body></html>"
+
+
+def grid_season(revision: int = 100, grids: list[str] | None = None) -> SeasonSource:
+    data: dict[str, object] = {"label": "1979-80", "start_year": 1979, "wikipedia_source": [{"title": LIGA, "revision": revision}]}
+    if grids:
+        data["wikipedia_grids"] = grids
+    return SeasonSource.model_validate(data)
+
+
+def grid_fake(html: str, revision: int = 100) -> FakeWikipedia:
+    return FakeWikipedia({(LIGA, revision): html}, GRID_QIDS)
+
+
+async def read_grid(tmp_path: Path, html: str, grids: list[str] | None = None) -> list[tuple[str, str, str, str]]:
+    got = await read_grid_season(grid_season(grids=grids), RevisionStore(tmp_path, grid_fake(html)), {})
+    return [
+        (m.round_label, m.home, m.away, f"{m.score.home}–{m.score.away}" if m.score else m.status.value) for m in got.matches
+    ]
+
+
+def test_grids_carry_headings_and_positions() -> None:
+    [g] = parse_season_grids(grid_page(LIGA_HTML))
+    assert g.heading == ("Results",) and g.rows == THREE == g.columns
+    assert [(c.row, c.column, c.score) for c in g.cells][:2] == [(0, 1, (2, 1)), (0, 2, (1, 1))]
+    assert len(g.cells) == 6  # the diagonal is skipped
+    # Verification's reader is unchanged: the first grid, by title.
+    reference = parse_results_grid(grid_page(LIGA_HTML))
+    assert reference is not None and len(reference.cells) == 6
+
+
+@pytest.mark.parametrize(
+    ("heading", "label"),
+    [
+        (("Results",), "League"),
+        (("Regular season", "Results"), "League"),
+        (("Championship group", "Results"), "Championship group"),
+        (("Relegation play-off", "Results"), None),
+        (("Trivia",), None),
+    ],
+)
+def test_grid_label(heading: tuple[str, ...], label: str | None) -> None:
+    assert grid_label(heading) == label
+
+
+def test_named_groups_map_to_their_group() -> None:
+    assert normalize_stage("Championship group")[0] is Stage.GROUP and group_of("Championship group") == "Championship"
+    assert normalize_stage("League") == (Stage.LEAGUE, None)
+    assert group_of("First group stage") is None and group_of("Second group stage / Group A") == "A"
+
+
+async def test_league_season_from_its_grid(tmp_path: Path) -> None:
+    assert await read_grid(tmp_path, grid_page(LIGA_HTML)) == [
+        ("League", "Q1", "Q2", "2–1"),
+        ("League", "Q1", "Q3", "1–1"),
+        ("League", "Q2", "Q1", "0–0"),
+        ("League", "Q2", "Q3", "3–2"),
+        ("League", "Q3", "Q1", "1–0"),
+        ("League", "Q3", "Q2", "CANCELLED"),
+    ]
+
+
+async def test_row_and_column_named_differently_pair_by_position(tmp_path: Path) -> None:
+    html = grid_page(section("Results", grid(["Alpha CF", "Beta CF", "Old Gamma"], SCORES, columns=THREE)))
+    matches = await read_grid(tmp_path, html)
+    assert len(matches) == 6 and all(home != away for _, home, away, _ in matches)
+
+
+async def test_row_and_column_that_dont_match_fail(tmp_path: Path) -> None:
+    html = grid_page(section("Results", grid(["Alpha CF", "Beta CF", "Delta CF"], SCORES, columns=THREE)))
+    with pytest.raises(WikipediaSourceError, match=r"revision 100\): row 3 is 'Delta CF' \(Q4\) but column 3 is 'Gamma CF' \(Q3\)"):
+        await read_grid(tmp_path, html)
+
+
+async def test_cell_that_is_not_a_score_fails(tmp_path: Path) -> None:
+    html = grid_page(section("Results", grid(THREE, [["", "2–1", "1–1"], ["0–0", "", "3–2"], ["1–0", "a", ""]])))
+    with pytest.raises(WikipediaSourceError, match="Gamma CF v Beta CF reads 'a'"):
+        await read_grid(tmp_path, html)
+
+
+async def test_second_phase_in_groups(tmp_path: Path) -> None:
+    two = [["", "1–0"], ["2–2", ""]]
+    html = grid_page(
+        section("Regular season", section("Results", grid(THREE, SCORES), level=3)),
+        section("Championship group", section("Results", grid(THREE[:2], two), level=3)),
+        section("Relegation group", section("Results", grid(THREE[1:], two), level=3)),
+    )
+    matches = await read_grid(tmp_path, html, ["Regular season", "Championship group", "Relegation group"])
+    assert [m[0] for m in matches] == ["League"] * 6 + ["Championship group"] * 2 + ["Relegation group"] * 2
+
+
+async def test_only_the_seeded_sections_are_read(tmp_path: Path) -> None:
+    # As in 1950-51: the relegation group's own `Results` subsection isn't the league's `Results`.
+    relegation = section("Results", grid(["Beta CF", "Delta CF"], [["", "1–0"], ["2–2", ""]]), level=3)
+    html = grid_page(LIGA_HTML, section("Relegation group", relegation))
+    assert len(await read_grid(tmp_path, html, ["Results"])) == 6
+
+
+async def test_several_grids_and_no_sections_fail(tmp_path: Path) -> None:
+    html = grid_page(LIGA_HTML, section("Relegation group", grid(["Beta CF", "Delta CF"], [["", "1–0"], ["2–2", ""]])))
+    with pytest.raises(WikipediaSourceError, match=r"2 results grids .*revision 100\): Results; .*Relegation group"):
+        await read_grid(tmp_path, html)
+    with pytest.raises(WikipediaSourceError, match="no results grid under the section 'Second phase'"):
+        await read_grid(tmp_path, html, ["Results", "Second phase"])
+
+
+def test_grids_need_a_wikipedia_league_season() -> None:
+    with pytest.raises(ValueError, match="needs `wikipedia_source`"):
+        SeasonSource.model_validate({"label": "2024-25", "start_year": 2024, "file": "x.txt", "tz": "UTC", "wikipedia_grids": ["Results"]})
+    cup = {"name": "Cup", "team_kind": "CLUB", "scope": "DOMESTIC", "format": "CUP", "wikidata": "Q9"}
+    with pytest.raises(ValueError, match="only for leagues"):
+        CompetitionSeed.model_validate({**cup, "seasons": [grid_season(grids=["Results"]).model_dump(by_alias=True, exclude_unset=True)]})
+
+
+async def test_pins_tool_lists_cell_changes(tmp_path: Path) -> None:
+    wiki = FakeWikipedia({(LIGA, 100): grid_page(LIGA_HTML), (LIGA, 101): grid_page(LIGA_HTML.replace("3–2", "3–3"))}, GRID_QIDS)
+    store = RevisionStore(tmp_path, wiki)
+    old = rows(await read_grid_season(grid_season(100), store, {}))
+    new = rows(await read_grid_season(grid_season(101), store, {}))
+    assert box_diff(old, new) == [
+        "- League | no date | Beta CF | Gamma CF | 3–2 REGULAR",
+        "+ League | no date | Beta CF | Gamma CF | 3–3 REGULAR",
+    ]
+
+
+# --- sync ---------------------------------------------------------------------------------
+
+LEAGUE = {"name": "La Liga", "country": "ES", "team_kind": "CLUB", "scope": "DOMESTIC", "format": "LEAGUE", "wikidata": "Q324867"}
+GRID_CLUBS = [TeamSeed(name=n, kind=TeamKind.CLUB, country=None, wikidata=q) for n, q in GRID_QIDS.items() if n != "Old Gamma"]
+
+
+def league(src: SeasonSource) -> list[CompetitionSeed]:
+    return [CompetitionSeed.model_validate({**LEAGUE, "seasons": [src.model_dump(by_alias=True, exclude_unset=True)]})]
+
+
+async def grid_sync(teams: list[TeamSeed], awarded: AwardedSeeds | None = None, html: str = grid_page(LIGA_HTML)) -> SyncReport:
+    return await run_sync(competitions=league(grid_season()), teams=teams, awarded=awarded, refresh_sources=False, wikipedia=grid_fake(html))
+
+
+def awarded_entry(home: str, away: str) -> AwardedSeeds:
+    return AwardedSeeds.model_validate(
+        {"matches": [{"competition": "Q324867", "season": "1979-80", "home": home, "away": away, "played": "NONE", "reason": "r", "source": "s"}]}
+    )
+
+
+@pytest.mark.db
+async def test_grid_season_syncs_without_dates(fresh_db: Path, fixture_teams: list[TeamSeed]) -> None:
+    report = await grid_sync(fixture_teams + GRID_CLUBS)
+    assert not report.failed, report.failed
+    async with get_sessionmaker()() as session:
+        row = (await session.scalars(select(Season).where(Season.label == "1979-80"))).one()
+        assert row.source["license"] == "CC-BY-SA-4.0" and row.starts_on is None
+        matches = (await session.scalars(select(Match).where(Match.season_id == row.id))).all()
+    assert len(matches) == 6 and all(m.kickoff_utc is None and m.stage is Stage.LEAGUE for m in matches)
+    assert sorted(m.status for m in matches) == [MatchStatus.CANCELLED] + [MatchStatus.COMPLETED] * 5
+
+
+@pytest.mark.db
+async def test_awarded_match_from_the_seed(fresh_db: Path, fixture_teams: list[TeamSeed]) -> None:
+    report = await grid_sync(fixture_teams + GRID_CLUBS, awarded_entry("Q3", "Q1"))
+    assert not report.failed, report.failed
+    async with get_sessionmaker()() as session:
+        flagged = (await session.scalars(select(Match).where(Match.awarded))).all()
+    assert [(m.home_score, m.away_score, m.played) for m in flagged] == [(1, 0, Played.NONE)]
+
+
+@pytest.mark.db
+async def test_awarded_entry_without_its_match_fails(fresh_db: Path, fixture_teams: list[TeamSeed]) -> None:
+    report = await grid_sync(fixture_teams + GRID_CLUBS + [TeamSeed(name="Epsilon", kind=TeamKind.CLUB, country=None, wikidata="Q5")], awarded_entry("Q5", "Q1"))
+    [(_, _, exc)] = report.failed
+    assert "awarded.yaml lists Q5 v Q1, not in the season" in str(exc)

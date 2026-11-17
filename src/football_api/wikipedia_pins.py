@@ -1,5 +1,6 @@
 """Pin a season to the current revisions of its Wikipedia pages, and show what moving the pins
-changes (source-older-seasons-from-wikipedia, design D6).
+changes (source-older-seasons-from-wikipedia, design D6): box by box, or for a league cell by cell
+(la-liga-history-from-wikipedia).
 
     just wikipedia-pins "1960–61 European Cup"
     just wikipedia-pins "1960–61 European Cup" Q18756 1960-61   # also diff against the seeded pins
@@ -14,9 +15,10 @@ from collections.abc import Sequence
 
 from football_api.infra.settings import get_settings
 from football_api.ingestion.openfootball.text_parser import ParsedMatch
+from football_api.domain.enums import CompetitionFormat
 from football_api.ingestion.seeds import SeasonSource, WikipediaPin, load_competitions
 from football_api.ingestion.wikipedia import WikipediaClient
-from football_api.ingestion.wikipedia_season import RevisionStore, WikipediaSeason, read_season
+from football_api.ingestion.wikipedia_season import RevisionStore, WikipediaSeason, read_grid_season, read_season
 
 Row = tuple[str, str, str, str, str]  # stage label, date, home, away, result
 
@@ -46,9 +48,15 @@ def box_diff(old: set[Row], new: set[Row]) -> list[str]:
     return [f"{sign} {' | '.join(r)}" for sign, r in sorted(changed, key=lambda c: (c[1][1], c[1][2], c[0] == "+"))]
 
 
-def seeded_season(qid: str, label: str) -> SeasonSource | None:
+def seeded_season(qid: str, label: str) -> tuple[SeasonSource, bool] | None:
+    """The seeded season, and whether it's read from results grids (a league)."""
     comp = next((c for c in load_competitions() if c.wikidata == qid), None)
-    return next((s for s in comp.seasons if s.label == label), None) if comp else None
+    src = next((s for s in comp.seasons if s.label == label), None) if comp else None
+    return (src, comp.format is CompetitionFormat.LEAGUE) if comp and src else None
+
+
+async def read(src: SeasonSource, store: RevisionStore, *, grids: bool) -> WikipediaSeason:
+    return await (read_grid_season if grids else read_season)(src, store, {})
 
 
 async def run(title: str, qid: str | None, label: str | None) -> int:
@@ -60,14 +68,15 @@ async def run(title: str, qid: str | None, label: str | None) -> int:
         print(pins_yaml(pins))
         if qid is None or label is None:
             return 0
-        old = seeded_season(qid, label)
-        if old is None or not old.wikipedia_source:
+        seeded = seeded_season(qid, label)
+        if seeded is None or not seeded[0].wikipedia_source:
             print(f"\n# {qid} {label} has no seeded pins to compare with", file=sys.stderr)
             return 0
+        old, grids = seeded
         store = RevisionStore(settings.sources_dir / "wikipedia", wiki)
         new = old.model_copy(update={"wikipedia_source": pins})
-        diff = box_diff(rows(await read_season(old, store, {})), rows(await read_season(new, store, {})))
-        print(f"\n# {len(diff)} box change(s) from the seeded pins", file=sys.stderr)
+        diff = box_diff(rows(await read(old, store, grids=grids)), rows(await read(new, store, grids=grids)))
+        print(f"\n# {len(diff)} {'grid cell' if grids else 'box'} change(s) from the seeded pins", file=sys.stderr)
         for line in diff:
             print(f"# {line}", file=sys.stderr)
     return 0

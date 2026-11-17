@@ -55,7 +55,7 @@ Each cell of a results grid SHALL give one match: the club of its row at home, t
 
 ### Requirement: Grid sections
 
-A season read from grids SHALL read the one grid on its pages when there is only one. When there are several, the season seed SHALL name the section of each grid to read, and every grid in a named section is read. A page with several grids and no sections named, or a named section with no grid, SHALL fail the season. The stage and group SHALL come from the section heading, as for match boxes.
+A season read from grids SHALL read the one grid on its pages when there is only one. When there are several, the season seed SHALL name the top-level section of each grid to read, and every grid whose top-level section is named is read. A page with several grids and no sections named, or a named section with no grid, SHALL fail the season. The stage and group SHALL come from the section heading, as for match boxes.
 
 #### Scenario: Second phase in groups
 
