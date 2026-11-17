@@ -22,7 +22,7 @@ import uuid
 from collections import defaultdict
 from collections.abc import AsyncGenerator, Iterable
 from contextlib import AsyncExitStack, asynccontextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, date, datetime, time, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -33,7 +33,7 @@ from sqlalchemy import delete, select, text
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from football_api.domain.enums import Coverage, EntityType, MatchStatus, Played, SeasonStatus, Side, Stage, TeamKind
+from football_api.domain.enums import CompetitionFormat, Coverage, EntityType, MatchStatus, Played, SeasonStatus, Side, Stage, TeamKind
 from football_api.infra.db import get_engine, get_sessionmaker
 from football_api.infra.models import (
     Card,
@@ -530,6 +530,18 @@ async def sync_match(session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, 
     return match
 
 
+def flag_awarded(
+    seed: CompetitionSeed, src: SeasonSource, matches: list[ParsedMatch], awarded: AwardedSeeds, path: str
+) -> list[ParsedMatch]:
+    """A results grid can't mark a match awarded, so awarded.yaml does (la-liga-history-from-wikipedia
+    D5): each entry of the season flags its pairing, and an entry that matches none fails the season."""
+    entries = {(e.home, e.away) for e in awarded.matches if (e.competition, e.season) == (seed.wikidata, src.label)}
+    missing = entries - {(m.home, m.away) for m in matches}
+    if missing:
+        raise SyncError(f"{path}: awarded.yaml lists {', '.join(f'{h} v {a}' for h, a in sorted(missing))}, not in the season")
+    return [replace(m, awarded=True) if (m.home, m.away) in entries and m.score else m for m in matches]
+
+
 async def played(
     session: AsyncSession, ctx: SeasonContext, m: ParsedMatch, home_id: uuid.UUID, away_id: uuid.UUID, path: str
 ) -> Played | None:
@@ -695,8 +707,10 @@ async def sync_season(
     if src.wikipedia_source:
         if wikipedia is None:
             raise SyncError(f"{seed.name} {src.label}: sourced from Wikipedia, but no Wikipedia reader was given")
-        read = await wikipedia.read(src)
+        read = await wikipedia.read(src, grids=seed.format is CompetitionFormat.LEAGUE)
         matches, path, clubs = read.matches, read.path, read.clubs
+        if read.from_grids:
+            matches = flag_awarded(seed, src, matches, awarded or AwardedSeeds(), path)
     else:
         matches, path = read_matches(seed, src, sources)
     if not matches:

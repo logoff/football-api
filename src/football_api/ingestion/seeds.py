@@ -84,6 +84,12 @@ class SeasonSource(_Seed):
         description="The season article and sub-articles, each pinned to a revision, that this season is read "
         "from instead of openfootball (season-sources)",
     )
+    wikipedia_grids: list[str] | None = Field(
+        default=None,
+        min_length=1,
+        description="Sections whose results grids a league season sourced from Wikipedia reads, when its pages "
+        "have more than one grid (la-liga-history-from-wikipedia D4)",
+    )
 
     @model_validator(mode="after")
     def _one_source(self) -> "SeasonSource":
@@ -94,6 +100,8 @@ class SeasonSource(_Seed):
             titles = [p.title for p in self.wikipedia_source]
             if len(titles) != len(set(titles)):
                 raise ValueError(f"season {self.label}: a page is pinned twice")
+        elif self.wikipedia_grids is not None:
+            raise ValueError(f"season {self.label}: `wikipedia_grids` needs `wikipedia_source`")
         elif self.file is None or "tz" not in self.model_fields_set:
             raise ValueError(f"season {self.label}: needs `file` and `tz`, or `wikipedia_source`")
         return self
@@ -114,6 +122,8 @@ class CompetitionSeed(_Seed):
         labels = [s.label for s in self.seasons]
         if len(labels) != len(set(labels)):
             raise ValueError(f"{self.name}: duplicate season label")
+        if self.format is not CompetitionFormat.LEAGUE and any(s.wikipedia_grids for s in self.seasons):
+            raise ValueError(f"{self.name}: `wikipedia_grids` is only for leagues, which are read from results grids")
         starts = [e.start for e in self.standings]
         if starts != sorted(set(starts)):
             raise ValueError(f"{self.name}: standings eras must have increasing `from` years")

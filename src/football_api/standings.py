@@ -20,6 +20,9 @@ TeamId = uuid.UUID
 # `Group A`, `Gruppe 3`, `First stage / Group B`, `Second Round / Group C`; not `Group, Matchday 1`
 # nor `Group Stage / …` (the word after `Group` must be a lone letter or number).
 _GROUP_NAME = re.compile(r"\b(?:Group|Gruppe)\s+([A-Z]|\d+)\b")
+# A group named before the word, ending the label: `Championship group` (La Liga 1986-87); not
+# `First group stage`.
+_NAMED_GROUP = re.compile(r"(?:^|/ )([A-Z][\w-]*) group$")
 
 
 @dataclass(frozen=True)
@@ -74,7 +77,10 @@ def phase_of(round_label: str | None) -> int:
 
 def group_of(round_label: str | None) -> str | None:
     names = _GROUP_NAME.findall(round_label or "")
-    return names[-1] if names else None
+    if names:
+        return names[-1]
+    named = _NAMED_GROUP.search(round_label or "")
+    return named[1] if named else None
 
 
 def split_tables(matches: Iterable[TableMatch]) -> list[Table]:

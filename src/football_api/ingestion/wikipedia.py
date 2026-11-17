@@ -557,6 +557,52 @@ def merge_boxes(groups: Iterable[list[MatchBox]]) -> list[MatchBox]:
     return out
 
 
+@dataclass(frozen=True)
+class SeasonGridCell:
+    row: int  # 0-based; the row's club plays at home
+    column: int  # 0-based; the column's club plays away
+    text: str  # as written: a score, or empty for a match without a result
+    score: tuple[int, int] | None
+
+
+@dataclass(frozen=True)
+class SeasonGrid:
+    """A results grid read as a season's source (la-liga-history-from-wikipedia D4): rows and columns
+    pair by position, since a row may link an older article name than its column."""
+
+    heading: tuple[str, ...]
+    rows: list[str]  # club article titles, in row order
+    columns: list[str]
+    cells: list[SeasonGridCell]  # every cell off the diagonal, row by row
+
+
+def _season_grid(table: Tag) -> SeasonGrid | None:
+    rows = list(table.find_all("tr"))
+    if len(rows) < 3:
+        return None
+    columns = [_link_title(c) for c in _cells(rows[0])[1:]]
+    if len(columns) < 2 or any(t is None for t in columns):
+        return None
+    body = [cells for cells in (_cells(row) for row in rows[1:]) if cells and _link_title(cells[0])]
+    if len(body) != len(columns) or any(len(cells) != len(columns) + 1 for cells in body):
+        return None
+    cells: list[SeasonGridCell] = []
+    for i, row in enumerate(body):
+        for j, cell in enumerate(row[1:]):
+            if i != j:
+                score = _score(cell)  # drops footnote markers first
+                cells.append(SeasonGridCell(i, j, cell.get_text(" ", strip=True), score))
+    if not any(c.score for c in cells):
+        return None
+    return SeasonGrid(_heading(table), [cast(str, _link_title(r[0])) for r in body], cast(list[str], columns), cells)
+
+
+def parse_season_grids(html: str) -> list[SeasonGrid]:
+    """Every square team-by-team results table in the page, in page order, with its headings."""
+    soup = BeautifulSoup(html, "html.parser")
+    return [g for g in (_season_grid(table) for table in soup.find_all("table")) if g]
+
+
 def parse_results_grid(html: str) -> ResultsGrid | None:
     """The first square team-by-team results table in the page, or None if there is none."""
     soup = BeautifulSoup(html, "html.parser")
