@@ -27,6 +27,9 @@ REVISION_URL = "https://en.wikipedia.org/w/index.php?oldid={}"
 _NOT_A_STAGE = {
     "first leg", "second leg", "matches", "groups", "play-off", "play-offs", "replay", "replays",
     "tie-breaker", "tie-breakers", "knockout phase", "knockout stage", "summary",
+    # Wrappers of rounds, never a round: `Final phase / Third round` is a third round, not a final
+    # (cup-winners-cup-and-uefa-cup-from-wikipedia D2).
+    "final phase", "tournament phase", "qualifying phase",
 }
 
 
@@ -121,11 +124,20 @@ async def read_season(src: SeasonSource, store: RevisionStore, seeded: dict[str,
     pins = src.wikipedia_source
     assert pins, f"{src.label} has no Wikipedia pins"
     main = pins[0].title
+    skip = {h.lower() for h in src.wikipedia_skip or []}
+    skipped: set[str] = set()
     labelled: list[list[tuple[MatchBox, WikipediaPin]]] = []
     for pin in pins:
         suffix = pin.title[len(main) :].strip() if pin.title.startswith(main + " ") else ""
-        boxes = [replace(b, heading=(round_label(suffix, b.heading),)) for b in parse_match_boxes(await store.html(pin))]
+        boxes: list[MatchBox] = []
+        for b in parse_match_boxes(await store.html(pin)):
+            if hit := skip & {h.lower() for h in b.heading}:  # a section the season leaves out (D3)
+                skipped |= hit
+                continue
+            boxes.append(replace(b, heading=(round_label(suffix, b.heading),)))
         labelled.append([(b, pin) for b in boxes])
+    if missing := sorted(h for h in src.wikipedia_skip or [] if h.lower() not in skipped):
+        raise WikipediaSourceError(f"{main}: no boxes under the skipped section(s) {', '.join(map(repr, missing))}")
     # The page each kept box came from: its first copy, as `merge_boxes` keeps the first.
     pin_of = {(b.day, b.home, b.away): pin for page in reversed(labelled) for b, pin in reversed(page)}
     boxes = merge_boxes([b for b, _ in page] for page in labelled)
@@ -133,10 +145,14 @@ async def read_season(src: SeasonSource, store: RevisionStore, seeded: dict[str,
     titles: dict[str, set[str]] = {}
     for box in boxes:
         titles.setdefault(pin_of[(box.day, box.home, box.away)].title, set()).update((box.home, box.away))
-    qid_of: dict[str, str] = {}
+    # Clubs a box links to an article that doesn't exist take their QID from the seed (D4).
+    given = src.wikipedia_qids or {}
+    if stale := sorted(set(given) - {t for ts in titles.values() for t in ts}):
+        raise WikipediaSourceError(f"{main}: `wikipedia_qids` names {', '.join(map(repr, stale))}, which no box links")
+    qid_of: dict[str, str] = dict(given)
     for pin in pins:
-        if pin.title in titles:
-            qid_of |= await store.qids(pin, titles[pin.title])
+        if lookup := titles.get(pin.title, set()) - given.keys():
+            qid_of |= await store.qids(pin, lookup)
 
     matches: list[ParsedMatch] = []
     clubs: dict[str, str] = {}

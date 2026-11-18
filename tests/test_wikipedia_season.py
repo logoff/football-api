@@ -35,6 +35,7 @@ from football_api.ingestion.wikipedia_season import (
 from football_api.standings import group_of, phase_of
 from football_api.sync import SyncReport, run_sync
 from football_api.wikipedia_pins import box_diff, pins_yaml, rows
+from football_api.wikipedia_pins import read as pins_read
 
 
 def club(name: str) -> str:
@@ -118,6 +119,10 @@ def test_boxes_carry_their_section_headings() -> None:
         ("first group stage", ("Groups", "Group A"), "First group stage / Group A", Stage.GROUP, None),
         ("knockout phase", ("Round of 16", "Matches"), "Round of 16", Stage.R16, None),
         ("first round", ("Matches",), "First round", Stage.ROUND, 1),
+        # Wrappers name no stage (cup-winners-cup-and-uefa-cup-from-wikipedia D2).
+        ("", ("Final phase", "Third round"), "Third round", Stage.ROUND, 3),
+        ("", ("Tournament phase", "Semi-finals"), "Semi-finals", Stage.SF, None),
+        ("", ("Qualifying phase", "Preliminary round"), "Preliminary round", Stage.PRELIMINARY, None),
     ],
 )
 def test_round_label_from_page_and_headings(suffix: str, heading: tuple[str, ...], label: str, stage: Stage, number: int | None) -> None:
@@ -493,3 +498,56 @@ async def test_awarded_entry_without_its_match_fails(fresh_db: Path, fixture_tea
     report = await grid_sync(fixture_teams + GRID_CLUBS + [TeamSeed(name="Epsilon", kind=TeamKind.CLUB, country=None, wikidata="Q5")], awarded_entry("Q5", "Q1"))
     [(_, _, exc)] = report.failed
     assert "awarded.yaml lists Q5 v Q1, not in the season" in str(exc)
+
+
+# --- skipped sections and seeded QIDs (cup-winners-cup-and-uefa-cup-from-wikipedia D3, D4) --------
+
+
+def with_options(src: SeasonSource, **options: object) -> SeasonSource:
+    return SeasonSource.model_validate({**src.model_dump(by_alias=True, exclude_unset=True), **options})
+
+
+async def test_skipped_sections_are_not_read(tmp_path: Path) -> None:
+    src = with_options(season((MAIN, 100)), wikipedia_skip=["Quarter-finals"])
+    read = await read_season(src, RevisionStore(tmp_path, fake()), {})
+    assert {m.round_label for m in read.matches} == {"First round", "Final"}
+
+
+async def test_skipped_section_that_isnt_there_fails(tmp_path: Path) -> None:
+    src = with_options(season((MAIN, 100)), wikipedia_skip=["Quarter-finals", "Preliminary round"])
+    with pytest.raises(WikipediaSourceError, match="no boxes under the skipped section\\(s\\) 'Preliminary round'"):
+        await read_season(src, RevisionStore(tmp_path, fake()), {})
+
+
+async def test_seeded_qid_for_a_club_without_an_article(tmp_path: Path) -> None:
+    wiki = FakeWikipedia({(MAIN, 100): MAIN_HTML}, {t: q for t, q in QIDS.items() if t != "Delta F.C."})
+    with pytest.raises(WikipediaSourceError, match="'Delta F.C.' has no Wikidata QID"):
+        await read_season(season((MAIN, 100)), RevisionStore(tmp_path / "a", wiki), {})
+    read = await read_season(with_options(season((MAIN, 100)), wikipedia_qids={"Delta F.C.": "Q4"}), RevisionStore(tmp_path / "b", wiki), {})
+    assert "Q4" in {m.away for m in read.matches} | {m.home for m in read.matches}
+
+
+async def test_seeded_qid_no_box_links_fails(tmp_path: Path) -> None:
+    src = with_options(season((MAIN, 100)), wikipedia_qids={"Nobody F.C.": "Q9"})
+    with pytest.raises(WikipediaSourceError, match="names 'Nobody F.C.', which no box links"):
+        await read_season(src, RevisionStore(tmp_path, fake()), {})
+
+
+@pytest.mark.parametrize("option", [{"wikipedia_skip": ["Qualifying round"]}, {"wikipedia_qids": {"X": "Q1"}}])
+def test_wikipedia_options_need_a_wikipedia_season(option: dict[str, object]) -> None:
+    [name] = option
+    with pytest.raises(ValueError, match=f"`{name}` needs `wikipedia_source`"):
+        SeasonSource.model_validate({"label": "2024-25", "start_year": 2024, "file": "x.txt", "tz": "UTC", **option})
+
+
+async def test_pins_tool_reads_seeded_options(tmp_path: Path) -> None:
+    wiki = fake()
+    wiki.pages[(MAIN, 101)] = MAIN_HTML.replace("2–1", "2–0")
+    store = RevisionStore(tmp_path, wiki)
+    old = with_options(season((MAIN, 100)), wikipedia_skip=["Quarter-finals"])
+    new = old.model_copy(update={"wikipedia_source": [WikipediaPin(title=MAIN, revision=101)]})
+    diff = box_diff(rows(await pins_read(old, store, grids=False)), rows(await pins_read(new, store, grids=False)))
+    assert diff == [
+        "- First round | 1960-09-14 | Alpha F.C. | Beta F.C. | 2–1 REGULAR",
+        "+ First round | 1960-09-14 | Alpha F.C. | Beta F.C. | 2–0 REGULAR",
+    ]
