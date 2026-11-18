@@ -1690,8 +1690,13 @@
   format: TOURNAMENT
   wikidata: Q18760
   standings:
+    # UEFA Cup: a knockout until 2003-04, then 2004-05 to 2008-09 groups of five played once (UEFA Cup
+    # regulations). The era starts in 1971 only so every season has rules; no table exists before 2004-05.
+    - from: 1971
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, away_goals_for, wins, away_wins]
     # UEFA Europa League regulations, group stage (as the Champions League)
-    - from: 2020
+    - from: 2009
       points: {win: 3, draw: 1, loss: 0}
       tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, h2h_away_goals_for, h2h_reapply, goal_difference, goals_for, away_goals_for, wins, away_wins]
     # UEFA 2021-22: away goals no longer count in head-to-head
@@ -1702,8 +1707,268 @@
     - from: 2024
       points: {win: 3, draw: 1, loss: 0}
       tiebreakers: [goal_difference, goals_for, away_goals_for, wins, away_wins, opponents_points, opponents_goal_difference, opponents_goals_for]
-  # Every season openfootball/champions-league has (2020-21 onwards).
   seasons:
+    # 1971-72 to 2019-20 from the match boxes of English Wikipedia's UEFA Cup and Europa League articles and their
+    # round sub-articles, pinned by revision (cup-winners-cup-and-uefa-cup-from-wikipedia). Every round up to
+    # 1993-94; from 1994-95 the preliminary and qualifying rounds are left out, as for the Champions League.
+    - label: 1971-72
+      start_year: 1971
+      wikipedia_source:
+        - {title: "1971–72 UEFA Cup", revision: 1380919924}
+    - label: 1972-73
+      start_year: 1972
+      wikipedia_source:
+        - {title: "1972–73 UEFA Cup", revision: 1378387814}
+    - label: 1973-74
+      start_year: 1973
+      wikipedia_source:
+        - {title: "1973–74 UEFA Cup", revision: 1383050280}
+    - label: 1974-75
+      start_year: 1974
+      wikipedia_source:
+        - {title: "1974–75 UEFA Cup", revision: 1381072252}
+    - label: 1975-76
+      start_year: 1975
+      wikipedia_source:
+        - {title: "1975–76 UEFA Cup", revision: 1377723668}
+    - label: 1976-77
+      start_year: 1976
+      wikipedia_source:
+        - {title: "1976–77 UEFA Cup", revision: 1377472487}
+    - label: 1977-78
+      start_year: 1977
+      wikipedia_source:
+        - {title: "1977–78 UEFA Cup", revision: 1366338723}
+    - label: 1978-79
+      start_year: 1978
+      wikipedia_source:
+        - {title: "1978–79 UEFA Cup", revision: 1383050566}
+    - label: 1979-80
+      start_year: 1979
+      wikipedia_source:
+        - {title: "1979–80 UEFA Cup", revision: 1377473133}
+    - label: 1980-81
+      start_year: 1980
+      wikipedia_source:
+        - {title: "1980–81 UEFA Cup", revision: 1382404822}
+    - label: 1981-82
+      start_year: 1981
+      wikipedia_source:
+        - {title: "1981–82 UEFA Cup", revision: 1377471978}
+    - label: 1982-83
+      start_year: 1982
+      wikipedia_source:
+        - {title: "1982–83 UEFA Cup", revision: 1344026494}
+    - label: 1983-84
+      start_year: 1983
+      wikipedia_source:
+        - {title: "1983–84 UEFA Cup", revision: 1376157982}
+    - label: 1984-85
+      start_year: 1984
+      wikipedia_source:
+        - {title: "1984–85 UEFA Cup", revision: 1378604608}
+    - label: 1985-86
+      start_year: 1985
+      wikipedia_source:
+        - {title: "1985–86 UEFA Cup", revision: 1378694157}
+    - label: 1986-87
+      start_year: 1986
+      wikipedia_source:
+        - {title: "1986–87 UEFA Cup", revision: 1377867614}
+    - label: 1987-88
+      start_year: 1987
+      wikipedia_source:
+        - {title: "1987–88 UEFA Cup", revision: 1376865574}
+    - label: 1988-89
+      start_year: 1988
+      wikipedia_source:
+        - {title: "1988–89 UEFA Cup", revision: 1371785736}
+    - label: 1989-90
+      start_year: 1989
+      wikipedia_source:
+        - {title: "1989–90 UEFA Cup", revision: 1380087284}
+    - label: 1990-91
+      start_year: 1990
+      wikipedia_source:
+        - {title: "1990–91 UEFA Cup", revision: 1386206516}
+    - label: 1991-92
+      start_year: 1991
+      wikipedia_source:
+        - {title: "1991–92 UEFA Cup", revision: 1365907112}
+    - label: 1992-93
+      start_year: 1992
+      wikipedia_source:
+        - {title: "1992–93 UEFA Cup", revision: 1365907104}
+    - label: 1993-94
+      start_year: 1993
+      wikipedia_source:
+        - {title: "1993–94 UEFA Cup", revision: 1381679891}
+    - label: 1994-95
+      start_year: 1994
+      wikipedia_skip: ["Preliminary round"]
+      wikipedia_source:
+        - {title: "1994–95 UEFA Cup", revision: 1386204828}
+    - label: 1995-96
+      start_year: 1995
+      wikipedia_skip: ["Preliminary round"]
+      wikipedia_source:
+        - {title: "1995–96 UEFA Cup", revision: 1376824630}
+    - label: 1996-97
+      start_year: 1996
+      wikipedia_skip: ["Preliminary round", "Qualifying round"]
+      wikipedia_source:
+        - {title: "1996–97 UEFA Cup", revision: 1374189506}
+    - label: 1997-98
+      start_year: 1997
+      wikipedia_skip: ["First qualifying round", "Second qualifying round"]
+      wikipedia_source:
+        - {title: "1997–98 UEFA Cup", revision: 1375576184}
+    - label: 1998-99
+      start_year: 1998
+      wikipedia_skip: ["First qualifying round", "Second qualifying round"]
+      wikipedia_source:
+        - {title: "1998–99 UEFA Cup", revision: 1383355271}
+    - label: 1999-00
+      start_year: 1999
+      wikipedia_source:
+        - {title: "1999–2000 UEFA Cup", revision: 1386083652}
+        - {title: "1999–2000 UEFA Cup first round", revision: 1367983606}
+        - {title: "1999–2000 UEFA Cup second round", revision: 1358575364}
+        - {title: "1999–2000 UEFA Cup final phase", revision: 1324788103}
+    - label: 2000-01
+      start_year: 2000
+      wikipedia_source:
+        - {title: "2000–01 UEFA Cup", revision: 1360190451}
+        - {title: "2000–01 UEFA Cup first round", revision: 1367794375}
+        - {title: "2000–01 UEFA Cup second round", revision: 1358575436}
+        - {title: "2000–01 UEFA Cup final phase", revision: 1324881013}
+    - label: 2001-02
+      start_year: 2001
+      wikipedia_source:
+        - {title: "2001–02 UEFA Cup", revision: 1368140242}
+        - {title: "2001–02 UEFA Cup first round", revision: 1367853540}
+        - {title: "2001–02 UEFA Cup second round", revision: 1369670270}
+        - {title: "2001–02 UEFA Cup final phase", revision: 1370724633}
+    - label: 2002-03
+      start_year: 2002
+      wikipedia_source:
+        - {title: "2002–03 UEFA Cup", revision: 1367789412}
+        - {title: "2002–03 UEFA Cup first round", revision: 1375881898}
+        - {title: "2002–03 UEFA Cup second round", revision: 1367794727}
+        - {title: "2002–03 UEFA Cup final phase", revision: 1367794656}
+    - label: 2003-04
+      start_year: 2003
+      wikipedia_source:
+        - {title: "2003–04 UEFA Cup", revision: 1372189982}
+        - {title: "2003–04 UEFA Cup first round", revision: 1354864531}
+        - {title: "2003–04 UEFA Cup second round", revision: 1367796323}
+        - {title: "2003–04 UEFA Cup final phase", revision: 1336714910}
+    - label: 2004-05
+      start_year: 2004
+      wikipedia_source:
+        - {title: "2004–05 UEFA Cup", revision: 1370938786}
+        - {title: "2004–05 UEFA Cup first round", revision: 1372743421}
+        - {title: "2004–05 UEFA Cup group stage", revision: 1372864907}
+        - {title: "2004–05 UEFA Cup final phase", revision: 1372870986}
+        - {title: "2004–05 UEFA Cup knockout stage", revision: 1372870986}
+    - label: 2005-06
+      start_year: 2005
+      wikipedia_source:
+        - {title: "2005–06 UEFA Cup", revision: 1340903526}
+        - {title: "2005–06 UEFA Cup first round", revision: 1372645234}
+        - {title: "2005–06 UEFA Cup group stage", revision: 1370542885}
+        - {title: "2005–06 UEFA Cup final phase", revision: 1324707077}
+        - {title: "2005–06 UEFA Cup knockout stage", revision: 1324707077}
+    - label: 2006-07
+      start_year: 2006
+      wikipedia_source:
+        - {title: "2006–07 UEFA Cup", revision: 1368858880}
+        - {title: "2006–07 UEFA Cup first round", revision: 1376274730}
+        - {title: "2006–07 UEFA Cup group stage", revision: 1370542905}
+        - {title: "2006–07 UEFA Cup knockout stage", revision: 1314269637}
+    - label: 2007-08
+      start_year: 2007
+      wikipedia_source:
+        - {title: "2007–08 UEFA Cup", revision: 1383807222}
+        - {title: "2007–08 UEFA Cup first round", revision: 1370130534}
+        - {title: "2007–08 UEFA Cup group stage", revision: 1370542921}
+        - {title: "2007–08 UEFA Cup final phase", revision: 1338481978}
+        - {title: "2007–08 UEFA Cup knockout stage", revision: 1338481978}
+    - label: 2008-09
+      start_year: 2008
+      wikipedia_source:
+        - {title: "2008–09 UEFA Cup", revision: 1384921672}
+        - {title: "2008–09 UEFA Cup first round", revision: 1376274870}
+        - {title: "2008–09 UEFA Cup group stage", revision: 1376274875}
+        - {title: "2008–09 UEFA Cup final phase", revision: 1376274880}
+        - {title: "2008–09 UEFA Cup knockout stage", revision: 1376274880}
+    - label: 2009-10
+      start_year: 2009
+      wikipedia_source:
+        - {title: "2009–10 UEFA Europa League", revision: 1376275197}
+        - {title: "2009–10 UEFA Europa League group stage", revision: 1384430502}
+        - {title: "2009–10 UEFA Europa League knockout phase", revision: 1378911741}
+    - label: 2010-11
+      start_year: 2010
+      wikipedia_source:
+        - {title: "2010–11 UEFA Europa League", revision: 1360997640}
+        - {title: "2010–11 UEFA Europa League group stage", revision: 1384760255}
+        - {title: "2010–11 UEFA Europa League knockout phase", revision: 1303953333}
+    - label: 2011-12
+      start_year: 2011
+      wikipedia_source:
+        - {title: "2011–12 UEFA Europa League", revision: 1373179122}
+        - {title: "2011–12 UEFA Europa League knockout phase", revision: 1385153648}
+        - {title: "2011–12 UEFA Europa League group stage", revision: 1385605247}
+    - label: 2012-13
+      start_year: 2012
+      wikipedia_source:
+        - {title: "2012–13 UEFA Europa League", revision: 1360997593}
+        - {title: "2012–13 UEFA Europa League group stage", revision: 1385154111}
+        - {title: "2012–13 UEFA Europa League knockout phase", revision: 1384886140}
+    - label: 2013-14
+      start_year: 2013
+      wikipedia_source:
+        - {title: "2013–14 UEFA Europa League", revision: 1360997572}
+        - {title: "2013–14 UEFA Europa League group stage", revision: 1385605341}
+        - {title: "2013–14 UEFA Europa League knockout phase", revision: 1385343460}
+    - label: 2014-15
+      start_year: 2014
+      wikipedia_source:
+        - {title: "2014–15 UEFA Europa League", revision: 1375989908}
+        - {title: "2014–15 UEFA Europa League group stage", revision: 1386057042}
+        - {title: "2014–15 UEFA Europa League knockout phase", revision: 1385155279}
+    - label: 2015-16
+      start_year: 2015
+      wikipedia_source:
+        - {title: "2015–16 UEFA Europa League", revision: 1375990349}
+        - {title: "2015–16 UEFA Europa League group stage", revision: 1384761705}
+        - {title: "2015–16 UEFA Europa League knockout phase", revision: 1384573828}
+    - label: 2016-17
+      start_year: 2016
+      wikipedia_source:
+        - {title: "2016–17 UEFA Europa League", revision: 1373612333}
+        - {title: "2016–17 UEFA Europa League group stage", revision: 1385346266}
+        - {title: "2016–17 UEFA Europa League knockout phase", revision: 1384762114}
+    - label: 2017-18
+      start_year: 2017
+      wikipedia_source:
+        - {title: "2017–18 UEFA Europa League", revision: 1374076355}
+        - {title: "2017–18 UEFA Europa League group stage", revision: 1384574626}
+        - {title: "2017–18 UEFA Europa League knockout phase", revision: 1384887611}
+    - label: 2018-19
+      start_year: 2018
+      wikipedia_source:
+        - {title: "2018–19 UEFA Europa League", revision: 1363225942}
+        - {title: "2018–19 UEFA Europa League group stage", revision: 1385347927}
+        - {title: "2018–19 UEFA Europa League knockout phase", revision: 1385158317}
+    - label: 2019-20
+      start_year: 2019
+      wikipedia_source:
+        - {title: "2019–20 UEFA Europa League", revision: 1375364195}
+        - {title: "2019–20 UEFA Europa League knockout phase", revision: 1384888450}
+        - {title: "2019–20 UEFA Europa League group stage", revision: 1384763468}
+    # 2020-21 onwards: every season openfootball/champions-league has.
     - label: 2020-21
       start_year: 2020
       file: champions-league/2020-21/el.txt
@@ -1729,6 +1994,182 @@
       file: champions-league/2024-25/el.txt
       tz: Europe/Berlin
       wikipedia: "2024–25 UEFA Europa League"
+
+- name: UEFA Cup Winners' Cup
+  team_kind: CLUB
+  scope: CONTINENTAL
+  format: TOURNAMENT
+  wikidata: Q40241
+  # Every season, 1960-61 to 1998-99, from the match boxes of English Wikipedia's season articles, pinned by
+  # revision (cup-winners-cup-and-uefa-cup-from-wikipedia). Every round up to 1993-94; from 1994-95 the
+  # qualifying round is left out, as for the Champions League.
+  standings:
+    # A knockout throughout, so no table is ever computed; the era only gives every season rules.
+    - from: 1960
+      points: {win: 2, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for]
+  seasons:
+    - label: 1960-61
+      start_year: 1960
+      wikipedia_source:
+        - {title: "1960–61 European Cup Winners' Cup", revision: 1373613232}
+    - label: 1961-62
+      start_year: 1961
+      wikipedia_source:
+        - {title: "1961–62 European Cup Winners' Cup", revision: 1372218015}
+    - label: 1962-63
+      start_year: 1962
+      wikipedia_source:
+        - {title: "1962–63 European Cup Winners' Cup", revision: 1372218234}
+    - label: 1963-64
+      start_year: 1963
+      wikipedia_source:
+        - {title: "1963–64 European Cup Winners' Cup", revision: 1372218808}
+    - label: 1964-65
+      start_year: 1964
+      wikipedia_source:
+        - {title: "1964–65 European Cup Winners' Cup", revision: 1372219415}
+    - label: 1965-66
+      start_year: 1965
+      wikipedia_source:
+        - {title: "1965–66 European Cup Winners' Cup", revision: 1372220965}
+    - label: 1966-67
+      start_year: 1966
+      wikipedia_source:
+        - {title: "1966–67 European Cup Winners' Cup", revision: 1372221338}
+    - label: 1967-68
+      start_year: 1967
+      wikipedia_source:
+        - {title: "1967–68 European Cup Winners' Cup", revision: 1381638136}
+    - label: 1968-69
+      start_year: 1968
+      wikipedia_source:
+        - {title: "1968–69 European Cup Winners' Cup", revision: 1381926914}
+    - label: 1969-70
+      start_year: 1969
+      wikipedia_source:
+        - {title: "1969–70 European Cup Winners' Cup", revision: 1381787974}
+    - label: 1970-71
+      start_year: 1970
+      wikipedia_source:
+        - {title: "1970–71 European Cup Winners' Cup", revision: 1384768607}
+    - label: 1971-72
+      start_year: 1971
+      wikipedia_source:
+        - {title: "1971–72 European Cup Winners' Cup", revision: 1379552468}
+    - label: 1972-73
+      start_year: 1972
+      wikipedia_source:
+        - {title: "1972–73 European Cup Winners' Cup", revision: 1372239958}
+    - label: 1973-74
+      start_year: 1973
+      wikipedia_source:
+        - {title: "1973–74 European Cup Winners' Cup", revision: 1380083163}
+    - label: 1974-75
+      start_year: 1974
+      wikipedia_source:
+        - {title: "1974–75 European Cup Winners' Cup", revision: 1380539050}
+    - label: 1975-76
+      start_year: 1975
+      wikipedia_source:
+        - {title: "1975–76 European Cup Winners' Cup", revision: 1381804699}
+    - label: 1976-77
+      start_year: 1976
+      wikipedia_source:
+        - {title: "1976–77 European Cup Winners' Cup", revision: 1372372997}
+    - label: 1977-78
+      start_year: 1977
+      wikipedia_source:
+        - {title: "1977–78 European Cup Winners' Cup", revision: 1377716134}
+    - label: 1978-79
+      start_year: 1978
+      wikipedia_source:
+        - {title: "1978–79 European Cup Winners' Cup", revision: 1377731299}
+    - label: 1979-80
+      start_year: 1979
+      wikipedia_source:
+        - {title: "1979–80 European Cup Winners' Cup", revision: 1375824567}
+    - label: 1980-81
+      start_year: 1980
+      wikipedia_source:
+        - {title: "1980–81 European Cup Winners' Cup", revision: 1372376099}
+    - label: 1981-82
+      start_year: 1981
+      wikipedia_source:
+        - {title: "1981–82 European Cup Winners' Cup", revision: 1361088497}
+    - label: 1982-83
+      start_year: 1982
+      wikipedia_source:
+        - {title: "1982–83 European Cup Winners' Cup", revision: 1372376569}
+    - label: 1983-84
+      start_year: 1983
+      wikipedia_source:
+        - {title: "1983–84 European Cup Winners' Cup", revision: 1378604173}
+    - label: 1984-85
+      start_year: 1984
+      wikipedia_source:
+        - {title: "1984–85 European Cup Winners' Cup", revision: 1365907073}
+    - label: 1985-86
+      start_year: 1985
+      wikipedia_source:
+        - {title: "1985–86 European Cup Winners' Cup", revision: 1379346355}
+    - label: 1986-87
+      start_year: 1986
+      wikipedia_source:
+        - {title: "1986–87 European Cup Winners' Cup", revision: 1321183586}
+    - label: 1987-88
+      start_year: 1987
+      wikipedia_source:
+        - {title: "1987–88 European Cup Winners' Cup", revision: 1363704640}
+    - label: 1988-89
+      start_year: 1988
+      wikipedia_source:
+        - {title: "1988–89 European Cup Winners' Cup", revision: 1362525158}
+    - label: 1989-90
+      start_year: 1989
+      wikipedia_source:
+        - {title: "1989–90 European Cup Winners' Cup", revision: 1333905258}
+    - label: 1990-91
+      start_year: 1990
+      wikipedia_source:
+        - {title: "1990–91 European Cup Winners' Cup", revision: 1329050242}
+    - label: 1991-92
+      start_year: 1991
+      wikipedia_source:
+        - {title: "1991–92 European Cup Winners' Cup", revision: 1367508084}
+    - label: 1992-93
+      start_year: 1992
+      wikipedia_source:
+        - {title: "1992–93 European Cup Winners' Cup", revision: 1368393205}
+    - label: 1993-94
+      start_year: 1993
+      wikipedia_source:
+        - {title: "1993–94 European Cup Winners' Cup", revision: 1373736513}
+    - label: 1994-95
+      start_year: 1994
+      wikipedia_skip: ["Qualifying round"]
+      wikipedia_source:
+        - {title: "1994–95 UEFA Cup Winners' Cup", revision: 1357191639}
+    - label: 1995-96
+      start_year: 1995
+      wikipedia_skip: ["Qualifying round"]
+      wikipedia_source:
+        - {title: "1995–96 UEFA Cup Winners' Cup", revision: 1365281013}
+    - label: 1996-97
+      start_year: 1996
+      wikipedia_skip: ["Qualifying round"]
+      wikipedia_source:
+        - {title: "1996–97 UEFA Cup Winners' Cup", revision: 1365281039}
+    - label: 1997-98
+      start_year: 1997
+      wikipedia_skip: ["Qualifying round"]
+      wikipedia_source:
+        - {title: "1997–98 UEFA Cup Winners' Cup", revision: 1359328565}
+    - label: 1998-99
+      start_year: 1998
+      wikipedia_skip: ["Qualifying round"]
+      wikipedia_source:
+        - {title: "1998–99 UEFA Cup Winners' Cup", revision: 1362379776}
 
 - name: UEFA Conference League
   team_kind: CLUB

@@ -17,7 +17,7 @@ context: |
   aliases). External IDs live only in external_ref; no source is
   privileged.
 
-  Scope: 20 competitions. Domestic club leagues (6): every season
+  Scope: 21 competitions. Domestic club leagues (6): every season
   openfootball has, up to 2026-27 (in progress), each score verified
   against the English Wikipedia season grid: Premier League from
   1992-93, Bundesliga 2010-11, La Liga 2012-13, Serie A 2013-14, Ligue 1
@@ -34,9 +34,11 @@ context: |
   verified against the Wikipedia match boxes (verify-domestic-cups).
   Competitions have a format: LEAGUE, CUP, LEAGUE_CUP, SUPER_CUP,
   TOURNAMENT. Super cups: no source data.
-  International competitions (8): every edition openfootball has with
+  International competitions (9): every edition openfootball has with
   a date for every match (change extend-international-history): UCL
-  1955-56+ (1955-56 to 2010-11 from Wikipedia, unverified), UEL 2020-21+, UECL 2021-22+, Copa Libertadores 2012+, Club
+  1955-56+ (1955-56 to 2010-11 from Wikipedia, unverified), UEL 1971-72+ (UEFA Cup; 1971-72 to 2019-20 from
+  Wikipedia, unverified), Cup Winners' Cup 1960-61 to 1998-99 (Wikipedia,
+  unverified; change cup-winners-cup-and-uefa-cup-from-wikipedia), UECL 2021-22+, Copa Libertadores 2012+, Club
   World Cup 2000+, World Cup 1930+, Euro 1960+ (not 1984, 1992), Copa
   América 2011, 2021, 2024; not verified yet. Deferred: AFCON and FIFA
   Intercontinental Cup 2024 (no source data), Copa Sudamericana

@@ -194,12 +194,42 @@ matches:
 
   # --- UEFA Europa League (Q18760) ----------------------------------------------------
   - competition: Q18760
+    season: "1998-99"
+    home: Q2052 # Fiorentina
+    away: Q201360 # Grasshopper
+    played: PARTIAL
+    reason: "Abandoned at half-time in Salerno after a firecracker injured the fourth official; awarded 0-3 to Grasshopper and Fiorentina excluded"
+    source: https://www.irishtimes.com/sport/italian-leaders-ejected-1.212606
+  - competition: Q18760
+    season: "2000-01"
+    home: Q8749 # Celta
+    away: Q173009 # Red Star Belgrade
+    played: FULL
+    reason: "Celta won 5-3, then UEFA awarded it 3-0 because Red Star fielded two suspended players"
+    source: https://www.soccer-spain.com/ssdocs/archive2000/uefa/uefa16.html
+  - competition: Q18760
+    season: "2001-02"
+    home: Q245162 # Rapid București
+    away: Q483020 # Paris Saint-Germain
+    played: PARTIAL
+    reason: "Abandoned at 0-1 in the 113th minute after a power failure; awarded 0-3 to Paris Saint-Germain because Rapid had no emergency generator"
+    source: https://rsssf.org/ec/ec200102.html
+  - competition: Q18760
     season: "2020-21"
     home: Q12297 # Villarreal
     away: Q723476 # Qarabağ
     played: NONE
     reason: "Not played: Qarabağ lacked the minimum number of players after Covid-19 cases; UEFA declared it forfeited"
     source: https://www.uefa.com/news-media/news/0264-111ec5a43f08-60d12c855894-1000--cedb-villarreal-cf-v-qarabag-fk/
+
+  # --- UEFA Cup Winners' Cup (Q40241) ------------------------------------------------
+  - competition: Q40241
+    season: "1987-88"
+    home: Q181216 # Hajduk Split
+    away: Q132885 # Marseille
+    played: FULL
+    reason: "Hajduk won 2-0 after a 15-minute stoppage for tear gas thrown in the stands; UEFA awarded the match 0-3 to Marseille and banned Hajduk for two seasons"
+    source: https://rsssf.org/ec/ec198788.html
 
   # --- UEFA Conference League (Q59365764) ---------------------------------------------
   - competition: Q59365764
