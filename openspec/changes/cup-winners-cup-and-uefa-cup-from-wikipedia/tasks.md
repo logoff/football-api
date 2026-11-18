@@ -2,10 +2,10 @@
 
 ## 1. Reader
 
-- [ ] 1.1 Add `Final phase`, `Tournament phase` and `Qualifying phase` to the wrapper headings (design D2). Verify with `round_label` and `normalize_stage` tests: `Final phase / Third round` is `ROUND` 3, `Tournament phase / Semi-finals` is `SF`, and `Qualifying phase / Preliminary round` is `PRELIMINARY`. Check that the existing Champions League label tests still pass.
-- [ ] 1.2 Add `wikipedia_skip` to the season seed, valid only with `wikipedia_source`. Drop the boxes under a listed heading, and fail on a listed heading the pinned pages don't have. Leave the field out of the fingerprint while it's unset (D3, D5). Verify with seed loader and reader tests for spec `Sections left out`, and check that an existing season's fingerprint is unchanged.
-- [ ] 1.3 Add `wikipedia_qids` to the season seed. Resolve those titles before the QID lookup, and fail on an entry no box links. Leave the field out of the fingerprint while it's unset (D4, D5). Verify with a reader test for the spec scenario `Club article that doesn't exist`, and one for a stale entry.
-- [ ] 1.4 Make `just wikipedia-pins` read seeded seasons with their `wikipedia_skip` and `wikipedia_qids`, so its diff matches what sync stores. Verify with a test.
+- [x] 1.1 Add `Final phase`, `Tournament phase` and `Qualifying phase` to the wrapper headings (design D2). Verify with `round_label` and `normalize_stage` tests: `Final phase / Third round` is `ROUND` 3, `Tournament phase / Semi-finals` is `SF`, and `Qualifying phase / Preliminary round` is `PRELIMINARY`. Check that the existing Champions League label tests still pass.
+- [x] 1.2 Add `wikipedia_skip` to the season seed, valid only with `wikipedia_source`. Drop the boxes under a listed heading, and fail on a listed heading the pinned pages don't have. Leave the field out of the fingerprint while it's unset (D3, D5). Verify with seed loader and reader tests for spec `Sections left out`, and check that an existing season's fingerprint is unchanged.
+- [x] 1.3 Add `wikipedia_qids` to the season seed. Resolve those titles before the QID lookup, and fail on an entry no box links. Leave the field out of the fingerprint while it's unset (D4, D5). Verify with a reader test for the spec scenario `Club article that doesn't exist`, and one for a stale entry.
+- [x] 1.4 Make `just wikipedia-pins` read seeded seasons with their `wikipedia_skip` and `wikipedia_qids`, so its diff matches what sync stores. Verify with a test.
 
 ## 2. Cup Winners' Cup and UEFA Cup
 

@@ -61,6 +61,8 @@ class WikipediaPin(_Seed):
 
 
 _OPENFOOTBALL_FIELDS = ("file", "tz", "json_file", "events", "squads")
+# Options of a Wikipedia season; each is left out of the season fingerprint while unset.
+WIKIPEDIA_OPTIONS = ("wikipedia_grids", "wikipedia_skip", "wikipedia_qids")
 
 
 class SeasonSource(_Seed):
@@ -90,6 +92,18 @@ class SeasonSource(_Seed):
         description="Sections whose results grids a league season sourced from Wikipedia reads, when its pages "
         "have more than one grid (la-liga-history-from-wikipedia D4)",
     )
+    wikipedia_skip: list[str] | None = Field(
+        default=None,
+        min_length=1,
+        description="Section headings whose match boxes a Wikipedia season doesn't read, such as qualifying rounds "
+        "(cup-winners-cup-and-uefa-cup-from-wikipedia D3)",
+    )
+    wikipedia_qids: dict[str, str] | None = Field(
+        default=None,
+        min_length=1,
+        description="Wikidata QIDs for club titles a box links to an article that doesn't exist "
+        "(cup-winners-cup-and-uefa-cup-from-wikipedia D4)",
+    )
 
     @model_validator(mode="after")
     def _one_source(self) -> "SeasonSource":
@@ -100,8 +114,8 @@ class SeasonSource(_Seed):
             titles = [p.title for p in self.wikipedia_source]
             if len(titles) != len(set(titles)):
                 raise ValueError(f"season {self.label}: a page is pinned twice")
-        elif self.wikipedia_grids is not None:
-            raise ValueError(f"season {self.label}: `wikipedia_grids` needs `wikipedia_source`")
+        elif given := [f for f in WIKIPEDIA_OPTIONS if getattr(self, f) is not None]:
+            raise ValueError(f"season {self.label}: `{given[0]}` needs `wikipedia_source`")
         elif self.file is None or "tz" not in self.model_fields_set:
             raise ValueError(f"season {self.label}: needs `file` and `tz`, or `wikipedia_source`")
         return self
