@@ -77,10 +77,10 @@ The system SHALL track one or more seasons per competition. Each season has:
 
 - a reference to its competition
 - a label (e.g. `2024-25`, `2022`)
-- a start and end date
+- a start and end date, null for a season whose matches have no dates
 - a status: `SCHEDULED`, `IN_PROGRESS`, `COMPLETED`
 
-The seasons ingested for each competition are those listed in its seed. The five domestic leagues list every season their source provides: Premier League 1992-93, Bundesliga 2010-11, La Liga 2012-13, Serie A 2013-14 and Ligue 1 2014-15, each up to 2026-27. Segunda División lists every season its source provides in full, 2012-13 to 2024-25. The domestic cups list every completed season their source provides in full: FA Cup, EFL Cup and DFB-Pokal 2018-19 to 2024-25, Copa del Rey and Coppa Italia 2020-21 to 2024-25, and Coupe de France 2024-25. The international competitions list every edition their source provides with a date for every match: UEFA Champions League 1955-56 to 2025-26 (the European Cup up to 1991-92; up to 2010-11 from English Wikipedia, see `season-sources`), UEFA Europa League 2020-21 to 2024-25, UEFA Conference League 2021-22 to 2024-25, CONMEBOL Copa Libertadores 2012 to 2026, FIFA Club World Cup 2000 to 2025, FIFA World Cup 1930 to 2026, UEFA European Championship 1960 to 2024, and CONMEBOL Copa América 2011, 2021 and 2024. Editions in progress are included.
+The seasons ingested for each competition are those listed in its seed. The five domestic leagues list every season their source provides: Premier League 1992-93, Bundesliga 2010-11, La Liga 1929 (up to 2011-12 from English Wikipedia, without match dates, see `season-sources`), Serie A 2013-14 and Ligue 1 2014-15, each up to 2026-27. Segunda División lists every season its source provides in full, 2012-13 to 2024-25. The domestic cups list every completed season their source provides in full: FA Cup, EFL Cup and DFB-Pokal 2018-19 to 2024-25, Copa del Rey and Coppa Italia 2020-21 to 2024-25, and Coupe de France 2024-25. The international competitions list every edition their source provides with a date for every match: UEFA Champions League 1955-56 to 2025-26 (the European Cup up to 1991-92; up to 2010-11 from English Wikipedia, see `season-sources`), UEFA Europa League 2020-21 to 2024-25, UEFA Conference League 2021-22 to 2024-25, CONMEBOL Copa Libertadores 2012 to 2026, FIFA Club World Cup 2000 to 2025, FIFA World Cup 1930 to 2026, UEFA European Championship 1960 to 2024, and CONMEBOL Copa América 2011, 2021 and 2024. Editions in progress are included.
 
 #### Scenario: Listing seasons for a competition
 
@@ -89,9 +89,9 @@ The seasons ingested for each competition are those listed in its seed. The five
 
 #### Scenario: Several seasons of one competition
 
-- **GIVEN** La Liga is seeded with the 15 seasons from 2012-13 to 2026-27
-- **WHEN** a client GETs `/v1/seasons?competition_id={la-liga}` after a sync
-- **THEN** the response lists those 15 seasons, each with 380 matches
+- **GIVEN** the Bundesliga is seeded with the 17 seasons from 2010-11 to 2026-27
+- **WHEN** a client GETs `/v1/seasons?competition_id={bundesliga}` after a sync
+- **THEN** the response lists those 17 seasons, each with 306 matches
 - **AND** 2026-27 has status `IN_PROGRESS` while it has both played and unplayed matches
 
 #### Scenario: Full history of another league
@@ -135,7 +135,7 @@ The seasons ingested for each competition are those listed in its seed. The five
 
 #### Scenario: Edition without dates for every match
 
-- **GIVEN** a tournament edition whose source lists some matches without a date
+- **GIVEN** a tournament edition whose source dates some of its matches and lists others without a date
 - **WHEN** the seeds are reviewed
 - **THEN** that edition is not listed, and the README names it as a known gap
 
@@ -145,6 +145,13 @@ The seasons ingested for each competition are those listed in its seed. The five
 - **WHEN** a client GETs `/v1/seasons?competition_id={champions-league}` after a sync
 - **THEN** the response lists every season from 1955-56, the 1955-56 one with 29 matches
 - **AND** seasons up to 1993-94 hold every round, since all of them were the competition proper, while from 1994-95 the qualifying rounds are left out
+
+#### Scenario: La Liga history
+
+- **GIVEN** La Liga is seeded with 1929 to 2011-12 from Wikipedia and 2012-13 onwards from openfootball
+- **WHEN** a client GETs `/v1/seasons?competition_id={la-liga}` after a sync
+- **THEN** the response lists 96 seasons, from `1929` with 90 matches, with no seasons from 1936-37 to 1938-39
+- **AND** the seasons up to 2011-12 have no start or end date, and every one of their matches has a null kickoff
 
 ### Requirement: Team catalog
 

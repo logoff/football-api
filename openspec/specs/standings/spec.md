@@ -29,6 +29,21 @@ The endpoint SHALL accept `as_of` (a date), counting only matches played on or b
 - **WHEN** a client GETs the standings of the 2022 FIFA World Cup
 - **THEN** the API responds with eight `GROUP` tables, `A` to `H`, of four rows each
 
+### Requirement: Seasons without dates
+
+A season with matches without a date SHALL count them in its tables, and SHALL refuse `as_of` with 422, since those matches can't be placed before or after a date.
+
+#### Scenario: Season without dates
+
+- **GIVEN** La Liga 1955-56, whose matches have no date
+- **WHEN** a client GETs `/v1/seasons/{id}/standings`
+- **THEN** the API responds 200 with one `LEAGUE` table of 16 rows, status `final`, counting all 240 matches
+
+#### Scenario: Past date on a season without dates
+
+- **WHEN** a client GETs `/v1/seasons/{la-liga-1955-56}/standings?as_of=1956-01-01`
+- **THEN** the API responds 422 with an error saying the season's matches have no dates
+
 ### Requirement: Table rows
 
 Each row SHALL have:
@@ -103,6 +118,12 @@ Teams still level after the last tie-breaker are marked `tied`.
 - **GIVEN** the 2019-20 Ligue 1 season is declared to rank by points per game
 - **WHEN** a client GETs its standings
 - **THEN** teams are ordered by points divided by matches played
+
+#### Scenario: Two points for a win in older La Liga seasons
+
+- **GIVEN** La Liga's ranking rules give two points for a win until 1994-95 and three from 1995-96
+- **WHEN** a client GETs the standings of La Liga 1994-95 and of 1995-96
+- **THEN** each win is worth 2 points in the first table and 3 in the second
 
 ### Requirement: Curated adjustments
 
