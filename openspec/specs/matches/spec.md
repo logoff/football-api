@@ -14,7 +14,7 @@ The system SHALL store each match with:
 - a reference to its season
 - references to home and away teams
 - an optional reference to a venue
-- a kickoff timestamp in UTC, and an optional `original_kickoff_utc` set when the kickoff is first observed to change
+- a kickoff timestamp in UTC, null when the source gives no date for the match, and an optional `original_kickoff_utc` set when the kickoff is first observed to change
 - a status: `SCHEDULED`, `COMPLETED`, `CANCELLED`, `POSTPONED`
 - home and away scores at the end of play, including extra time (nullable until `COMPLETED`); for an awarded match, the score the source records
 - the referee's name and the attendance, both nullable (see `match-events`)
@@ -143,6 +143,12 @@ The system SHALL store each match with:
 - **WHEN** it is synced
 - **THEN** its match has stage `FIFTH_PLACE`
 
+#### Scenario: Match without a date
+
+- **GIVEN** La Liga 1929, read from a results grid that gives no dates
+- **WHEN** a client GETs one of its matches
+- **THEN** `kickoff_utc` is null and `matchday` is null, and the match has its score and status `COMPLETED`
+
 ### Requirement: Goal scorers
 
 The system SHALL record goal scorers for a match where the source data includes them. Each goal has a UUID and is linked to:
@@ -176,7 +182,7 @@ Scorer coverage in v0.1 is `full` for WC 2022, Euro 2024, Copa América 2024 and
 
 ### Requirement: Date and timezone semantics
 
-The system SHALL store and emit all timestamps in UTC, ISO 8601 format with a `Z` suffix.
+The system SHALL store and emit all timestamps in UTC, ISO 8601 format with a `Z` suffix. A match whose source gives no date SHALL have a null kickoff; no date is estimated for it.
 
 Source kickoff times are converted to UTC using, in order: an explicit offset on the match line, else the time zone configured for the source file. Sync SHALL fail for a match line with neither.
 
@@ -196,3 +202,15 @@ Source kickoff times are converted to UTC using, in order: an explicit offset on
 
 - **WHEN** a client GETs `/v1/matches?from=2024-08-01&to=2024-09-01`
 - **THEN** the API responds 200 with matches whose `kickoff_utc` falls within the inclusive date range
+
+#### Scenario: Date range leaves out matches without a date
+
+- **GIVEN** La Liga 1950-51, whose matches have no date
+- **WHEN** a client GETs `/v1/matches?from=1950-09-01&to=1951-06-30`
+- **THEN** none of those matches are listed
+
+#### Scenario: Matches without a date sort last
+
+- **GIVEN** a team with matches from La Liga 2011-12, without dates, and from La Liga 2012-13, with dates
+- **WHEN** a client pages through `/v1/matches?team_id={team}` to the end
+- **THEN** every dated match comes before every match without a date, and each match appears exactly once across the pages

@@ -132,7 +132,7 @@ These seasons aren't verified, but a one-off cross-check against RSSSF found err
 - **Wrong scores:** 28, in 1929-30, 1934-35, 1939-40, 1944-45, 1945-46, 1947-48, 1950-51, 1952-53, 1953-54, 1954-55, 1955-56, 1960-61, 1961-62, 1979-80, 1999-00, 2003-04 and 2006-07. In 1979-80 Málaga v Salamanca is `CANCELLED`, because the grid is empty, though the annulled 0–3 was reinstated in 1982.
 - **Wrong team links:** in 1964-65, UD Las Palmas's results are attributed to CD Málaga. In 1988-89 and 1989-90, CD Málaga's results are attributed to Málaga CF, which was founded in 1994.
 
-The full list, with the right values and their sources, is in [`wikipedia-corrections.md`](openspec/changes/la-liga-history-from-wikipedia/wikipedia-corrections.md).
+The full list, with the right values and their sources, is in [`wikipedia-corrections.md`](openspec/changes/archive/2026-11-18-la-liga-history-from-wikipedia/wikipedia-corrections.md).
 
 Ligue 1 2019-20 was stopped after 279 matches; its 101 unplayed fixtures are listed as `CANCELLED`.
 
