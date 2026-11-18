@@ -287,6 +287,11 @@
   openfootball:
     - "AD Alcorcón"
 
+- name: "AD Almería"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q290781
+
 - name: "AD Ceuta"
   kind: CLUB
   country: "ES"
@@ -986,6 +991,8 @@
     - "Club Atlético de Madrid"
     - "Club Atlético de Madrid (ESP)"
     - "Atlético Madrid (ESP)"
+  # 1939-40 to 1946-47 as Atlético Aviación, whose article Wikidata ties to Aviación Nacional.
+  reference_wikidata: [Q16549751]
 
 - name: "Atlético Mancha Real"
   kind: CLUB
@@ -1015,6 +1022,11 @@
   wikidata: Q1956993
   openfootball:
     - "Atlético Sanluqueño CF"
+
+- name: "Atlético Tetuán"
+  kind: CLUB
+  country: "MA"
+  wikidata: Q757467
 
 - name: "Atlético Tucumán"
   kind: CLUB
@@ -1543,6 +1555,12 @@
   openfootball:
     - "Burgos CF"
 
+- name: "Burgos CF (1936)"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q4998669
+  # Founded 1936, dissolved 1983; today's Burgos CF is a different club.
+
 - name: "Burnley"
   kind: CLUB
   country: "GB-ENG"
@@ -2028,6 +2046,11 @@
   openfootball:
     - "CD Colegios Diocesanos"
 
+- name: "CD Condal"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q856083
+
 - name: "CD Coria"
   kind: CLUB
   country: "ES"
@@ -2205,6 +2228,11 @@
   openfootball:
     - "CD Leganés"
 
+- name: "CD Logroñés"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q657865
+
 - name: "CD Los Yébenes San Bruno"
   kind: CLUB
   country: "ES"
@@ -2267,6 +2295,12 @@
   wikidata: Q124097617
   openfootball:
     - "CD Monte"
+
+- name: "CD Málaga"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q124518
+  # Dissolved 1992; Málaga CF is a different club.
 
 - name: "CD Móstoles URJC"
   kind: CLUB
@@ -2539,6 +2573,11 @@
   wikidata: Q2504228
   openfootball:
     - "CF Badalona Futur"
+
+- name: "CF Extremadura"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q732742
 
 - name: "CF Fuenlabrada"
   kind: CLUB
@@ -3275,6 +3314,11 @@
   wikidata: Q122853325
   openfootball:
     - "CP Mijas Las Lagunas"
+
+- name: "CP Mérida"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q856416
 
 - name: "CR Flamengo"
   kind: CLUB
@@ -7510,6 +7554,11 @@
     - "Real Betis (ESP)"
     - "Real Betis Balompié"
 
+- name: "Real Burgos"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q543446
+
 - name: "Real Jaén"
   kind: CLUB
   country: "ES"
@@ -9458,6 +9507,11 @@
   openfootball:
     - "UD Poblense"
 
+- name: "UD Salamanca"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q697353
+
 - name: "UD San Pedro"
   kind: CLUB
   country: "ES"
@@ -9507,6 +9561,11 @@
   wikidata: Q124751432
   openfootball:
     - "UE Llagostera"
+
+- name: "UE Lleida"
+  kind: CLUB
+  country: "ES"
+  wikidata: Q837218
 
 - name: "UE Olot"
   kind: CLUB

@@ -10,7 +10,7 @@
   - Sync sets `season.starts_on` and `ends_on` from the earliest and latest match day.
   - `standings.py` sorts matches by kickoff, both to drop a group's repeated pairings and to order connected components.
   - `season_tables.py` filters on kickoff for `as_of`.
-- **The spike, run on 2026-11-17 over the 80 English Wikipedia articles from `1929 La Liga` to `2011–12 La Liga`:**
+- **The spike, run on 2026-11-17 over the 80 English Wikipedia articles from `1929 La Liga` to `2011–12 La Liga`.** It skipped `1929–30 La Liga`, which has a grid like the others, so the implementation has 81 seasons and 22,396 matches:
   - Every article has a grid, and every cell has a score apart from Málaga v Salamanca 1979-80, which was annulled. That gives 22,215 scores in the league grids, and 90 more in the 1986-87 second phase. Counting the annulled match, that makes 22,306 matches.
   - No grid gives a date or a matchday. The only dated boxes are relegation play-offs.
   - The grids link 60 clubs, and 12 of them aren't seeded: Atlético Aviación, CD Málaga, UE Lleida, Atlético Tetuán, CD Condal, Burgos CF (1936–1983), UD Salamanca, AD Almería, CD Logroñés, Real Burgos, CP Mérida and CF Extremadura.
@@ -90,7 +90,7 @@
 
 ### D6. Teams
 
-- **The 12 unseeded clubs** are added from Wikidata, with name, country and `kind: CLUB`, and reviewed by hand, as in `source-older-seasons-from-wikipedia` D5.
+- **11 of the 12 unseeded clubs** are added from Wikidata, with name, country and `kind: CLUB`, and reviewed by hand, as in `source-older-seasons-from-wikipedia` D5.
 - **Atlético Aviación** (Q16549751) goes under `reference_wikidata` of Atlético Madrid (Q8701): it's the same club, renamed in 1947.
 - **Burgos CF (1936–1983) and Real Burgos** stay separate teams from today's Burgos CF (Q852079), since Wikidata treats them as different clubs. So does CD Málaga from Málaga CF.
 
@@ -98,12 +98,15 @@
 
 - **Points:**
   - The La Liga eras become 2-1-0 from 1929 and 3-1-0 from 1995. The current era starts in 1992, which is wrong for 1992-93 to 1994-95.
-  - The 1995 era keeps today's tie-breakers, since nothing changes for the seasons from 2012-13.
-- **Tie-breakers before 1995** are fixed by era, each cited from the regulations of the time where one is found and from Wikipedia's notes otherwise. The expected shape is goal ratio in the early decades and head-to-head later on.
-- **Check:** compare every computed final table with Wikipedia's, once and without storing anything, using `parse_standings`. Then add the curated entries the differences call for:
-  - point deductions in `standings.yaml`, with no `effective` date, since there are no dates to place them against, such as Salamanca −2 and Málaga −3 in 1979-80;
-  - orders for ties settled off the table.
-  - The PR states the result as *n* of 80 tables agreeing, and explains each one that doesn't.
+  - The 1995 era adds `h2h_reapply` to today's tie-breakers. That only changes 1995-96, where it puts Oviedo above Athletic Club as Wikipedia does. No table from 2012-13 changes.
+- **Tie-breakers before 1995:** no regulation text of the time was found. Wikipedia's tables settle every tie with `h2h_points, h2h_reapply, h2h_goal_difference, goal_difference, goals_for`: head-to-head points among the clubs level, then again among those still level, before head-to-head goal difference. The multi-club ties of 1963-64, 1969-70, 1972-73 and 1981-82 need that order. No goal-ratio era was needed.
+- **Curated entries:** Málaga −3 in 1979-80 for forfeiting against Almería, whose 0–1 is flagged awarded and `NONE`, and Racing −1 in 2003-04. Deductions have no `effective` date, since there are no dates to place them against.
+- **Check:** every computed final table was compared with Wikipedia's once, using `parse_standings`, and nothing was stored. 54 of 84 tables agree. The other 30:
+  - **Scores wrong in Wikipedia's grid.** These are 16 seasons with 28 cells, including 1979-80's empty Málaga v Salamanca, which was a 0–3. Every grid cell was cross-checked with RSSSF's crosstables and round lists, read only to compare. Of the 28 corrections, 24 also make the grid agree with the page's own table. The other 4 rest on RSSSF plus a match report or a recorded decision.
+  - **Team links wrong in Wikipedia's grid:** 1964-65, where Las Palmas's row links CD Málaga, and 1988-89 and 1989-90, which link Málaga CF, founded in 1994, instead of CD Málaga.
+  - **Wikipedia's tables wrong while the grid matches RSSSF:** 1929, 1930-31, 1967-68, 1968-69, 1971-72, 1973-74, 1980-81 and 2000-01. 1961-62 has both kinds.
+  - **1986-87's three group tables:** Wikipedia's carry the first-phase points over, which is a non-goal.
+- **What's stored:** the user chose to keep the grids as Wikipedia has them, rather than leave those seasons out, and to correct Wikipedia later. `wikipedia-corrections.md` lists every cell and link, with what it should be and the evidence. Once Wikipedia is corrected, moving those pins takes the fix, and the pinning tool shows the cell diff.
 
 ### D8. Delivery
 
@@ -112,16 +115,12 @@ Three PRs: dateless matches (D1–D3), grid reading (D4, D5), then the seasons, 
 ## Risks / Trade-offs
 
 - **Breaking change for clients** → `kickoff_utc` can now be null. A strict client that parses it as a non-null datetime breaks the first time it reads a pre-2012-13 La Liga match. The README and the OpenAPI schema say so. The project has no external clients that need a deprecation window.
-- **Wikipedia errors become our data** → as for the Champions League. Only moving a pin takes a correction, and the pinning tool diffs boxes, not grids. So the tool learns to diff grid cells as well.
+- **Wikipedia errors become our data** → as for the Champions League, and here they are known: 28 scores and 3 team links (D7). The README lists them. Only moving a pin takes a correction, and the pinning tool now diffs grid cells as well.
 - **Share-alike** → every La Liga team's history from 1929 to 2011-12 is CC BY-SA. Clients that need CC0 only can filter by `license`, which is on every match already.
 - **1986-87 group tables differ from the official ranking** → that's a documented non-goal. The `final` status of the championship group could mislead, and the README calls it out.
-- **Size** → +22,306 matches, about 45% more than today. Sync time grows a little: one cached HTML per season, and no per-match network calls.
+- **Size** → +22,396 matches, about 45% more than today. Sync time grows a little: one cached HTML per season, and no per-match network calls.
 
 ## Migration Plan
 
 - **Deploy order:** the migration ships with the first PR. Existing data is untouched, since every stored match keeps its kickoff.
 - **Rollback:** the downgrade works until the first dateless season is synced. After that, the rollback is to delete those seasons and then downgrade.
-
-## Open Questions
-
-- **Era boundaries for the tie-breakers before 1995.** D7's comparison settles them, and they only change seed data.
