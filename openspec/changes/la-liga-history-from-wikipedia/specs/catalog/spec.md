@@ -79,5 +79,5 @@ The seasons ingested for each competition are those listed in its seed. The five
 
 - **GIVEN** La Liga is seeded with 1929 to 2011-12 from Wikipedia and 2012-13 onwards from openfootball
 - **WHEN** a client GETs `/v1/seasons?competition_id={la-liga}` after a sync
-- **THEN** the response lists 95 seasons, from `1929` with 90 matches, with no seasons from 1936-37 to 1938-39
+- **THEN** the response lists 96 seasons, from `1929` with 90 matches, with no seasons from 1936-37 to 1938-39
 - **AND** the seasons up to 2011-12 have no start or end date, and every one of their matches has a null kickoff

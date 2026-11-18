@@ -49,7 +49,7 @@ Each cell of a results grid SHALL give one match: the club of its row at home, t
 
 #### Scenario: Annulled match
 
-- **GIVEN** the 1979-80 grid, whose Málaga v Salamanca cell is empty because the result was annulled
+- **GIVEN** the 1979-80 grid, whose Málaga v Salamanca cell is empty
 - **WHEN** it is read
 - **THEN** that match is `CANCELLED` without a score, and the other 305 are `COMPLETED`
 

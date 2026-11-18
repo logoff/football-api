@@ -18,16 +18,16 @@
 
 ## 3. La Liga 1929 to 2011-12
 
-- [ ] 3.1 Add the 12 unseeded clubs to `seeds/teams.yaml` from Wikidata, and add Atlético Aviación (Q16549751) under Atlético Madrid's `reference_wikidata` (D6). Verify that the seeds load and that every QID the pinned grids link resolves.
-- [ ] 3.2 Pin the 80 seasons with `just wikipedia-pins`. Give 1950-51 to 1955-56 `wikipedia_grids: [Results]` and 1986-87 its four sections. Verify the counts in a full sync: 22,306 matches (1929: 90; 1946-47: 182; 1979-80: 305 `COMPLETED` and 1 `CANCELLED`; 1986-87: 306 `LEAGUE` and 90 `GROUP`), with no relegation play-off stored.
-- [ ] 3.3 Find awarded matches in each season's notes, and add each one to `seeds/awarded.yaml`, confirmed from a source (D5). Verify that a sync applies every entry without failing.
-- [ ] 3.4 Split the La Liga standings eras: 2-1-0 from 1929 and 3-1-0 from 1995, with tie-breakers before 1995 by era, each cited (D7). Compare every computed final table with Wikipedia's once, without storing anything, and add the deductions and orders the differences call for to `seeds/standings.yaml`. Verify with the spec scenario `Two points for a win in older La Liga seasons`. Record *n* of 80 tables agreeing in the PR, and explain each one that doesn't.
-- [ ] 3.5 In the README, add the La Liga coverage row, the note that these seasons have no dates and aren't verified, and the 1986-87 second-phase caveat. Update the La Liga entry in the `openspec/config.yaml` context. Verify that mdformat leaves no changes.
+- [x] 3.1 Add the 12 unseeded clubs to `seeds/teams.yaml` from Wikidata, and add Atlético Aviación (Q16549751) under Atlético Madrid's `reference_wikidata` (D6). Verify that the seeds load and that every QID the pinned grids link resolves. Outcome: 11 clubs added. The 12th QID, Atlético Aviación's, is folded into Atlético Madrid. Every pinned grid resolves.
+- [x] 3.2 Pin the 81 seasons with `just wikipedia-pins`. Give 1950-51 to 1955-56 `wikipedia_grids: [Results]` and 1986-87 its four sections. Verify the counts in a full sync: 22,396 matches (1929: 90; 1929-30: 90; 1946-47: 182; 1979-80: 305 `COMPLETED` and 1 `CANCELLED`; 1986-87: 306 `LEAGUE` and 90 `GROUP`), with no relegation play-off stored. Outcome: 81 seasons, not 80, since the spike had skipped 1929-30. That's 22,396 matches, with only the 1979-80 empty cell `CANCELLED`.
+- [x] 3.3 Find awarded matches in each season's notes, and add each one to `seeds/awarded.yaml`, confirmed from a source (D5). Verify that a sync applies every entry without failing. Outcome: one, Málaga v Almería 1979-80 (`NONE`).
+- [x] 3.4 Split the La Liga standings eras: 2-1-0 from 1929 and 3-1-0 from 1995, with tie-breakers before 1995 by era, each cited (D7). Compare every computed final table with Wikipedia's once, without storing anything, and add the deductions and orders the differences call for to `seeds/standings.yaml`. Verify with the spec scenario `Two points for a win in older La Liga seasons`. Record *n* of 80 tables agreeing in the PR, and explain each one that doesn't. Outcome: 54 of 84 tables agree. The 30 others come from 28 wrong scores and 3 wrong team links in Wikipedia's grids, found by a cross-check with RSSSF and listed in `wikipedia-corrections.md`; from errors in Wikipedia's own tables; or from 1986-87's carried-over points (design D7). Curated: Málaga −3 (1979-80) and Racing −1 (2003-04).
+- [x] 3.5 In the README, add the La Liga coverage row, the note that these seasons have no dates and aren't verified, and the 1986-87 second-phase caveat. Update the La Liga entry in the `openspec/config.yaml` context. Verify that mdformat leaves no changes.
 
 ## 4. Integration
 
-- [ ] 4.1 Run a full local sync from an empty Wikipedia cache, and then a second one. Verify that the first sync fetches each new pin once and logs no warnings, and that the second sends no request to Wikipedia and skips every season.
-- [ ] 4.2 Verify that `just typecheck`, `just test` and `openspec validate la-liga-history-from-wikipedia --strict` all pass.
+- [x] 4.1 Run a full local sync from an empty Wikipedia cache, and then a second one. Verify that the first sync fetches each new pin once and logs no warnings, and that the second sends no request to Wikipedia and skips every season. Outcome: the first sync fetched all 187 pins (106 Champions League, 81 La Liga) in about 5 minutes, with no warning. The second skipped every season in 9 seconds, without opening the cache.
+- [x] 4.2 Verify that `just typecheck`, `just test` and `openspec validate la-liga-history-from-wikipedia --strict` all pass.
 
 ## Workflow follow-up
 

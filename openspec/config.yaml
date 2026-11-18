@@ -22,7 +22,10 @@ context: |
   against the English Wikipedia season grid: Premier League from
   1992-93, Bundesliga 2010-11, La Liga 2012-13, Serie A 2013-14, Ligue 1
   2014-15 (changes
-  verify-and-schedule-la-liga, extend-and-verify-top-leagues); Segunda
+  verify-and-schedule-la-liga, extend-and-verify-top-leagues); La Liga
+  also 1929 to 2011-12 from Wikipedia results grids, matches without
+  dates (null kickoff_utc), unverified, known Wikipedia grid errors
+  listed in the change (la-liga-history-from-wikipedia); Segunda
   División 2012-13 to 2024-25, complete seasons only (change
   add-segunda-division).
   Domestic cups (6): FA Cup, EFL Cup (league cup) and DFB-Pokal

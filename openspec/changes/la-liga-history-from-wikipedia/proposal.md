@@ -2,7 +2,7 @@
 
 ## Why
 
-La Liga starts in 2012-13 because openfootball does, but the league has been played since 1929. English Wikipedia (CC BY-SA 4.0, already a season source since `source-older-seasons-from-wikipedia`) has a results grid for every earlier season. A spike on 2026-11-17 over all 80 seasons from 1929 to 2011-12 read a league grid in each one with 22,215 scores, plus 90 in the 1986-87 second phase, between 60 clubs, 12 of them not seeded yet. The grids give no date or matchday, though, and neither does Spanish Wikipedia. Today every match must have a kickoff, so these seasons need matches whose date isn't known.
+La Liga starts in 2012-13 because openfootball does, but the league has been played since 1929. English Wikipedia (CC BY-SA 4.0, already a season source since `source-older-seasons-from-wikipedia`) has a results grid for every earlier season. Every one of the 81 seasons from 1929 to 2011-12 has a league grid, with 22,305 scores, plus 90 in the 1986-87 second phase. The grids link 60 Wikidata items, 12 of them not seeded yet. One of them, Atlético Aviación, is Atlético Madrid, so there are 59 clubs. A first spike on 2026-11-17 skipped 1929-30, so the counts here are from the implementation. The grids give no date or matchday, though, and neither does Spanish Wikipedia. Today every match must have a kickoff, so these seasons need matches whose date isn't known.
 
 ## What Changes
 
@@ -14,13 +14,14 @@ La Liga starts in 2012-13 because openfootball does, but the league has been pla
 - **Wikipedia results grids as a season source.**
   - A Wikipedia season can be read from the results grids of its pinned revision as well as from match boxes. Each cell gives the home club, the away club and the score.
   - Rows and columns pair up by position and resolve to clubs by QID. One grid in 1946-47 names a club differently in its row and its column.
-  - An empty cell becomes a `CANCELLED` match without a score. Málaga v Salamanca 1979-80 was annulled after it was played.
+  - An empty cell becomes a `CANCELLED` match without a score. In 1979-80 the grid leaves Málaga v Salamanca empty: the result was annulled in 1980, then reinstated in 1982.
   - When a page has more than one grid, the seed names the sections to read.
 - **La Liga 1929 to 2011-12.**
-  - 80 seasons join La Liga with 22,306 matches: 22,305 with a score and the annulled one. The Civil War seasons 1936-37 to 1938-39 were never played.
+  - 81 seasons join La Liga with 22,396 matches: 22,395 with a score and the one the grid leaves empty. The Civil War seasons 1936-37 to 1938-39 were never played.
   - The 1986-87 second phase (championship, intermediate and relegation groups) is included, since only La Liga clubs played it.
   - Relegation play-offs and the 1950-51 to 1955-56 relegation groups are left out, since they included Segunda clubs.
-  - 12 clubs are added to `seeds/teams.yaml`. Atlético Aviación is folded into Atlético Madrid.
+  - 11 clubs are added to `seeds/teams.yaml`. The 12th, Atlético Aviación, is folded into Atlético Madrid.
+  - Wikipedia's grids carry 28 wrong scores and 3 wrong team links, found by a cross-check with RSSSF. They're stored as they are and listed in `wikipedia-corrections.md`, until someone corrects Wikipedia and the pins move.
 - **Era rules for La Liga standings.**
   - 2 points for a win until 1994-95 and 3 from 1995-96. The current era starts in 1992, which is wrong but didn't matter while the seasons began in 2012.
   - Tie-breakers per era, checked against Wikipedia's final tables once, without storing anything.
@@ -51,9 +52,9 @@ None.
   - REST schemas, GraphQL types and `schema.graphql`.
 - **API:** `kickoff_utc` and `kickoffUtc` can be null. That breaks clients that assume a value.
 - **Seeds:**
-  - 80 La Liga seasons with pins in `competitions.yaml`.
+  - 81 La Liga seasons with pins in `competitions.yaml`.
   - 12 teams.
   - The La Liga standings eras.
   - Point deductions and awarded entries.
 - **Docs:** the README coverage row, a note on matches without dates, and the `openspec/config.yaml` context.
-- **Load on Wikipedia:** 80 page revisions, fetched once and then cached.
+- **Load on Wikipedia:** 81 page revisions, fetched once and then cached.

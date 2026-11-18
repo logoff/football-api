@@ -230,12 +230,354 @@
   format: LEAGUE
   wikidata: Q324867
   standings:
-    # RFEF Reglamento General: head-to-head points and goal difference among the tied clubs, then overall goal difference and goals scored
-    - from: 1992
+    # Two points for a win until 1994-95. No regulation text of the time was found online: the order
+    # follows Wikipedia's final tables (head-to-head points among the tied clubs, then again among
+    # those still level, then their head-to-head goal difference), checked once against every
+    # 1929 to 1994-95 table whose results agree (la-liga-history-from-wikipedia D7).
+    - from: 1929
+      points: {win: 2, draw: 1, loss: 0}
+      tiebreakers: [h2h_points, h2h_reapply, h2h_goal_difference, goal_difference, goals_for]
+    # RFEF Reglamento General: head-to-head points and goal difference among the tied clubs, then
+    # overall goal difference and goals scored. Head-to-head starts again among a smaller set still
+    # level, which only 1995-96 needs (Oviedo above Athletic Club).
+    - from: 1995
       points: {win: 3, draw: 1, loss: 0}
-      tiebreakers: [h2h_points, h2h_goal_difference, goal_difference, goals_for]
-  # Every season openfootball/espana has (2012-13 onwards).
+      tiebreakers: [h2h_points, h2h_goal_difference, h2h_reapply, goal_difference, goals_for]
   seasons:
+    # 1929 to 2011-12 from the results grids of English Wikipedia's season articles, pinned by revision
+    # (la-liga-history-from-wikipedia); their matches have no dates. 1936-37 to 1938-39 weren't played.
+    - label: "1929"
+      start_year: 1929
+      wikipedia_source:
+        - {title: "1929 La Liga", revision: 1383090017}
+    - label: 1929-30
+      start_year: 1929
+      wikipedia_source:
+        - {title: "1929–30 La Liga", revision: 1350494680}
+    - label: 1930-31
+      start_year: 1930
+      wikipedia_source:
+        - {title: "1930–31 La Liga", revision: 1359430524}
+    - label: 1931-32
+      start_year: 1931
+      wikipedia_source:
+        - {title: "1931–32 La Liga", revision: 1350494645}
+    - label: 1932-33
+      start_year: 1932
+      wikipedia_source:
+        - {title: "1932–33 La Liga", revision: 1351839089}
+    - label: 1933-34
+      start_year: 1933
+      wikipedia_source:
+        - {title: "1933–34 La Liga", revision: 1350664928}
+    - label: 1934-35
+      start_year: 1934
+      wikipedia_source:
+        - {title: "1934–35 La Liga", revision: 1371857037}
+    - label: 1935-36
+      start_year: 1935
+      wikipedia_source:
+        - {title: "1935–36 La Liga", revision: 1350664848}
+    - label: 1939-40
+      start_year: 1939
+      wikipedia_source:
+        - {title: "1939–40 La Liga", revision: 1350664769}
+    - label: 1940-41
+      start_year: 1940
+      wikipedia_source:
+        - {title: "1940–41 La Liga", revision: 1350664994}
+    - label: 1941-42
+      start_year: 1941
+      wikipedia_source:
+        - {title: "1941–42 La Liga", revision: 1350667915}
+    - label: 1942-43
+      start_year: 1942
+      wikipedia_source:
+        - {title: "1942–43 La Liga", revision: 1350671024}
+    - label: 1943-44
+      start_year: 1943
+      wikipedia_source:
+        - {title: "1943–44 La Liga", revision: 1350676427}
+    - label: 1944-45
+      start_year: 1944
+      wikipedia_source:
+        - {title: "1944–45 La Liga", revision: 1350676455}
+    - label: 1945-46
+      start_year: 1945
+      wikipedia_source:
+        - {title: "1945–46 La Liga", revision: 1350676469}
+    - label: 1946-47
+      start_year: 1946
+      wikipedia_source:
+        - {title: "1946–47 La Liga", revision: 1350689347}
+    - label: 1947-48
+      start_year: 1947
+      wikipedia_source:
+        - {title: "1947–48 La Liga", revision: 1350689330}
+    - label: 1948-49
+      start_year: 1948
+      wikipedia_source:
+        - {title: "1948–49 La Liga", revision: 1367838205}
+    - label: 1949-50
+      start_year: 1949
+      wikipedia_source:
+        - {title: "1949–50 La Liga", revision: 1350689295}
+    - label: 1950-51
+      start_year: 1950
+      wikipedia_grids: [Results]  # not the relegation group, which Segunda clubs played
+      wikipedia_source:
+        - {title: "1950–51 La Liga", revision: 1350689279}
+    - label: 1951-52
+      start_year: 1951
+      wikipedia_grids: [Results]  # not the relegation group, which Segunda clubs played
+      wikipedia_source:
+        - {title: "1951–52 La Liga", revision: 1350689258}
+    - label: 1952-53
+      start_year: 1952
+      wikipedia_grids: [Results]  # not the relegation group, which Segunda clubs played
+      wikipedia_source:
+        - {title: "1952–53 La Liga", revision: 1350705700}
+    - label: 1953-54
+      start_year: 1953
+      wikipedia_grids: [Results]  # not the relegation group, which Segunda clubs played
+      wikipedia_source:
+        - {title: "1953–54 La Liga", revision: 1367990003}
+    - label: 1954-55
+      start_year: 1954
+      wikipedia_grids: [Results]  # not the relegation group, which Segunda clubs played
+      wikipedia_source:
+        - {title: "1954–55 La Liga", revision: 1348668807}
+    - label: 1955-56
+      start_year: 1955
+      wikipedia_grids: [Results]  # not the relegation group, which Segunda clubs played
+      wikipedia_source:
+        - {title: "1955–56 La Liga", revision: 1337764010}
+    - label: 1956-57
+      start_year: 1956
+      wikipedia_source:
+        - {title: "1956–57 La Liga", revision: 1368049849}
+    - label: 1957-58
+      start_year: 1957
+      wikipedia_source:
+        - {title: "1957–58 La Liga", revision: 1344908152}
+    - label: 1958-59
+      start_year: 1958
+      wikipedia_source:
+        - {title: "1958–59 La Liga", revision: 1337764038}
+    - label: 1959-60
+      start_year: 1959
+      wikipedia_source:
+        - {title: "1959–60 La Liga", revision: 1350725437}
+    - label: 1960-61
+      start_year: 1960
+      wikipedia_source:
+        - {title: "1960–61 La Liga", revision: 1366672802}
+    - label: 1961-62
+      start_year: 1961
+      wikipedia_source:
+        - {title: "1961–62 La Liga", revision: 1370298180}
+    - label: 1962-63
+      start_year: 1962
+      wikipedia_source:
+        - {title: "1962–63 La Liga", revision: 1337764085}
+    - label: 1963-64
+      start_year: 1963
+      wikipedia_source:
+        - {title: "1963–64 La Liga", revision: 1337764092}
+    - label: 1964-65
+      start_year: 1964
+      wikipedia_source:
+        - {title: "1964–65 La Liga", revision: 1352034413}
+    - label: 1965-66
+      start_year: 1965
+      wikipedia_source:
+        - {title: "1965–66 La Liga", revision: 1337764113}
+    - label: 1966-67
+      start_year: 1966
+      wikipedia_source:
+        - {title: "1966–67 La Liga", revision: 1352304897}
+    - label: 1967-68
+      start_year: 1967
+      wikipedia_source:
+        - {title: "1967–68 La Liga", revision: 1344907513}
+    - label: 1968-69
+      start_year: 1968
+      wikipedia_source:
+        - {title: "1968–69 La Liga", revision: 1382034018}
+    - label: 1969-70
+      start_year: 1969
+      wikipedia_source:
+        - {title: "1969–70 La Liga", revision: 1344907566}
+    - label: 1970-71
+      start_year: 1970
+      wikipedia_source:
+        - {title: "1970–71 La Liga", revision: 1366338914}
+    - label: 1971-72
+      start_year: 1971
+      wikipedia_source:
+        - {title: "1971–72 La Liga", revision: 1356105296}
+    - label: 1972-73
+      start_year: 1972
+      wikipedia_source:
+        - {title: "1972–73 La Liga", revision: 1344907910}
+    - label: 1973-74
+      start_year: 1973
+      wikipedia_source:
+        - {title: "1973–74 La Liga", revision: 1366303796}
+    - label: 1974-75
+      start_year: 1974
+      wikipedia_source:
+        - {title: "1974–75 La Liga", revision: 1366303684}
+    - label: 1975-76
+      start_year: 1975
+      wikipedia_source:
+        - {title: "1975–76 La Liga", revision: 1366303664}
+    - label: 1976-77
+      start_year: 1976
+      wikipedia_source:
+        - {title: "1976–77 La Liga", revision: 1366303590}
+    - label: 1977-78
+      start_year: 1977
+      wikipedia_source:
+        - {title: "1977–78 La Liga", revision: 1366303436}
+    - label: 1978-79
+      start_year: 1978
+      wikipedia_source:
+        - {title: "1978–79 La Liga", revision: 1380544569}
+    - label: 1979-80
+      start_year: 1979
+      wikipedia_source:
+        - {title: "1979–80 La Liga", revision: 1357420983}
+    - label: 1980-81
+      start_year: 1980
+      wikipedia_source:
+        - {title: "1980–81 La Liga", revision: 1357421036}
+    - label: 1981-82
+      start_year: 1981
+      wikipedia_source:
+        - {title: "1981–82 La Liga", revision: 1364946461}
+    - label: 1982-83
+      start_year: 1982
+      wikipedia_source:
+        - {title: "1982–83 La Liga", revision: 1357421116}
+    - label: 1983-84
+      start_year: 1983
+      wikipedia_source:
+        - {title: "1983–84 La Liga", revision: 1357421165}
+    - label: 1984-85
+      start_year: 1984
+      wikipedia_source:
+        - {title: "1984–85 La Liga", revision: 1337764363}
+    - label: 1985-86
+      start_year: 1985
+      wikipedia_source:
+        - {title: "1985–86 La Liga", revision: 1337764383}
+    - label: 1986-87
+      start_year: 1986
+      wikipedia_grids: ["Regular season", "Championship group", "Intermediate group", "Relegation group"]
+      wikipedia_source:
+        - {title: "1986–87 La Liga", revision: 1350705590}
+    - label: 1987-88
+      start_year: 1987
+      wikipedia_source:
+        - {title: "1987–88 La Liga", revision: 1337764406}
+    - label: 1988-89
+      start_year: 1988
+      wikipedia_source:
+        - {title: "1988–89 La Liga", revision: 1337764510}
+    - label: 1989-90
+      start_year: 1989
+      wikipedia_source:
+        - {title: "1989–90 La Liga", revision: 1337764526}
+    - label: 1990-91
+      start_year: 1990
+      wikipedia_source:
+        - {title: "1990–91 La Liga", revision: 1352258053}
+    - label: 1991-92
+      start_year: 1991
+      wikipedia_source:
+        - {title: "1991–92 La Liga", revision: 1354674550}
+    - label: 1992-93
+      start_year: 1992
+      wikipedia_source:
+        - {title: "1992–93 La Liga", revision: 1366895755}
+    - label: 1993-94
+      start_year: 1993
+      wikipedia_source:
+        - {title: "1993–94 La Liga", revision: 1362421719}
+    - label: 1994-95
+      start_year: 1994
+      wikipedia_source:
+        - {title: "1994–95 La Liga", revision: 1362421643}
+    - label: 1995-96
+      start_year: 1995
+      wikipedia_source:
+        - {title: "1995–96 La Liga", revision: 1362421507}
+    - label: 1996-97
+      start_year: 1996
+      wikipedia_source:
+        - {title: "1996–97 La Liga", revision: 1374905017}
+    - label: 1997-98
+      start_year: 1997
+      wikipedia_source:
+        - {title: "1997–98 La Liga", revision: 1360178602}
+    - label: 1998-99
+      start_year: 1998
+      wikipedia_source:
+        - {title: "1998–99 La Liga", revision: 1366143675}
+    - label: 1999-00
+      start_year: 1999
+      wikipedia_source:
+        - {title: "1999–2000 La Liga", revision: 1377999080}
+    - label: 2000-01
+      start_year: 2000
+      wikipedia_source:
+        - {title: "2000–01 La Liga", revision: 1371498723}
+    - label: 2001-02
+      start_year: 2001
+      wikipedia_source:
+        - {title: "2001–02 La Liga", revision: 1364823472}
+    - label: 2002-03
+      start_year: 2002
+      wikipedia_source:
+        - {title: "2002–03 La Liga", revision: 1376351160}
+    - label: 2003-04
+      start_year: 2003
+      wikipedia_source:
+        - {title: "2003–04 La Liga", revision: 1377712299}
+    - label: 2004-05
+      start_year: 2004
+      wikipedia_source:
+        - {title: "2004–05 La Liga", revision: 1380852119}
+    - label: 2005-06
+      start_year: 2005
+      wikipedia_source:
+        - {title: "2005–06 La Liga", revision: 1382005461}
+    - label: 2006-07
+      start_year: 2006
+      wikipedia_source:
+        - {title: "2006–07 La Liga", revision: 1377450851}
+    - label: 2007-08
+      start_year: 2007
+      wikipedia_source:
+        - {title: "2007–08 La Liga", revision: 1383691804}
+    - label: 2008-09
+      start_year: 2008
+      wikipedia_source:
+        - {title: "2008–09 La Liga", revision: 1376221710}
+    - label: 2009-10
+      start_year: 2009
+      wikipedia_source:
+        - {title: "2009–10 La Liga", revision: 1384583853}
+    - label: 2010-11
+      start_year: 2010
+      wikipedia_source:
+        - {title: "2010–11 La Liga", revision: 1373899522}
+    - label: 2011-12
+      start_year: 2011
+      wikipedia_source:
+        - {title: "2011–12 La Liga", revision: 1374033622}
+    # 2012-13 onwards: every season openfootball/espana has.
     - label: 2012-13
       start_year: 2012
       file: espana/2012-13/1-liga.txt

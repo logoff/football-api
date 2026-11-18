@@ -455,7 +455,10 @@ def league(src: SeasonSource) -> list[CompetitionSeed]:
 
 
 async def grid_sync(teams: list[TeamSeed], awarded: AwardedSeeds | None = None, html: str = grid_page(LIGA_HTML)) -> SyncReport:
-    return await run_sync(competitions=league(grid_season()), teams=teams, awarded=awarded, refresh_sources=False, wikipedia=grid_fake(html))
+    # Never the shipped awarded.yaml, whose real La Liga 1979-80 entry this fake season would trip.
+    return await run_sync(
+        competitions=league(grid_season()), teams=teams, awarded=awarded or AwardedSeeds(), refresh_sources=False, wikipedia=grid_fake(html)
+    )
 
 
 def awarded_entry(home: str, away: str) -> AwardedSeeds:

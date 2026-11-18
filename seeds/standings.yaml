@@ -56,6 +56,18 @@ adjustments:
 
   # --- La Liga (Q324867) --------------------------------------------------------------------
   - competition: Q324867
+    season: "1979-80"
+    team: Q124518 # CD Málaga
+    points: -3
+    reason: "Forfeited the match against AD Almería, which the Competition Committee awarded 0-1 to Almería on 1 April 1980"
+    source: https://www.malagacf.com/en/news/domingos-match
+  - competition: Q324867
+    season: "2003-04"
+    team: Q12236 # Racing Santander
+    points: -1
+    reason: "Fielded one non-EU player more than allowed for three minutes against Osasuna on 14 December 2003"
+    source: https://www.rsssf.org/tabless/span04.html
+  - competition: Q324867
     season: "2014-15"
     team: Q10407 # UD Almería
     points: -3

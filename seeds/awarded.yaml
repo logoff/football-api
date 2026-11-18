@@ -19,6 +19,17 @@ matches:
     reason: "Played to a 1-1 draw after Bochum's goalkeeper was hit by a lighter; the DFB sports court awarded Bochum a 2-0 win"
     source: https://www.dfb.de/news/dfb-sportgericht-wertet-bundesligaspiel-in-berlin-fuer-bochum
 
+  # --- La Liga (Q324867) -------------------------------------------------------------
+  # La Liga before 2012-13 is read from Wikipedia results grids, which can't mark a match
+  # awarded: each entry here also flags its match (la-liga-history-from-wikipedia D5).
+  - competition: Q324867
+    season: "1979-80"
+    home: Q124518 # CD Málaga
+    away: Q290781 # AD Almería
+    played: NONE
+    reason: "Málaga didn't turn up at Algeciras, where the match was moved after La Rosaleda was closed; awarded 0-1 to Almería"
+    source: https://www.malagacf.com/en/news/domingos-match
+
   # --- Serie A (Q15804) ---------------------------------------------------------------
   # No official communiqué found online; press report of the Giudice Sportivo decision.
   - competition: Q15804

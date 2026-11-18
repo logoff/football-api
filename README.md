@@ -88,12 +88,12 @@ The sync refuses to run until the API container has applied the migrations (exit
 
 ## Data coverage
 
-20 competitions. The five top domestic leagues have every season openfootball publishes, up to the one in progress, and Segunda División every complete one, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The international competitions have every edition openfootball publishes with a date for every match, including those in progress, also checked against Wikipedia. The Champions League also goes back to the first European Cup, 1955-56, from Wikipedia. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
+20 competitions. The five top domestic leagues have every season openfootball publishes, up to the one in progress, and Segunda División every complete one, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The international competitions have every edition openfootball publishes with a date for every match, including those in progress, also checked against Wikipedia. The Champions League also goes back to the first European Cup, 1955-56, and La Liga to its first season, 1929, both from Wikipedia. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
 
 | Competition                | Format     | Seasons                 | Results | Verified   | Goal scorers | Squads     | Line-ups and cards |
 | -------------------------- | ---------- | ----------------------- | ------- | ---------- | ------------ | ---------- | ------------------ |
 | Premier League             | LEAGUE     | 1992-93 to 2026-27 (35) | ✅      | ✅         | none         | none       | 2025-26            |
-| La Liga                    | LEAGUE     | 2012-13 to 2026-27 (15) | ✅      | ✅         | none         | none       | 2025-26            |
+| La Liga                    | LEAGUE     | 1929 to 2026-27 (96)    | ✅      | 2012-13 on | none         | none       | 2025-26            |
 | Segunda División           | LEAGUE     | 2012-13 to 2024-25 (13) | ✅      | ✅         | none         | none       | none               |
 | Bundesliga                 | LEAGUE     | 2010-11 to 2026-27 (17) | ✅      | ✅         | none         | none       | 2025-26            |
 | Serie A                    | LEAGUE     | 2013-14 to 2026-27 (14) | ✅      | ✅         | none         | none       | 2025-26            |
@@ -124,6 +124,15 @@ A match whose source gives no date at all has `kickoff_utc: null` (`kickoffUtc` 
 Segunda División 2025-26 is not included: openfootball stopped updating it after 131 of its 462 results. The promotion play-offs aren't in the source, and in 2024-25 the source is missing 9 last-day results. English Wikipedia redirects UE Llagostera (2014-15 and 2015-16) to its successor club's article, so its matches and those seasons' tables can't be verified.
 
 The Champions League's 1955-56 to 2010-11 seasons, the European Cup until 1991-92, come from the match boxes of English Wikipedia's season articles and their group and knockout sub-articles, each pinned to a revision (see [Data sources and licenses](#data-sources-and-licenses)). Up to 1993-94 every round is included, since all of them were the competition proper; from 1994-95 the qualifying rounds are left out, as they are from 2011-12. These matches have dates but no kickoff times (`kickoff_utc` is midnight UTC). A replay or play-off has the stage of its tie. Four ties a club withdrew from or was expelled from, such as Linfield v Vorwärts Berlin in 1961-62, are listed as `CANCELLED` without a score. These seasons aren't verified: Wikipedia is their source, so it can't also be their check.
+
+La Liga's 1929 to 2011-12 seasons come from the results grids of English Wikipedia's season articles, each pinned to a revision. The grids give no dates, so these 22,396 matches have `kickoff_utc: null` and no `matchday`, and their tables can't be asked for `as_of` a date. 1936-37 to 1938-39 weren't played (Civil War). Relegation play-offs and the 1950-51 to 1955-56 relegation groups, which Segunda clubs played, aren't included. The 1986-87 second phase is: three groups of six (`GROUP`, named `Championship`, `Intermediate` and `Relegation`). Their tables count only second-phase matches, while the official 1986-87 ranking carried the first-phase points over. Clubs are served under their seeded names, so Atlético Aviación (1939–1947) is Atlético Madrid.
+
+These seasons aren't verified, but a one-off cross-check against RSSSF found errors in Wikipedia's grids, which are served as Wikipedia has them until Wikipedia is corrected:
+
+- **Wrong scores:** 28, in 1929-30, 1934-35, 1939-40, 1944-45, 1945-46, 1947-48, 1950-51, 1952-53, 1953-54, 1954-55, 1955-56, 1960-61, 1961-62, 1979-80, 1999-00, 2003-04 and 2006-07. In 1979-80 Málaga v Salamanca is `CANCELLED`, because the grid is empty, though the annulled 0–3 was reinstated in 1982.
+- **Wrong team links:** in 1964-65, UD Las Palmas's results are attributed to CD Málaga. In 1988-89 and 1989-90, CD Málaga's results are attributed to Málaga CF, which was founded in 1994.
+
+The full list, with the right values and their sources, is in [`wikipedia-corrections.md`](openspec/changes/la-liga-history-from-wikipedia/wikipedia-corrections.md).
 
 Ligue 1 2019-20 was stopped after 279 matches; its 101 unplayed fixtures are listed as `CANCELLED`.
 
@@ -234,13 +243,13 @@ just psql        # database shell
 
 ## Data sources and licenses
 
-| Source                                              | License                                                         | Seasons                                                 |
-| --------------------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------- |
-| [openfootball](https://github.com/openfootball)     | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)   | every season, except those below                        |
-| [English Wikipedia](https://en.wikipedia.org/)      | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | UEFA Champions League (European Cup) 1955-56 to 2010-11 |
-| [Wikidata](https://www.wikidata.org/) (identifiers) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)   | team and competition identity                           |
+| Source                                              | License                                                         | Seasons                                                                          |
+| --------------------------------------------------- | --------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| [openfootball](https://github.com/openfootball)     | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)   | every season, except those below                                                 |
+| [English Wikipedia](https://en.wikipedia.org/)      | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | UEFA Champions League (European Cup) 1955-56 to 2010-11; La Liga 1929 to 2011-12 |
+| [Wikidata](https://www.wikidata.org/) (identifiers) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)   | team and competition identity                                                    |
 
-Every season has a `source` with its publisher, its license as an SPDX identifier (`CC0-1.0` or `CC-BY-SA-4.0`) and the pages it was read from, and every match has the `license` of its season. A Wikipedia season links the exact revision of each article it was taken from (`https://en.wikipedia.org/w/index.php?oldid=…`), where the article's history credits its authors. The match data was extracted from the articles' match boxes and reshaped into this API's records.
+Every season has a `source` with its publisher, its license as an SPDX identifier (`CC0-1.0` or `CC-BY-SA-4.0`) and the pages it was read from, and every match has the `license` of its season. A Wikipedia season links the exact revision of each article it was taken from (`https://en.wikipedia.org/w/index.php?oldid=…`), where the article's history credits its authors. The match data was extracted from the articles' match boxes, or for La Liga their results grids, and reshaped into this API's records.
 
 Data from a Wikipedia season, and anything derived from it, is served under CC BY-SA 4.0: its matches, and the standings and team listings computed from them. If you reuse it, credit English Wikipedia and its contributors, link the license, and share what you build from it under the same license. Data from openfootball seasons is CC0, with no conditions; to use only that, filter on `license`.
 
