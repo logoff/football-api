@@ -75,6 +75,7 @@ No stored openfootball label contains `Third-place` or a standalone `Finals`. Th
 - **The field:** an optional season field, `wikipedia_abandoned: [{date, home, away}]`, with home and away as QIDs.
   - The listed box is stored `CANCELLED` without a score. The replay is the result.
   - The table already leaves out `CANCELLED` matches, so the replay counts.
+  - Sync numbers a pairing listed again after a listing without a score as the same game rescheduled. A `CANCELLED` listing now counts as a game of its own, so the abandoned match keeps its row (`occurrence` 1) next to the replay (2). No openfootball season lists a cancelled match and then the same pairing again in the same stage, so no stored match changes.
   - A listed match that no box holds fails the season.
 - **Where it's used:** 1916 Argentina v Uruguay, 16 July. The pages are searched for "abandoned" while pinning, and any other case gets an entry too.
 - **Alternative: drop the box.** Rejected. The match was kicked off and is part of the record; `CANCELLED` without a score says it didn't count.

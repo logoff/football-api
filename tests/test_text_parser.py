@@ -73,6 +73,11 @@ def test_score_notations(text: str, expected: ParsedScore) -> None:
         ("Finals, Semifinals", Stage.SF, None),
         ("Play-off for third place", Stage.THIRD_PLACE, None),
         ("Finals, Final", Stage.FINAL, None),
+        # euro-and-copa-america-from-wikipedia D2
+        ("Third-place match", Stage.THIRD_PLACE, None),
+        ("Third-place play-off", Stage.THIRD_PLACE, None),
+        ("Knockout stage / Finals", Stage.FINAL, None),
+        ("Semi-finals", Stage.SF, None),
     ],
 )
 def test_normalize_stage(label: str, stage: Stage, number: int | None) -> None:
