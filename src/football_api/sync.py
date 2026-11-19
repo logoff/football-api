@@ -428,14 +428,15 @@ async def sync_goals(session: AsyncSession, ctx: SeasonContext, match: Match, pa
 def occurrences(matches: list[ParsedMatch], team_of: dict[str, uuid.UUID]) -> list[int]:
     """Number each listing within its (stage, home, away): a pairing listed again after a game with
     a score is a further game (a cup re-replay); listed again after one without, it is the same
-    game rescheduled (matches spec, Match record)."""
+    game rescheduled (matches spec, Match record). A cancelled game counts as one of its own, so
+    an abandoned match stays next to its replay (euro-and-copa-america-from-wikipedia D4)."""
     last: dict[tuple[Stage, uuid.UUID, uuid.UUID], tuple[int, bool]] = {}
     out: list[int] = []
     for m in matches:
         key = (normalize_stage(m.round_label)[0], team_of[m.home], team_of[m.away])
         previous, played = last.get(key, (0, True))
         occurrence = previous + 1 if played else previous
-        last[key] = (occurrence, m.score is not None)
+        last[key] = (occurrence, m.score is not None or m.status is MatchStatus.CANCELLED)
         out.append(occurrence)
     return out
 

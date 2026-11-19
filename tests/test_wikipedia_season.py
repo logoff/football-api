@@ -32,6 +32,7 @@ from football_api.ingestion.wikipedia_season import (
     seeded_qids,
     source_of,
 )
+from football_api.season_tables import season_tables
 from football_api.standings import group_of, phase_of
 from football_api.sync import SyncReport, run_sync
 from football_api.wikipedia_pins import box_diff, pins_yaml, rows
@@ -551,3 +552,117 @@ async def test_pins_tool_reads_seeded_options(tmp_path: Path) -> None:
         "- First round | 1960-09-14 | Alpha F.C. | Beta F.C. | 2–1 REGULAR",
         "+ First round | 1960-09-14 | Alpha F.C. | Beta F.C. | 2–0 REGULAR",
     ]
+
+
+# --- renamed headings and abandoned matches (euro-and-copa-america-from-wikipedia D3, D4) ----------
+
+ROBIN = "1916 South American Championship"
+ROBIN_HTML = (
+    f"<html><head><title>{ROBIN}</title></head><body>"
+    + section(
+        "Results",
+        box("1916-07-02", "Alpha F.C.", "Beta F.C.", "4–0"),
+        box("1916-07-06", "Gamma F.C.", "Delta F.C.", "6–1"),
+        box("1916-07-08", "Beta F.C.", "Delta F.C.", "1–1"),
+        box("1916-07-10", "Gamma F.C.", "Beta F.C.", "1–1"),
+        box("1916-07-12", "Alpha F.C.", "Delta F.C.", "2–1"),
+        box("1916-07-16", "Gamma F.C.", "Alpha F.C.", "0–0"),
+        box("1916-07-17", "Gamma F.C.", "Alpha F.C.", "0–0"),
+        section("Play-off", box("1916-07-20", "Alpha F.C.", "Beta F.C.", "1–0"), level=3),
+    )
+    + "</body></html>"
+)
+ABANDONED = {"date": "1916-07-16", "home": "Q3", "away": "Q1", "reason": "Abandoned at 0-0 after crowd trouble; replayed"}
+
+
+def robin() -> FakeWikipedia:
+    return FakeWikipedia({(ROBIN, 300): ROBIN_HTML}, QIDS)
+
+
+def test_round_robin_heading_renamed_to_a_group_stage() -> None:
+    assert round_label("", ("Group stage", "Play-off")) == "Group stage"
+    assert normalize_stage("Group stage") == (Stage.GROUP, None) and group_of("Group stage") is None
+    assert normalize_stage("Second group stage") == (Stage.GROUP, None) and phase_of("Second group stage") == 2
+
+
+async def test_renamed_heading_gives_the_round_label(tmp_path: Path) -> None:
+    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"results": "Group stage"})
+    read = await read_season(src, RevisionStore(tmp_path, robin()), {})
+    assert len(read.matches) == 8 and {m.round_label for m in read.matches} == {"Group stage"}
+
+
+async def test_unrenamed_round_robin_names_no_stage(tmp_path: Path) -> None:
+    with pytest.raises(WikipediaSourceError, match="heading 'Results' names no stage"):
+        await read_season(season((ROBIN, 300)), RevisionStore(tmp_path, robin()), {})
+
+
+async def test_final_round_renamed_to_a_second_group_stage(tmp_path: Path) -> None:
+    html = ROBIN_HTML.replace("<h2>Results</h2>", "<h2>Final round</h2>")
+    wiki = FakeWikipedia({(ROBIN, 300): html}, QIDS)
+    plain = await read_season(season((ROBIN, 300)), RevisionStore(tmp_path / "a", wiki), {})
+    assert {normalize_stage(m.round_label)[0] for m in plain.matches} == {Stage.FINAL}
+    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"Final round": "Second group stage"})
+    read = await read_season(src, RevisionStore(tmp_path / "b", wiki), {})
+    assert {m.round_label for m in read.matches} == {"Second group stage"}
+
+
+async def test_renamed_heading_that_isnt_there_fails(tmp_path: Path) -> None:
+    src = with_options(season((MAIN, 100)), wikipedia_rounds={"Results": "Group stage"})
+    with pytest.raises(WikipediaSourceError, match="no boxes under the renamed section\\(s\\) 'Results'"):
+        await read_season(src, RevisionStore(tmp_path, fake()), {})
+
+
+async def test_abandoned_match_is_cancelled_and_its_replay_kept(tmp_path: Path) -> None:
+    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
+    read = await read_season(src, RevisionStore(tmp_path, robin()), {})
+    gamma_alpha = [m for m in read.matches if (m.home, m.away) == ("Q3", "Q1")]
+    assert [(m.day, m.status, m.score) for m in gamma_alpha] == [
+        (date(1916, 7, 16), MatchStatus.CANCELLED, None),
+        (date(1916, 7, 17), MatchStatus.COMPLETED, gamma_alpha[1].score),
+    ]
+    assert gamma_alpha[1].score is not None and (gamma_alpha[1].score.home, gamma_alpha[1].score.away) == (0, 0)
+
+
+async def test_abandoned_match_no_box_holds_fails(tmp_path: Path) -> None:
+    stale = {**ABANDONED, "date": "1916-07-15"}
+    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"Results": "Group stage"}, wikipedia_abandoned=[stale])
+    with pytest.raises(WikipediaSourceError, match="lists Q3 v Q1 on 1916-07-15, which no box holds"):
+        await read_season(src, RevisionStore(tmp_path, robin()), {})
+
+
+@pytest.mark.parametrize("option", [{"wikipedia_rounds": {"Results": "Group stage"}}, {"wikipedia_abandoned": [ABANDONED]}])
+def test_new_options_need_a_wikipedia_season(option: dict[str, object]) -> None:
+    [name] = option
+    with pytest.raises(ValueError, match=f"`{name}` needs `wikipedia_source`"):
+        SeasonSource.model_validate({"label": "1916", "start_year": 1916, "file": "x.txt", "tz": "UTC", **option})
+
+
+async def test_pins_tool_reads_renames_and_abandoned_matches(tmp_path: Path) -> None:
+    wiki = robin()
+    wiki.pages[(ROBIN, 301)] = ROBIN_HTML.replace("4–0", "3–0")
+    store = RevisionStore(tmp_path, wiki)
+    old = with_options(season((ROBIN, 300)), wikipedia_rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
+    new = old.model_copy(update={"wikipedia_source": [WikipediaPin(title=ROBIN, revision=301)]})
+    assert "Group stage | 1916-07-16 | Gamma F.C. | Alpha F.C. | no result" in {" | ".join(r) for r in rows(await pins_read(old, store, grids=False))}
+    diff = box_diff(rows(await pins_read(old, store, grids=False)), rows(await pins_read(new, store, grids=False)))
+    assert diff == [
+        "- Group stage | 1916-07-02 | Alpha F.C. | Beta F.C. | 4–0 REGULAR",
+        "+ Group stage | 1916-07-02 | Alpha F.C. | Beta F.C. | 3–0 REGULAR",
+    ]
+
+
+@pytest.mark.db
+async def test_round_robin_table_counts_the_replay_not_the_abandoned_match(fresh_db: Path, fixture_teams: list[TeamSeed]) -> None:
+    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
+    report = await wiki_sync(cup(src), fixture_teams + CLUBS, robin())
+    assert not report.failed, report.failed
+    async with get_sessionmaker()() as session:
+        row = (await session.scalars(select(Season))).one()
+        matches = (await session.scalars(select(Match).where(Match.season_id == row.id))).all()
+        assert sorted(m.status for m in matches) == [MatchStatus.CANCELLED] + [MatchStatus.COMPLETED] * 7
+        assert {m.stage for m in matches} == {Stage.GROUP}
+        gamma_alpha = sorted((m.occurrence, m.status) for m in matches if m.status is MatchStatus.CANCELLED or m.home_score == m.away_score == 0)
+        assert gamma_alpha == [(1, MatchStatus.CANCELLED), (2, MatchStatus.COMPLETED)]
+        [table] = await season_tables(session, row)
+    # The play-off repeats Alpha v Beta, so it stays out; the abandoned match is cancelled.
+    assert sorted(r.played for r in table.rows) == [3, 3, 3, 3]

@@ -126,6 +126,9 @@ async def read_season(src: SeasonSource, store: RevisionStore, seeded: dict[str,
     main = pins[0].title
     skip = {h.lower() for h in src.wikipedia_skip or []}
     skipped: set[str] = set()
+    # Headings read as another round label, such as a round robin's `Results` (euro-and-copa-america-from-wikipedia D3).
+    rounds = {h.lower(): label for h, label in (src.wikipedia_rounds or {}).items()}
+    renamed: set[str] = set()
     labelled: list[list[tuple[MatchBox, WikipediaPin]]] = []
     for pin in pins:
         suffix = pin.title[len(main) :].strip() if pin.title.startswith(main + " ") else ""
@@ -134,10 +137,14 @@ async def read_season(src: SeasonSource, store: RevisionStore, seeded: dict[str,
             if hit := skip & {h.lower() for h in b.heading}:  # a section the season leaves out (D3)
                 skipped |= hit
                 continue
-            boxes.append(replace(b, heading=(round_label(suffix, b.heading),)))
+            renamed |= rounds.keys() & {h.lower() for h in b.heading}
+            heading = tuple(rounds.get(h.lower(), h) for h in b.heading)
+            boxes.append(replace(b, heading=(round_label(suffix, heading),)))
         labelled.append([(b, pin) for b in boxes])
     if missing := sorted(h for h in src.wikipedia_skip or [] if h.lower() not in skipped):
         raise WikipediaSourceError(f"{main}: no boxes under the skipped section(s) {', '.join(map(repr, missing))}")
+    if missing := sorted(h for h in src.wikipedia_rounds or {} if h.lower() not in renamed):
+        raise WikipediaSourceError(f"{main}: no boxes under the renamed section(s) {', '.join(map(repr, missing))}")
     # The page each kept box came from: its first copy, as `merge_boxes` keeps the first.
     pin_of = {(b.day, b.home, b.away): pin for page in reversed(labelled) for b, pin in reversed(page)}
     boxes = merge_boxes([b for b, _ in page] for page in labelled)
@@ -154,6 +161,8 @@ async def read_season(src: SeasonSource, store: RevisionStore, seeded: dict[str,
         if lookup := titles.get(pin.title, set()) - given.keys():
             qid_of |= await store.qids(pin, lookup)
 
+    # Abandoned and replayed: no result, the replay is the result (euro-and-copa-america-from-wikipedia D4).
+    abandoned = {(a.day, a.home, a.away) for a in src.wikipedia_abandoned or []}
     matches: list[ParsedMatch] = []
     clubs: dict[str, str] = {}
     for line_no, box in enumerate(boxes, 1):
@@ -173,7 +182,15 @@ async def read_season(src: SeasonSource, store: RevisionStore, seeded: dict[str,
             qid = seeded.get(qid_of[title], qid_of[title])
             clubs.setdefault(qid, title)
             sides.append(qid)
+        home, away = sides
+        if (box.day, home, away) in abandoned:
+            abandoned.discard((box.day, home, away))
+            matches.append(ParsedMatch(line_no, label, box.day, None, None, home, away, None, status=MatchStatus.CANCELLED))
+            continue
         matches.append(_parsed(box, line_no, label, *sides))
+    if abandoned:
+        listed = ", ".join(f"{home} v {away} on {day}" for day, home, away in sorted(abandoned))
+        raise WikipediaSourceError(f"{main}: `wikipedia_abandoned` lists {listed}, which no box holds")
     return WikipediaSeason(matches, main, clubs)
 
 

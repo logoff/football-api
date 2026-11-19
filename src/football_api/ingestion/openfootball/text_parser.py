@@ -397,7 +397,7 @@ _ORDINALS = {"first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5}
 
 _STAGE_RULES: list[tuple[re.Pattern[str], Stage]] = [
     (re.compile(r"qualif", re.I), Stage.QUALIFYING),
-    (re.compile(r"third place|3rd place", re.I), Stage.THIRD_PLACE),
+    (re.compile(r"third[- ]place|3rd place", re.I), Stage.THIRD_PLACE),
     (re.compile(r"fifth place|5th place", re.I), Stage.FIFTH_PLACE),
     # German knockout labels in some UEFA files: Sechzehntel-/Achtel-/Viertel-/Halbfinale.
     (re.compile(r"sechzehntelfinale", re.I), Stage.R32),
@@ -408,7 +408,7 @@ _STAGE_RULES: list[tuple[re.Pattern[str], Stage]] = [
     (re.compile(r"quarter", re.I), Stage.QF),
     (re.compile(r"round of 16", re.I), Stage.R16),
     (re.compile(r"round of 32", re.I), Stage.R32),
-    (re.compile(r"\bfinal\b", re.I), Stage.FINAL),
+    (re.compile(r"\bfinals?\b", re.I), Stage.FINAL),
     (re.compile(r"play-?offs?", re.I), Stage.PLAYOFF),
     (re.compile(r"group|gruppe", re.I), Stage.GROUP),
     (re.compile(r"league|matchday|regular season", re.I), Stage.LEAGUE),

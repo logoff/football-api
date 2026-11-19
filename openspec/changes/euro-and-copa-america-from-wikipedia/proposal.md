@@ -45,6 +45,7 @@ None.
 ### Modified Capabilities
 
 - `catalog`: the Euro lists every edition from 1960, and the Copa América every edition from 1916.
+- `matches`: a cancelled listing counts as a game of its own, so an abandoned match isn't merged into its replay.
 - `ingestion`: two more stage variants, a season field that renames headings to round labels, and one that marks abandoned matches that were replayed.
 
 ## Impact
