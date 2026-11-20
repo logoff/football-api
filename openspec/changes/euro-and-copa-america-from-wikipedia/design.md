@@ -101,6 +101,12 @@ The CIS (Q721418) is added as a national team. It stays separate from the Soviet
 
 - **Two PRs:** the code (D2–D5, with tests), then the seasons, team, eras and docs (D1, D6, D7).
 
+### D9. Awarded matches in boxes
+
+- **Found while pinning:** the 1942 box for Argentina v Chile reads 0–0 with no mark. Chile left the pitch after 43 minutes and Argentina was given the win. The match was stored as a draw, and that table was the only one of 82 that differed from Wikipedia's.
+- **The fix:** an `awarded.yaml` entry flags its match in every Wikipedia season, not just a grid season. A box that already says "awarded" is flagged either way. A stale entry fails the season, as for grids.
+- **Alternative: store the draw and list it.** Rejected. The seed already exists for this, and a box is no better than a grid at saying a match was awarded.
+
 ## Risks / Trade-offs
 
 - **Wikipedia errors become our data** → the same accepted risk as for the European Cup. The group-table comparison catches score errors in group matches. Knockout matches have no such check.

@@ -2938,6 +2938,11 @@
   openfootball:
     - "CG Haubourdin"
 
+- name: "CIS"
+  kind: NATIONAL
+  country: null
+  wikidata: Q721418
+
 - name: "Chamois Niortais"
   kind: CLUB
   country: "FR"
