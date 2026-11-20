@@ -81,7 +81,7 @@ The system SHALL track one or more seasons per competition. Each season has:
 - a start and end date, null for a season whose matches have no dates
 - a status: `SCHEDULED`, `IN_PROGRESS`, `COMPLETED`
 
-The seasons ingested for each competition are those listed in its seed. The five domestic leagues list every season their source provides: Premier League 1992-93, Bundesliga 2010-11, La Liga 1929 (up to 2011-12 from English Wikipedia, without match dates, see `season-sources`), Serie A 2013-14 and Ligue 1 2014-15, each up to 2026-27. Segunda División lists every season its source provides in full, 2012-13 to 2024-25. The domestic cups list every completed season their source provides in full: FA Cup, EFL Cup and DFB-Pokal 2018-19 to 2024-25, Copa del Rey and Coppa Italia 2020-21 to 2024-25, and Coupe de France 2024-25. The international competitions list every edition their source provides with a date for every match: UEFA Champions League 1955-56 to 2025-26 (the European Cup up to 1991-92; up to 2010-11 from English Wikipedia, see `season-sources`), UEFA Europa League 1971-72 to 2024-25 (the UEFA Cup up to 2008-09; up to 2019-20 from English Wikipedia), UEFA Cup Winners' Cup 1960-61 to 1998-99 (from English Wikipedia), UEFA Conference League 2021-22 to 2024-25, CONMEBOL Copa Libertadores 2012 to 2026, FIFA Club World Cup 2000 to 2025, FIFA World Cup 1930 to 2026, UEFA European Championship 1960 to 2024, and CONMEBOL Copa América 2011, 2021 and 2024. Editions in progress are included.
+The seasons ingested for each competition are those listed in its seed. The five domestic leagues list every season their source provides: Premier League 1992-93, Bundesliga 2010-11, La Liga 1929 (up to 2011-12 from English Wikipedia, without match dates, see `season-sources`), Serie A 2013-14 and Ligue 1 2014-15, each up to 2026-27. Segunda División lists every season its source provides in full, 2012-13 to 2024-25. The domestic cups list every completed season their source provides in full: FA Cup, EFL Cup and DFB-Pokal 2018-19 to 2024-25, Copa del Rey and Coppa Italia 2020-21 to 2024-25, and Coupe de France 2024-25. The international competitions list every edition their source provides with a date for every match: UEFA Champions League 1955-56 to 2025-26 (the European Cup up to 1991-92; up to 2010-11 from English Wikipedia, see `season-sources`), UEFA Europa League 1971-72 to 2024-25 (the UEFA Cup up to 2008-09; up to 2019-20 from English Wikipedia), UEFA Cup Winners' Cup 1960-61 to 1998-99 (from English Wikipedia), UEFA Conference League 2021-22 to 2024-25, CONMEBOL Copa Libertadores 2012 to 2026, FIFA Club World Cup 2000 to 2025, FIFA World Cup 1930 to 2026, UEFA European Championship 1960 to 2024 (1984 and 1992 from English Wikipedia), and CONMEBOL Copa América 1916 to 2024 (every edition up to 2019 from English Wikipedia, except 2011). Editions in progress are included.
 
 #### Scenario: Listing seasons for a competition
 
@@ -138,7 +138,14 @@ The seasons ingested for each competition are those listed in its seed. The five
 
 - **GIVEN** a tournament edition whose source dates some of its matches and lists others without a date
 - **WHEN** the seeds are reviewed
-- **THEN** that edition is not listed, and the README names it as a known gap
+- **THEN** that edition is read from English Wikipedia if its match boxes have every date, and otherwise isn't listed and the README names it as a known gap
+
+#### Scenario: Euro editions without dates in openfootball
+
+- **GIVEN** Euro 1984 and Euro 1992, whose openfootball files list the group matches without a date, are seeded from Wikipedia
+- **WHEN** a client GETs `/v1/seasons?competition_id={euro}` after a sync
+- **THEN** the response lists 17 seasons from 1960 to 2024
+- **AND** 1984 and 1992 have 15 matches each, every one with a date
 
 #### Scenario: European Cup history
 
@@ -167,6 +174,14 @@ The seasons ingested for each competition are those listed in its seed. The five
 - **WHEN** a client GETs `/v1/seasons?competition_id={europa-league}` after a sync
 - **THEN** the response lists every season from 1971-72
 - **AND** 2004-05 to 2008-09 have eight groups of five teams, each played once
+
+#### Scenario: Copa América history
+
+- **GIVEN** the Copa América is seeded with every edition from 1916 to 2019 from Wikipedia, except 2011, and 2011, 2021 and 2024 from openfootball
+- **WHEN** a client GETs `/v1/seasons?competition_id={copa-america}` after a sync
+- **THEN** the response lists 48 seasons, from `1916` with 7 matches
+- **AND** the two editions played in 1959 are labelled `1959 Argentina` and `1959 Ecuador`
+- **AND** 1967 has no qualifying round
 
 ### Requirement: Team catalog
 
