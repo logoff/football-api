@@ -2571,6 +2571,8 @@
       start_year: 1950
       file: worldcup/more/1950.txt
       tz: inline
+      # The final round was a round robin of four, not a final (fix-world-cup-final-stages).
+      rounds: {"Final Round": "Second group stage"}
       events: worldcup/more/1950_full.txt
       wikipedia: "1950 FIFA World Cup"
       squads:
@@ -2904,7 +2906,7 @@
   seasons:
     - label: "1916"
       start_year: 1916
-      wikipedia_rounds: {"Results": "Group stage"}
+      rounds: {"Results": "Group stage"}
       wikipedia_abandoned:
         - date: 1916-07-16
           home: Q79800 # Argentina
@@ -2914,148 +2916,148 @@
         - {title: "1916 South American Championship", revision: 1365588011}
     - label: "1917"
       start_year: 1917
-      wikipedia_rounds: {"Results": "Group stage"}
+      rounds: {"Results": "Group stage"}
       wikipedia_source:
         - {title: "1917 South American Championship", revision: 1365124375}
     - label: "1919"
       start_year: 1919
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1919 South American Championship", revision: 1349375197}
         - {title: "1919 South American Championship Final", revision: 1342343239}
     - label: "1920"
       start_year: 1920
-      wikipedia_rounds: {"Results": "Group stage"}
+      rounds: {"Results": "Group stage"}
       wikipedia_source:
         - {title: "1920 South American Championship", revision: 1365124323}
     - label: "1921"
       start_year: 1921
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1921 South American Championship", revision: 1365124294}
     - label: "1922"
       start_year: 1922
-      wikipedia_rounds: {"Results": "Group stage"}
+      rounds: {"Results": "Group stage"}
       wikipedia_source:
         - {title: "1922 South American Championship", revision: 1363459324}
         - {title: "1922 South American Championship play-off", revision: 1350686580}
     - label: "1923"
       start_year: 1923
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1923 South American Championship", revision: 1365124262}
     - label: "1924"
       start_year: 1924
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1924 South American Championship", revision: 1365124178}
     - label: "1925"
       start_year: 1925
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1925 South American Championship", revision: 1365124036}
     - label: "1926"
       start_year: 1926
-      wikipedia_rounds: {"Results": "Group stage"}
+      rounds: {"Results": "Group stage"}
       wikipedia_source:
         - {title: "1926 South American Championship", revision: 1363459628}
     - label: "1927"
       start_year: 1927
-      wikipedia_rounds: {"Results": "Group stage"}
+      rounds: {"Results": "Group stage"}
       wikipedia_source:
         - {title: "1927 South American Championship", revision: 1363480510}
     - label: "1929"
       start_year: 1929
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1929 South American Championship", revision: 1363583601}
     - label: "1935"
       start_year: 1935
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1935 South American Championship", revision: 1385736917}
     - label: "1937"
       start_year: 1937
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1937 South American Championship", revision: 1368297646}
         - {title: "1937 South American Championship Final", revision: 1365043911}
     - label: "1939"
       start_year: 1939
-      wikipedia_rounds: {"Results": "Group stage"}
+      rounds: {"Results": "Group stage"}
       wikipedia_source:
         - {title: "1939 South American Championship", revision: 1363584155}
     - label: "1941"
       start_year: 1941
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1941 South American Championship", revision: 1364268241}
     - label: "1942"
       start_year: 1942
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1942 South American Championship", revision: 1327257365}
     - label: "1945"
       start_year: 1945
-      wikipedia_rounds: {"Results": "Group stage"}
+      rounds: {"Results": "Group stage"}
       wikipedia_source:
         - {title: "1945 South American Championship", revision: 1382438887}
     - label: "1946"
       start_year: 1946
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1946 South American Championship", revision: 1374632639}
     - label: "1947"
       start_year: 1947
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1947 South American Championship", revision: 1368514445}
     - label: "1949"
       start_year: 1949
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1949 South American Championship", revision: 1349374498}
         - {title: "1949 South American Championship Final", revision: 1372137521}
     - label: "1953"
       start_year: 1953
-      wikipedia_rounds: {"Results": "Group stage"}
+      rounds: {"Results": "Group stage"}
       wikipedia_source:
         - {title: "1953 South American Championship", revision: 1352323581}
         - {title: "1953 South American Championship play-off", revision: 1364335073}
     - label: "1955"
       start_year: 1955
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1955 South American Championship", revision: 1328449827}
     - label: "1956"
       start_year: 1956
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1956 South American Championship", revision: 1325989262}
     - label: "1957"
       start_year: 1957
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1957 South American Championship", revision: 1377463773}
     - label: "1959 Argentina"
       start_year: 1959
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1959 South American Championship (Argentina)", revision: 1376381983}
     - label: "1959 Ecuador"
       start_year: 1959
-      wikipedia_rounds: {"Matches": "Group stage"}
+      rounds: {"Matches": "Group stage"}
       wikipedia_source:
         - {title: "1959 South American Championship (Ecuador)", revision: 1377463655}
     - label: "1963"
       start_year: 1963
-      wikipedia_rounds: {"Final round": "Group stage"}
+      rounds: {"Final round": "Group stage"}
       wikipedia_source:
         - {title: "1963 South American Championship", revision: 1364170334}
     - label: "1967"
       start_year: 1967
       wikipedia_skip: ["Qualifying round"]
-      wikipedia_rounds: {"Results": "Group stage"}
+      rounds: {"Results": "Group stage"}
       wikipedia_source:
         - {title: "1967 South American Championship", revision: 1363683979}
     - label: "1975"
@@ -3082,12 +3084,12 @@
         - {title: "1987 Copa América final", revision: 1342340522}
     - label: "1989"
       start_year: 1989
-      wikipedia_rounds: {"Final round": "Second group stage"}
+      rounds: {"Final round": "Second group stage"}
       wikipedia_source:
         - {title: "1989 Copa América", revision: 1385349073}
     - label: "1991"
       start_year: 1991
-      wikipedia_rounds: {"Final round": "Second group stage"}
+      rounds: {"Final round": "Second group stage"}
       wikipedia_source:
         - {title: "1991 Copa América", revision: 1373049082}
     - label: "1993"

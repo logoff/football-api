@@ -15,6 +15,7 @@ from football_api.infra.db import get_sessionmaker
 from football_api.infra.models import Competition, ExternalRef, Goal, Match, MatchVerification, Player, PlayerTeamSeason, Season, SeasonCheck, Team, TeamSeason
 from football_api.ingestion.openfootball.squads import parse_more_squads, parse_per_team_squad
 from football_api.ingestion.seeds import AwardedSeeds, CompetitionSeed, ScopedSpelling, SeasonSource, TeamSeed
+from football_api.season_tables import season_tables
 from football_api.sync import SyncReport, UnknownTeamError, run_sync
 
 pytestmark = pytest.mark.db
@@ -347,6 +348,54 @@ async def test_relabelled_round_keeps_its_matches(
     after = await fa_cup_ids()
     assert {k: v[0] for k, v in after.items()} == {k: v[0] for k, v in before.items()}
     assert after[("Coventry City", "Manchester United", 1)][1] is Stage.ROUND
+
+
+
+# 1950 World Cup: a final round played as a round robin (fix-world-cup-final-stages).
+ROUND_ROBIN_FINAL = """= World Cup 1950
+
+▪ Group Matches
+▪▪ Group 1
+Sat Jun 24
+  15:00 UTC-3   Spain  3-1  Argentina   @ Maracanã, Rio de Janeiro
+  15:00 UTC-3   France  1-0  Croatia   @ Maracanã, Rio de Janeiro
+
+▪ Final Round
+Sun Jul 9
+  15:00 UTC-3   Spain  2-0  France   @ Maracanã, Rio de Janeiro
+  15:00 UTC-3   Argentina  1-1  Croatia   @ Pacaembu, São Paulo
+Thu Jul 13
+  15:00 UTC-3   Spain  1-1  Croatia   @ Maracanã, Rio de Janeiro
+  15:00 UTC-3   Argentina  2-1  France   @ Pacaembu, São Paulo
+"""
+
+
+def world_cup_1950(fixture_competitions: list[CompetitionSeed], sources: Path, **options: object) -> list[CompetitionSeed]:
+    (sources / "worldcup/more/1950.txt").write_text(ROUND_ROBIN_FINAL, encoding="utf-8")
+    [wc] = [c for c in fixture_competitions if c.name == "FIFA World Cup"]
+    season = SeasonSource.model_validate({"label": "1950", "start_year": 1950, "file": "worldcup/more/1950.txt", "tz": "inline", **options})
+    return [wc.model_copy(update={"seasons": [season]})]
+
+
+async def test_renamed_round_robin_final_is_a_second_group_stage(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    competitions = world_cup_1950(fixture_competitions, fresh_db, rounds={"final round": "Second group stage"})
+    await sync(competitions, fixture_teams)
+    async with get_sessionmaker()() as session:
+        season = (await session.scalars(select(Season))).one()
+        labels = sorted((m.stage, m.round_label) for m in await session.scalars(select(Match)))
+        tables = await season_tables(session, season)
+    assert labels == [(Stage.GROUP, "Group Matches / Group 1")] * 2 + [(Stage.GROUP, "Second group stage")] * 4
+    assert sorted((t.key.phase, len(t.rows)) for t in tables) == [(1, 4), (2, 4)]
+
+
+async def test_renamed_heading_no_match_has_fails(
+    fresh_db: Path, fixture_competitions: list[CompetitionSeed], fixture_teams: list[TeamSeed]
+) -> None:
+    competitions = world_cup_1950(fixture_competitions, fresh_db, rounds={"Final round group": "Second group stage"})
+    [(_, _, exc)] = (await run_sync(competitions=competitions, teams=fixture_teams, refresh_sources=False)).failed
+    assert "no matches under the renamed heading(s) 'Final round group'" in str(exc)
 
 
 async def test_match_removed_from_source_is_deleted(

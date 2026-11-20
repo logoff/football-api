@@ -23,7 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import football_api
 from football_api.domain.enums import EntityType
 from football_api.infra.models import ExternalRef, Match, Season, SeasonCheck
-from football_api.ingestion.seeds import WIKIPEDIA_OPTIONS, CompetitionSeed, SeasonSource, TeamSeed
+from football_api.ingestion.seeds import OPTIONAL_FIELDS, CompetitionSeed, SeasonSource, TeamSeed
 
 WIKIDATA = "wikidata"
 SeasonKey = tuple[str, str]  # (competition QID, season label)
@@ -77,8 +77,8 @@ def season_fingerprint(
     parts = [
         code_fingerprint().encode(),
         _canonical(seed.model_dump(mode="json", exclude={"seasons"})),
-        # Wikipedia options are left out while unset, so adding one didn't change every season's fingerprint.
-        _canonical(src.model_dump(mode="json", by_alias=True, exclude={f for f in WIKIPEDIA_OPTIONS if getattr(src, f) is None})),
+        # Optional fields are left out while unset, so adding one didn't change every season's fingerprint.
+        _canonical(src.model_dump(mode="json", by_alias=True, exclude={f for f in OPTIONAL_FIELDS if getattr(src, f) is None})),
         teams.encode(),
         _canonical([e.model_dump(mode="json", by_alias=True) for e in awarded]),
     ]

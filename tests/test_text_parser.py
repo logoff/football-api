@@ -78,6 +78,9 @@ def test_score_notations(text: str, expected: ParsedScore) -> None:
         ("Third-place play-off", Stage.THIRD_PLACE, None),
         ("Knockout stage / Finals", Stage.FINAL, None),
         ("Semi-finals", Stage.SF, None),
+        # fix-world-cup-final-stages: FIFA's name for the 2026 third-place match
+        ("Bronze final", Stage.THIRD_PLACE, None),
+        ("Final", Stage.FINAL, None),
     ],
 )
 def test_normalize_stage(label: str, stage: Stage, number: int | None) -> None:

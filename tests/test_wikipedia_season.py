@@ -586,7 +586,7 @@ def test_round_robin_heading_renamed_to_a_group_stage() -> None:
 
 
 async def test_renamed_heading_gives_the_round_label(tmp_path: Path) -> None:
-    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"results": "Group stage"})
+    src = with_options(season((ROBIN, 300)), rounds={"results": "Group stage"})
     read = await read_season(src, RevisionStore(tmp_path, robin()), {})
     assert len(read.matches) == 8 and {m.round_label for m in read.matches} == {"Group stage"}
 
@@ -601,19 +601,19 @@ async def test_final_round_renamed_to_a_second_group_stage(tmp_path: Path) -> No
     wiki = FakeWikipedia({(ROBIN, 300): html}, QIDS)
     plain = await read_season(season((ROBIN, 300)), RevisionStore(tmp_path / "a", wiki), {})
     assert {normalize_stage(m.round_label)[0] for m in plain.matches} == {Stage.FINAL}
-    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"Final round": "Second group stage"})
+    src = with_options(season((ROBIN, 300)), rounds={"Final round": "Second group stage"})
     read = await read_season(src, RevisionStore(tmp_path / "b", wiki), {})
     assert {m.round_label for m in read.matches} == {"Second group stage"}
 
 
 async def test_renamed_heading_that_isnt_there_fails(tmp_path: Path) -> None:
-    src = with_options(season((MAIN, 100)), wikipedia_rounds={"Results": "Group stage"})
+    src = with_options(season((MAIN, 100)), rounds={"Results": "Group stage"})
     with pytest.raises(WikipediaSourceError, match="no boxes under the renamed section\\(s\\) 'Results'"):
         await read_season(src, RevisionStore(tmp_path, fake()), {})
 
 
 async def test_abandoned_match_is_cancelled_and_its_replay_kept(tmp_path: Path) -> None:
-    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
+    src = with_options(season((ROBIN, 300)), rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
     read = await read_season(src, RevisionStore(tmp_path, robin()), {})
     gamma_alpha = [m for m in read.matches if (m.home, m.away) == ("Q3", "Q1")]
     assert [(m.day, m.status, m.score) for m in gamma_alpha] == [
@@ -625,23 +625,27 @@ async def test_abandoned_match_is_cancelled_and_its_replay_kept(tmp_path: Path) 
 
 async def test_abandoned_match_no_box_holds_fails(tmp_path: Path) -> None:
     stale = {**ABANDONED, "date": "1916-07-15"}
-    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"Results": "Group stage"}, wikipedia_abandoned=[stale])
+    src = with_options(season((ROBIN, 300)), rounds={"Results": "Group stage"}, wikipedia_abandoned=[stale])
     with pytest.raises(WikipediaSourceError, match="lists Q3 v Q1 on 1916-07-15, which no box holds"):
         await read_season(src, RevisionStore(tmp_path, robin()), {})
 
 
-@pytest.mark.parametrize("option", [{"wikipedia_rounds": {"Results": "Group stage"}}, {"wikipedia_abandoned": [ABANDONED]}])
-def test_new_options_need_a_wikipedia_season(option: dict[str, object]) -> None:
-    [name] = option
-    with pytest.raises(ValueError, match=f"`{name}` needs `wikipedia_source`"):
-        SeasonSource.model_validate({"label": "1916", "start_year": 1916, "file": "x.txt", "tz": "UTC", **option})
+def test_abandoned_matches_need_a_wikipedia_season() -> None:
+    with pytest.raises(ValueError, match="`wikipedia_abandoned` needs `wikipedia_source`"):
+        SeasonSource.model_validate({"label": "1916", "start_year": 1916, "file": "x.txt", "tz": "UTC", "wikipedia_abandoned": [ABANDONED]})
+
+
+async def test_grid_season_rejects_rounds(tmp_path: Path) -> None:
+    src = with_options(grid_season(), rounds={"Results": "Group stage"})
+    with pytest.raises(WikipediaSourceError, match="a league's grids have none"):
+        await read_grid_season(src, RevisionStore(tmp_path, grid_fake(grid_page(LIGA_HTML))), {})
 
 
 async def test_pins_tool_reads_renames_and_abandoned_matches(tmp_path: Path) -> None:
     wiki = robin()
     wiki.pages[(ROBIN, 301)] = ROBIN_HTML.replace("4–0", "3–0")
     store = RevisionStore(tmp_path, wiki)
-    old = with_options(season((ROBIN, 300)), wikipedia_rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
+    old = with_options(season((ROBIN, 300)), rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
     new = old.model_copy(update={"wikipedia_source": [WikipediaPin(title=ROBIN, revision=301)]})
     assert "Group stage | 1916-07-16 | Gamma F.C. | Alpha F.C. | no result" in {" | ".join(r) for r in rows(await pins_read(old, store, grids=False))}
     diff = box_diff(rows(await pins_read(old, store, grids=False)), rows(await pins_read(new, store, grids=False)))
@@ -653,7 +657,7 @@ async def test_pins_tool_reads_renames_and_abandoned_matches(tmp_path: Path) -> 
 
 @pytest.mark.db
 async def test_round_robin_table_counts_the_replay_not_the_abandoned_match(fresh_db: Path, fixture_teams: list[TeamSeed]) -> None:
-    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
+    src = with_options(season((ROBIN, 300)), rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
     report = await wiki_sync(cup(src), fixture_teams + CLUBS, robin())
     assert not report.failed, report.failed
     async with get_sessionmaker()() as session:
@@ -671,7 +675,7 @@ async def test_round_robin_table_counts_the_replay_not_the_abandoned_match(fresh
 @pytest.mark.db
 async def test_awarded_yaml_flags_a_box_that_doesnt_say_so(fresh_db: Path, fixture_teams: list[TeamSeed]) -> None:
     # 1942 Copa América: Argentina v Chile reads 0–0, but Argentina was given the win.
-    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
+    src = with_options(season((ROBIN, 300)), rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
     entry = {"competition": "Q18756", "season": "1960-61", "home": "Q3", "away": "Q2", "played": "PARTIAL", "reason": "r", "source": "s"}
     report = await run_sync(
         competitions=cup(src), teams=fixture_teams + CLUBS, awarded=AwardedSeeds.model_validate({"matches": [entry]}), refresh_sources=False, wikipedia=robin()
