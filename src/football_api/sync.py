@@ -535,7 +535,8 @@ def flag_awarded(
     seed: CompetitionSeed, src: SeasonSource, matches: list[ParsedMatch], awarded: AwardedSeeds, path: str
 ) -> list[ParsedMatch]:
     """A results grid can't mark a match awarded, so awarded.yaml does (la-liga-history-from-wikipedia
-    D5): each entry of the season flags its pairing, and an entry that matches none fails the season."""
+    D5), as for a box that gives the score without saying so (1942 Copa América): each entry of the
+    season flags its pairing, and an entry that matches none fails the season."""
     entries = {(e.home, e.away) for e in awarded.matches if (e.competition, e.season) == (seed.wikidata, src.label)}
     missing = entries - {(m.home, m.away) for m in matches}
     if missing:
@@ -710,8 +711,7 @@ async def sync_season(
             raise SyncError(f"{seed.name} {src.label}: sourced from Wikipedia, but no Wikipedia reader was given")
         read = await wikipedia.read(src, grids=seed.format is CompetitionFormat.LEAGUE)
         matches, path, clubs = read.matches, read.path, read.clubs
-        if read.from_grids:
-            matches = flag_awarded(seed, src, matches, awarded or AwardedSeeds(), path)
+        matches = flag_awarded(seed, src, matches, awarded or AwardedSeeds(), path)
     else:
         matches, path = read_matches(seed, src, sources)
     if not matches:

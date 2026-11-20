@@ -666,3 +666,17 @@ async def test_round_robin_table_counts_the_replay_not_the_abandoned_match(fresh
         [table] = await season_tables(session, row)
     # The play-off repeats Alpha v Beta, so it stays out; the abandoned match is cancelled.
     assert sorted(r.played for r in table.rows) == [3, 3, 3, 3]
+
+
+@pytest.mark.db
+async def test_awarded_yaml_flags_a_box_that_doesnt_say_so(fresh_db: Path, fixture_teams: list[TeamSeed]) -> None:
+    # 1942 Copa América: Argentina v Chile reads 0–0, but Argentina was given the win.
+    src = with_options(season((ROBIN, 300)), wikipedia_rounds={"Results": "Group stage"}, wikipedia_abandoned=[ABANDONED])
+    entry = {"competition": "Q18756", "season": "1960-61", "home": "Q3", "away": "Q2", "played": "PARTIAL", "reason": "r", "source": "s"}
+    report = await run_sync(
+        competitions=cup(src), teams=fixture_teams + CLUBS, awarded=AwardedSeeds.model_validate({"matches": [entry]}), refresh_sources=False, wikipedia=robin()
+    )
+    assert not report.failed, report.failed
+    async with get_sessionmaker()() as session:
+        flagged = (await session.scalars(select(Match).where(Match.awarded))).all()
+    assert [(m.home_score, m.away_score, m.played) for m in flagged] == [(1, 1, Played.PARTIAL)]

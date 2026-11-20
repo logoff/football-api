@@ -9,16 +9,16 @@
 
 ## 2. Euro and Copa América
 
-- [ ] 2.1 Add the CIS (Q721418) to `seeds/teams.yaml` (D6). Verify that every QID the pinned boxes link resolves.
-- [ ] 2.2 Pin Euro 1984 and 1992 and remove the seed comment about left-out editions (D1). Verify that each has 15 matches, every one with a date, and the stages `GROUP` (groups 1 and 2), `SF` and `FINAL`.
-- [ ] 2.3 Pin the 45 Copa América editions with `wikipedia_rounds` for the round robins and for 1989 and 1991, and `wikipedia_skip: [Qualifying round]` for 1967 (D1, D3). Search the pinned pages for "abandoned" and add a `wikipedia_abandoned` entry for each case, starting with 1916 (D4). Verify the match counts in a sync against the spike, minus 1967's qualifying round. Check that `FINAL` holds only finals, final legs and final play-offs.
-- [ ] 2.4 Add the Copa América eras from 1916, cited (D7). Compare every computed group table of both competitions' new seasons with Wikipedia's once, without storing anything. Record the result in the PR and explain any difference.
-- [ ] 2.5 Update the README: the coverage rows (the Euro from 1960 with no gap, the Copa América from 1916), the note on the Euro gap, the sources table and the note that these seasons aren't verified. Update the `openspec/config.yaml` context. Verify that mdformat leaves no changes.
+- [x] 2.1 Add the CIS (Q721418) to `seeds/teams.yaml` (D6). Verify that every QID the pinned boxes link resolves.
+- [x] 2.2 Pin Euro 1984 and 1992 and remove the seed comment about left-out editions (D1). Verify that each has 15 matches, every one with a date, and the stages `GROUP` (groups 1 and 2), `SF` and `FINAL`.
+- [x] 2.3 Pin the 45 Copa América editions with `wikipedia_rounds` for the round robins and for 1989 and 1991, and `wikipedia_skip: [Qualifying round]` for 1967 (D1, D3). Search the pinned pages for "abandoned" and add a `wikipedia_abandoned` entry for each case, starting with 1916 (D4). Verify the match counts in a sync against the spike, minus 1967's qualifying round. Check that `FINAL` holds only finals, final legs and final play-offs. Outcome: 784 matches. That's the spike's count minus 1967's four qualifiers. `FINAL` holds 19 matches: the single finals, the 1983 legs, and the 1975 and 1979 legs and play-offs. Only 1916 was abandoned and replayed. The other matches the pages call abandoned or suspended kept their result (1922, 1937, 1957, 1975, 1999), or were awarded (1953 twice).
+- [x] 2.4 Add the Copa América eras from 1916, cited (D7). Compare every computed group table of both competitions' new seasons with Wikipedia's once, without storing anything. Record the result in the PR and explain any difference. Outcome: 82 of 82 tables match (4 Euro, 78 Copa América). The round robins have no tie-breaker: the pages say there was none, and Wikipedia ranks level teams joint (1922, 1926, 1953). Three awarded matches go in `awarded.yaml` and as `standings.yaml` awards: 1953 Peru v Paraguay and Chile v Bolivia, and 1942 Argentina v Chile. The 1942 box doesn't say the match was awarded, so `awarded.yaml` now flags matches in box seasons too (D9).
+- [x] 2.5 Update the README: the coverage rows (the Euro from 1960 with no gap, the Copa América from 1916), the note on the Euro gap, the sources table and the note that these seasons aren't verified. Update the `openspec/config.yaml` context. Verify that mdformat leaves no changes.
 
 ## 3. Integration
 
-- [ ] 3.1 Run a full local sync from an empty Wikipedia cache, then a second one. Verify that the first fetches each pin once and logs no warnings, and that the second skips every season without a request to Wikipedia.
-- [ ] 3.2 Verify that `just typecheck`, `just test` and `openspec validate euro-and-copa-america-from-wikipedia --strict` all pass.
+- [x] 3.1 Run a full local sync from an empty Wikipedia cache, then a second one. Verify that the first fetches each pin once and logs no warnings, and that the second skips every season without a request to Wikipedia. Outcome: the full sync re-synced every season except the 48 Copa América ones, which had already synced with this code. A `--full` sync of the Copa América then fetched its pins. The cache holds all 431 pinned revisions, each once, and no other. The only error line was the existing Wikidata rate-limit notice. The second sync skipped all 512 seasons in 14 seconds and wrote nothing to the cache.
+- [x] 3.2 Verify that `just typecheck`, `just test` and `openspec validate euro-and-copa-america-from-wikipedia --strict` all pass. Outcome: 456 tests pass.
 
 ## Workflow follow-up
 

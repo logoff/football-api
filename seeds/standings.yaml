@@ -222,3 +222,25 @@ awards:
     winner: away
     reason: "Abandoned at half-time at 0-0 after Bastia supporters attacked Lyon players; the LFP gave Lyon the win and kept the 0-0"
     source: https://ma-api.ligue1.fr/championship-standings/1/general?season=2016
+  # Copa América: RSSSF records these awarded matches with their score and no goals awarded.
+  - competition: Q178750
+    season: "1942"
+    home: Q79800 # Argentina
+    away: Q172025 # Chile
+    winner: home
+    reason: "Chile left the pitch after 43 minutes at 0-0 in protest at the referee; Argentina was given the win with no goals"
+    source: https://www.rsssf.org/tables/42safull.html
+  - competition: Q178750
+    season: "1953"
+    home: Q212166 # Peru
+    away: Q172020 # Paraguay
+    winner: home
+    reason: "Drawn 2-2, then awarded to Peru because Paraguay made one more substitution than allowed"
+    source: https://www.rsssf.org/tables/53safull.html
+  - competition: Q178750
+    season: "1953"
+    home: Q172025 # Chile
+    away: Q193386 # Bolivia
+    winner: home
+    reason: "Suspended after 66 minutes at 2-2 and awarded to Chile for unsportsmanlike behaviour by Bolivia"
+    source: https://www.rsssf.org/tables/53safull.html

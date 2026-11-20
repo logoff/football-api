@@ -79,7 +79,6 @@ class WikipediaSeason:
     matches: list[ParsedMatch]  # home and away are Wikidata QIDs
     path: str  # the season article: where errors and match references point
     clubs: dict[str, str]  # QID → the club article that linked it, for error messages
-    from_grids: bool = False  # read from results grids, which can't mark a match awarded (D5)
 
 
 def source_of(src: SeasonSource) -> dict[str, Any]:
@@ -260,7 +259,7 @@ async def read_grid_season(src: SeasonSource, store: RevisionStore, seeded: dict
                 matches.append(ParsedMatch(line_no, label, None, None, None, home, away, None, status=MatchStatus.CANCELLED))
             else:
                 raise WikipediaSourceError(f"{where}: {clubs[home]} v {clubs[away]} reads {cell.text!r}, not a score")
-    return WikipediaSeason(matches, pins[0].title, clubs, from_grids=True)
+    return WikipediaSeason(matches, pins[0].title, clubs)
 
 
 @dataclass(frozen=True)

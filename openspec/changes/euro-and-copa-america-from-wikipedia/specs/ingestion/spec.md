@@ -1,4 +1,25 @@
+## RENAMED Requirements
+
+- FROM: `### Requirement: Awarded matches in grids`
+- TO: `### Requirement: Awarded matches from the seed`
+
 ## MODIFIED Requirements
+
+### Requirement: Awarded matches from the seed
+
+A grid can't mark a match as awarded, and a match box can give the score without saying the match was awarded. In a season read from Wikipedia, a match listed in `seeds/awarded.yaml` SHALL be stored flagged `awarded`, with the score the grid or box gives and the curated `played` value. An entry for a pairing the season doesn't have SHALL fail that season's sync.
+
+#### Scenario: Awarded match from the seed
+
+- **GIVEN** La Liga 1979-80, and an `awarded.yaml` entry for Málaga v Almería curated as `NONE`
+- **WHEN** it is synced
+- **THEN** that match is `COMPLETED`, `awarded` and `played` `NONE`, with the grid's score
+
+#### Scenario: Box that doesn't say the match was awarded
+
+- **GIVEN** the 1942 South American Championship, whose box for Argentina v Chile reads 0–0 with no mark, and an `awarded.yaml` entry for it curated as `PARTIAL`
+- **WHEN** it is synced
+- **THEN** that match is `COMPLETED`, `awarded` and `played` `PARTIAL`, with the score 0–0
 
 ### Requirement: Stage from section headings
 

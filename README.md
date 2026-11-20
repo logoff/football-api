@@ -1,6 +1,6 @@
 # Football API
 
-HTTP API for football (soccer) statistics, built from public-domain [openfootball](https://github.com/openfootball) data (CC0), English Wikipedia for older European Cup seasons (CC BY-SA 4.0), and Wikidata identifiers. See [Data sources and licenses](#data-sources-and-licenses).
+HTTP API for football (soccer) statistics, built from public-domain [openfootball](https://github.com/openfootball) data (CC0), English Wikipedia for older seasons (CC BY-SA 4.0), and Wikidata identifiers. See [Data sources and licenses](#data-sources-and-licenses).
 
 ## Quickstart
 
@@ -88,33 +88,33 @@ The sync refuses to run until the API container has applied the migrations (exit
 
 ## Data coverage
 
-21 competitions. The five top domestic leagues have every season openfootball publishes, up to the one in progress, and Segunda División every complete one, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The international competitions have every edition openfootball publishes with a date for every match, including those in progress, also checked against Wikipedia. From Wikipedia, the Champions League also goes back to the first European Cup, 1955-56, the Europa League to the first UEFA Cup, 1971-72, and La Liga to its first season, 1929; the Cup Winners' Cup (1960-61 to 1998-99) comes from Wikipedia too. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
+21 competitions. The five top domestic leagues have every season openfootball publishes, up to the one in progress, and Segunda División every complete one, each checked against Wikipedia (see [Verification](#verification)). The domestic cups have every complete season openfootball publishes, also checked against Wikipedia. The international competitions have every edition openfootball publishes with a date for every match, including those in progress, also checked against Wikipedia. From Wikipedia, the Champions League also goes back to the first European Cup, 1955-56, the Europa League to the first UEFA Cup, 1971-72, La Liga to its first season, 1929, and the Copa América to the first South American Championship, 1916; the Cup Winners' Cup (1960-61 to 1998-99) and Euro 1984 and 1992, which openfootball lists partly without dates, come from Wikipedia too. Each competition has a `format`: `LEAGUE`, `CUP` (knockout open to the national pyramid), `LEAGUE_CUP` (knockout for league clubs only), `SUPER_CUP` or `TOURNAMENT` (a group or league phase, then knockouts).
 
-| Competition                | Format     | Seasons                 | Results | Verified   | Goal scorers | Squads     | Line-ups and cards |
-| -------------------------- | ---------- | ----------------------- | ------- | ---------- | ------------ | ---------- | ------------------ |
-| Premier League             | LEAGUE     | 1992-93 to 2026-27 (35) | ✅      | ✅         | none         | none       | 2025-26            |
-| La Liga                    | LEAGUE     | 1929 to 2026-27 (96)    | ✅      | 2012-13 on | none         | none       | 2025-26            |
-| Segunda División           | LEAGUE     | 2012-13 to 2024-25 (13) | ✅      | ✅         | none         | none       | none               |
-| Bundesliga                 | LEAGUE     | 2010-11 to 2026-27 (17) | ✅      | ✅         | none         | none       | 2025-26            |
-| Serie A                    | LEAGUE     | 2013-14 to 2026-27 (14) | ✅      | ✅         | none         | none       | 2025-26            |
-| Ligue 1                    | LEAGUE     | 2014-15 to 2026-27 (13) | ✅      | ✅         | none         | none       | 2025-26            |
-| FA Cup                     | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅         | none         | none       | none               |
-| EFL Cup                    | LEAGUE_CUP | 2018-19 to 2024-25 (7)  | ✅      | ✅         | none         | none       | none               |
-| Copa del Rey               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅         | none         | none       | none               |
-| DFB-Pokal                  | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅         | none         | none       | none               |
-| Coppa Italia               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅         | none         | none       | none               |
-| Coupe de France            | CUP        | 2024-25                 | ✅      | ✅         | none         | none       | none               |
-| UEFA Champions League      | TOURNAMENT | 1955-56 to 2025-26 (71) | ✅      | 2011-12 on | none         | none       | none               |
-| UEFA Europa League         | TOURNAMENT | 1971-72 to 2024-25 (54) | ✅      | 2020-21 on | none         | none       | none               |
-| UEFA Conference League     | TOURNAMENT | 2021-22 to 2024-25 (4)  | ✅      | ✅         | none         | none       | none               |
-| UEFA Cup Winners' Cup      | TOURNAMENT | 1960-61 to 1998-99 (39) | ✅      | none       | none         | none       | none               |
-| CONMEBOL Copa Libertadores | TOURNAMENT | 2012 to 2026 (15)       | ✅      | ✅         | none         | none       | none               |
-| FIFA Club World Cup        | TOURNAMENT | 2000 to 2025 (21)       | ✅      | ✅         | most         | ✅         | ✅                 |
-| FIFA World Cup             | TOURNAMENT | 1930 to 2026 (23)       | ✅      | ✅         | ✅           | ✅         | ✅                 |
-| UEFA European Championship | TOURNAMENT | 1960 to 2024 (15)       | ✅      | ✅         | most         | 2021, 2024 | none               |
-| CONMEBOL Copa América      | TOURNAMENT | 2011, 2021, 2024        | ✅      | ✅         | 2024         | 2021, 2024 | none               |
+| Competition                | Format     | Seasons                 | Results | Verified           | Goal scorers | Squads     | Line-ups and cards |
+| -------------------------- | ---------- | ----------------------- | ------- | ------------------ | ------------ | ---------- | ------------------ |
+| Premier League             | LEAGUE     | 1992-93 to 2026-27 (35) | ✅      | ✅                 | none         | none       | 2025-26            |
+| La Liga                    | LEAGUE     | 1929 to 2026-27 (96)    | ✅      | 2012-13 on         | none         | none       | 2025-26            |
+| Segunda División           | LEAGUE     | 2012-13 to 2024-25 (13) | ✅      | ✅                 | none         | none       | none               |
+| Bundesliga                 | LEAGUE     | 2010-11 to 2026-27 (17) | ✅      | ✅                 | none         | none       | 2025-26            |
+| Serie A                    | LEAGUE     | 2013-14 to 2026-27 (14) | ✅      | ✅                 | none         | none       | 2025-26            |
+| Ligue 1                    | LEAGUE     | 2014-15 to 2026-27 (13) | ✅      | ✅                 | none         | none       | 2025-26            |
+| FA Cup                     | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅                 | none         | none       | none               |
+| EFL Cup                    | LEAGUE_CUP | 2018-19 to 2024-25 (7)  | ✅      | ✅                 | none         | none       | none               |
+| Copa del Rey               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅                 | none         | none       | none               |
+| DFB-Pokal                  | CUP        | 2018-19 to 2024-25 (7)  | ✅      | ✅                 | none         | none       | none               |
+| Coppa Italia               | CUP        | 2020-21 to 2024-25 (5)  | ✅      | ✅                 | none         | none       | none               |
+| Coupe de France            | CUP        | 2024-25                 | ✅      | ✅                 | none         | none       | none               |
+| UEFA Champions League      | TOURNAMENT | 1955-56 to 2025-26 (71) | ✅      | 2011-12 on         | none         | none       | none               |
+| UEFA Europa League         | TOURNAMENT | 1971-72 to 2024-25 (54) | ✅      | 2020-21 on         | none         | none       | none               |
+| UEFA Conference League     | TOURNAMENT | 2021-22 to 2024-25 (4)  | ✅      | ✅                 | none         | none       | none               |
+| UEFA Cup Winners' Cup      | TOURNAMENT | 1960-61 to 1998-99 (39) | ✅      | none               | none         | none       | none               |
+| CONMEBOL Copa Libertadores | TOURNAMENT | 2012 to 2026 (15)       | ✅      | ✅                 | none         | none       | none               |
+| FIFA Club World Cup        | TOURNAMENT | 2000 to 2025 (21)       | ✅      | ✅                 | most         | ✅         | ✅                 |
+| FIFA World Cup             | TOURNAMENT | 1930 to 2026 (23)       | ✅      | ✅                 | ✅           | ✅         | ✅                 |
+| UEFA European Championship | TOURNAMENT | 1960 to 2024 (17)       | ✅      | all but 1984, 1992 | most         | 2021, 2024 | none               |
+| CONMEBOL Copa América      | TOURNAMENT | 1916 to 2024 (48)       | ✅      | 2011, 2021, 2024   | 2024         | 2021, 2024 | none               |
 
-Euro 1984 and Euro 1992 are not included: openfootball lists some of their matches without a date. Euro 2020, played in 2021, has the season label `2021`. The Club World Cup's placement match has stage `FIFTH_PLACE`.
+Euro 2020, played in 2021, has the season label `2021`. The Club World Cup's placement match has stage `FIFTH_PLACE`.
 
 Cups start where the source does: the FA Cup at Round 1 (the first round proper), the Coupe de France at round 7. Numbered cup rounds have stage `ROUND` with the round's number in `matchday`, and a preliminary round that is part of the competition proper has stage `PRELIMINARY`; clients that switch over `stage` should expect both. A pairing played again with the same home team in the same round (FA Cup 2023-24: Scarborough Athletic v Forest Green Rovers, drawn and then replayed at Scarborough after a voided replay) is two matches with `occurrence` 1 and 2.
 
@@ -127,6 +127,8 @@ Segunda División 2025-26 is not included: openfootball stopped updating it afte
 The Champions League's 1955-56 to 2010-11 seasons, the European Cup until 1991-92, come from the match boxes of English Wikipedia's season articles and their group and knockout sub-articles, each pinned to a revision (see [Data sources and licenses](#data-sources-and-licenses)). Up to 1993-94 every round is included, since all of them were the competition proper; from 1994-95 the qualifying rounds are left out, as they are from 2011-12. These matches have dates but no kickoff times (`kickoff_utc` is midnight UTC). A replay or play-off has the stage of its tie. Four ties a club withdrew from or was expelled from, such as Linfield v Vorwärts Berlin in 1961-62, are listed as `CANCELLED` without a score. These seasons aren't verified: Wikipedia is their source, so it can't also be their check.
 
 The Europa League's 1971-72 to 2019-20 seasons (the UEFA Cup until 2008-09) and every Cup Winners' Cup season, 1960-61 to 1998-99, come from the match boxes of English Wikipedia's season articles and their round sub-articles, each pinned to a revision, as the European Cup does. The scope is the same as the Champions League's: every round up to 1993-94, and from 1994-95 no qualifying or preliminary rounds. These matches have dates but no kickoff times. Six UEFA Cup ties a club withdrew from, such as Rapid Wien v Vllaznia in 1971-72, and three group matches that weren't played are `CANCELLED` without a score. The UEFA Cup's groups of five (2004-05 to 2008-09) were played once, so each team has four matches. These seasons aren't verified, but every computed group table matches Wikipedia's (172 of 172).
+
+Euro 1984 and 1992 and the Copa América from 1916 to 2019 come from the match boxes of English Wikipedia's tournament articles and their group, knockout and final sub-articles, each pinned to a revision, as the European Cup does. That's every edition CONMEBOL counts, the extra championships included, with the two of 1959 labelled `1959 Argentina` and `1959 Ecuador`. Only the final tournament is included, so not 1967's qualifying round. These matches have dates but no kickoff times. Up to 1967 each Copa América was one round robin, stored as a single `GROUP` with no group name. Its table ranks on points alone, with level teams marked `tied`: a tie for the title was settled by a play-off (1919, 1922, 1937, 1949, 1953), which stays out of the table. Argentina v Uruguay on 16 July 1916 was abandoned after crowd trouble and replayed the next day, so it's `CANCELLED` without a score. These seasons aren't verified, but every computed group table matches Wikipedia's (82 of 82).
 
 La Liga's 1929 to 2011-12 seasons come from the results grids of English Wikipedia's season articles, each pinned to a revision. The grids give no dates, so these 22,396 matches have `kickoff_utc: null` and no `matchday`, and their tables can't be asked for `as_of` a date. 1936-37 to 1938-39 weren't played (Civil War). Relegation play-offs and the 1950-51 to 1955-56 relegation groups, which Segunda clubs played, aren't included. The 1986-87 second phase is: three groups of six (`GROUP`, named `Championship`, `Intermediate` and `Relegation`). Their tables count only second-phase matches, while the official 1986-87 ranking carried the first-phase points over. Clubs are served under their seeded names, so Atlético Aviación (1939–1947) is Atlético Madrid.
 
@@ -246,11 +248,11 @@ just psql        # database shell
 
 ## Data sources and licenses
 
-| Source                                              | License                                                         | Seasons                                                                                                                                                                      |
-| --------------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [openfootball](https://github.com/openfootball)     | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)   | every season, except those below                                                                                                                                             |
-| [English Wikipedia](https://en.wikipedia.org/)      | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | UEFA Champions League (European Cup) 1955-56 to 2010-11; UEFA Europa League (UEFA Cup) 1971-72 to 2019-20; UEFA Cup Winners' Cup 1960-61 to 1998-99; La Liga 1929 to 2011-12 |
-| [Wikidata](https://www.wikidata.org/) (identifiers) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)   | team and competition identity                                                                                                                                                |
+| Source                                              | License                                                         | Seasons                                                                                                                                                                                                                                                    |
+| --------------------------------------------------- | --------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [openfootball](https://github.com/openfootball)     | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)   | every season, except those below                                                                                                                                                                                                                           |
+| [English Wikipedia](https://en.wikipedia.org/)      | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) | UEFA Champions League (European Cup) 1955-56 to 2010-11; UEFA Europa League (UEFA Cup) 1971-72 to 2019-20; UEFA Cup Winners' Cup 1960-61 to 1998-99; La Liga 1929 to 2011-12; UEFA European Championship 1984 and 1992; CONMEBOL Copa América 1916 to 2019 |
+| [Wikidata](https://www.wikidata.org/) (identifiers) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)   | team and competition identity                                                                                                                                                                                                                              |
 
 Every season has a `source` with its publisher, its license as an SPDX identifier (`CC0-1.0` or `CC-BY-SA-4.0`) and the pages it was read from, and every match has the `license` of its season. A Wikipedia season links the exact revision of each article it was taken from (`https://en.wikipedia.org/w/index.php?oldid=…`), where the article's history credits its authors. The match data was extracted from the articles' match boxes, or for La Liga their results grids, and reshaped into this API's records.
 

@@ -2766,7 +2766,9 @@
     - from: 2016
       points: {win: 3, draw: 1, loss: 0}
       tiebreakers: [h2h_points, h2h_goal_difference, h2h_goals_for, h2h_reapply, goal_difference, goals_for, wins]
-  # Every edition openfootball/euro has with a date for every match: 1984 and 1992 list matches without dates.
+  # Every edition from openfootball/euro, except 1984 and 1992, whose group matches it lists without dates:
+  # those two come from English Wikipedia (CC BY-SA 4.0), match boxes of the pinned revisions, written
+  # with `just wikipedia-pins` (euro-and-copa-america-from-wikipedia D1).
   # Each file states a fixed local offset (CET = Etc/GMT-1, CEST/BST/WEST as written = Etc/GMT-2/-1).
   seasons:
     - label: "1960"
@@ -2799,11 +2801,31 @@
       file: euro/1980--italy/euro.txt
       tz: Etc/GMT-2
       wikipedia: "UEFA Euro 1980"
+    - label: "1984"
+      start_year: 1984
+      wikipedia_source:
+        - {title: "UEFA Euro 1984", revision: 1380039632}
+        - {title: "UEFA Euro 1984 Group 1", revision: 1346312222}
+        - {title: "UEFA Euro 1984 Group 2", revision: 1376854966}
+        - {title: "UEFA Euro 1984 knockout stage", revision: 1366758879}
+        - {title: "UEFA Euro 1984 final", revision: 1365864357}
+        - {title: "UEFA Euro 1984 Final", revision: 1365864357}
     - label: "1988"
       start_year: 1988
       file: euro/1988--west-germany/euro.txt
       tz: Etc/GMT-2
       wikipedia: "UEFA Euro 1988"
+    - label: "1992"
+      start_year: 1992
+      wikipedia_source:
+        - {title: "UEFA Euro 1992", revision: 1385669940}
+        - {title: "UEFA Euro 1992 Final", revision: 1368657278}
+        - {title: "UEFA Euro 1992 Group 1", revision: 1358137936}
+        - {title: "UEFA Euro 1992 Group 2", revision: 1347046639}
+        - {title: "UEFA Euro 1992 knockout stage", revision: 1346315783}
+        - {title: "UEFA Euro 1992 final", revision: 1368657278}
+        - {title: "UEFA Euro 1992 Group B", revision: 1347046639}
+        - {title: "UEFA Euro 1992 Group A", revision: 1358137936}
     - label: "1996"
       start_year: 1996
       file: euro/1996--england/euro.txt
@@ -2857,12 +2879,304 @@
   format: TOURNAMENT
   wikidata: Q178750
   standings:
+    # Round robins up to 1967, two points for a win and no tie-breaker: a tie for the title was
+    # played off, outside the table, and Wikipedia ranks other level teams joint (1922, 1926, 1953).
+    - from: 1916
+      points: {win: 2, draw: 1, loss: 0}
+      tiebreakers: []
+    # Groups from 1975. Wikipedia quotes the regulations from 1989: goal difference, goals scored, the
+    # head-to-head match, then lots. None found for 1975 to 1987; the same order matches their tables.
+    - from: 1975
+      points: {win: 2, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, h2h_points]
+    # Three points for a win from 1995, the same tie-breakers (quoted up to 2007).
+    - from: 1995
+      points: {win: 3, draw: 1, loss: 0}
+      tiebreakers: [goal_difference, goals_for, h2h_points]
     # CONMEBOL Copa América regulations: goal difference, goals scored, head-to-head, then cards and lots
     - from: 2011
       points: {win: 3, draw: 1, loss: 0}
       tiebreakers: [goal_difference, goals_for, h2h_points, h2h_goal_difference, h2h_goals_for]
-  # Every edition openfootball/copa-america has (2011, 2021, 2024).
+  # 1916 to 2019 from English Wikipedia (CC BY-SA 4.0): match boxes of the pinned revisions, final
+  # tournament only, written with `just wikipedia-pins`. Every edition CONMEBOL counts, extra championships
+  # included; the round robins up to 1967 are one unnamed group (euro-and-copa-america-from-wikipedia D1, D3).
+  # Then every edition openfootball/copa-america has (2011, 2021, 2024).
   seasons:
+    - label: "1916"
+      start_year: 1916
+      wikipedia_rounds: {"Results": "Group stage"}
+      wikipedia_abandoned:
+        - date: 1916-07-16
+          home: Q79800 # Argentina
+          away: Q134916 # Uruguay
+          reason: "Abandoned at 0-0 after five minutes, when supporters rioted; replayed the next day at Racing Club"
+      wikipedia_source:
+        - {title: "1916 South American Championship", revision: 1365588011}
+    - label: "1917"
+      start_year: 1917
+      wikipedia_rounds: {"Results": "Group stage"}
+      wikipedia_source:
+        - {title: "1917 South American Championship", revision: 1365124375}
+    - label: "1919"
+      start_year: 1919
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1919 South American Championship", revision: 1349375197}
+        - {title: "1919 South American Championship Final", revision: 1342343239}
+    - label: "1920"
+      start_year: 1920
+      wikipedia_rounds: {"Results": "Group stage"}
+      wikipedia_source:
+        - {title: "1920 South American Championship", revision: 1365124323}
+    - label: "1921"
+      start_year: 1921
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1921 South American Championship", revision: 1365124294}
+    - label: "1922"
+      start_year: 1922
+      wikipedia_rounds: {"Results": "Group stage"}
+      wikipedia_source:
+        - {title: "1922 South American Championship", revision: 1363459324}
+        - {title: "1922 South American Championship play-off", revision: 1350686580}
+    - label: "1923"
+      start_year: 1923
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1923 South American Championship", revision: 1365124262}
+    - label: "1924"
+      start_year: 1924
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1924 South American Championship", revision: 1365124178}
+    - label: "1925"
+      start_year: 1925
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1925 South American Championship", revision: 1365124036}
+    - label: "1926"
+      start_year: 1926
+      wikipedia_rounds: {"Results": "Group stage"}
+      wikipedia_source:
+        - {title: "1926 South American Championship", revision: 1363459628}
+    - label: "1927"
+      start_year: 1927
+      wikipedia_rounds: {"Results": "Group stage"}
+      wikipedia_source:
+        - {title: "1927 South American Championship", revision: 1363480510}
+    - label: "1929"
+      start_year: 1929
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1929 South American Championship", revision: 1363583601}
+    - label: "1935"
+      start_year: 1935
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1935 South American Championship", revision: 1385736917}
+    - label: "1937"
+      start_year: 1937
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1937 South American Championship", revision: 1368297646}
+        - {title: "1937 South American Championship Final", revision: 1365043911}
+    - label: "1939"
+      start_year: 1939
+      wikipedia_rounds: {"Results": "Group stage"}
+      wikipedia_source:
+        - {title: "1939 South American Championship", revision: 1363584155}
+    - label: "1941"
+      start_year: 1941
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1941 South American Championship", revision: 1364268241}
+    - label: "1942"
+      start_year: 1942
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1942 South American Championship", revision: 1327257365}
+    - label: "1945"
+      start_year: 1945
+      wikipedia_rounds: {"Results": "Group stage"}
+      wikipedia_source:
+        - {title: "1945 South American Championship", revision: 1382438887}
+    - label: "1946"
+      start_year: 1946
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1946 South American Championship", revision: 1374632639}
+    - label: "1947"
+      start_year: 1947
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1947 South American Championship", revision: 1368514445}
+    - label: "1949"
+      start_year: 1949
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1949 South American Championship", revision: 1349374498}
+        - {title: "1949 South American Championship Final", revision: 1372137521}
+    - label: "1953"
+      start_year: 1953
+      wikipedia_rounds: {"Results": "Group stage"}
+      wikipedia_source:
+        - {title: "1953 South American Championship", revision: 1352323581}
+        - {title: "1953 South American Championship play-off", revision: 1364335073}
+    - label: "1955"
+      start_year: 1955
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1955 South American Championship", revision: 1328449827}
+    - label: "1956"
+      start_year: 1956
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1956 South American Championship", revision: 1325989262}
+    - label: "1957"
+      start_year: 1957
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1957 South American Championship", revision: 1377463773}
+    - label: "1959 Argentina"
+      start_year: 1959
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1959 South American Championship (Argentina)", revision: 1376381983}
+    - label: "1959 Ecuador"
+      start_year: 1959
+      wikipedia_rounds: {"Matches": "Group stage"}
+      wikipedia_source:
+        - {title: "1959 South American Championship (Ecuador)", revision: 1377463655}
+    - label: "1963"
+      start_year: 1963
+      wikipedia_rounds: {"Final round": "Group stage"}
+      wikipedia_source:
+        - {title: "1963 South American Championship", revision: 1364170334}
+    - label: "1967"
+      start_year: 1967
+      wikipedia_skip: ["Qualifying round"]
+      wikipedia_rounds: {"Results": "Group stage"}
+      wikipedia_source:
+        - {title: "1967 South American Championship", revision: 1363683979}
+    - label: "1975"
+      start_year: 1975
+      wikipedia_source:
+        - {title: "1975 Copa América", revision: 1385668864}
+        - {title: "1975 Copa América Finals", revision: 1383281178}
+        - {title: "1975 Copa América final", revision: 1383281178}
+    - label: "1979"
+      start_year: 1979
+      wikipedia_source:
+        - {title: "1979 Copa América", revision: 1380582681}
+        - {title: "1979 Copa América Finals", revision: 1369752698}
+        - {title: "1979 Copa América final", revision: 1369752698}
+    - label: "1983"
+      start_year: 1983
+      wikipedia_source:
+        - {title: "1983 Copa América", revision: 1378676970}
+        - {title: "1983 Copa América final", revision: 1377305187}
+    - label: "1987"
+      start_year: 1987
+      wikipedia_source:
+        - {title: "1987 Copa América", revision: 1373049088}
+        - {title: "1987 Copa América final", revision: 1342340522}
+    - label: "1989"
+      start_year: 1989
+      wikipedia_rounds: {"Final round": "Second group stage"}
+      wikipedia_source:
+        - {title: "1989 Copa América", revision: 1385349073}
+    - label: "1991"
+      start_year: 1991
+      wikipedia_rounds: {"Final round": "Second group stage"}
+      wikipedia_source:
+        - {title: "1991 Copa América", revision: 1373049082}
+    - label: "1993"
+      start_year: 1993
+      wikipedia_source:
+        - {title: "1993 Copa América", revision: 1385348541}
+        - {title: "1993 Copa América Final", revision: 1367408900}
+        - {title: "1993 Copa América final", revision: 1367408900}
+    - label: "1995"
+      start_year: 1995
+      wikipedia_source:
+        - {title: "1995 Copa América", revision: 1378241630}
+        - {title: "1995 Copa América Final", revision: 1349684504}
+        - {title: "1995 Copa América final", revision: 1349684504}
+    - label: "1997"
+      start_year: 1997
+      wikipedia_source:
+        - {title: "1997 Copa América", revision: 1373049067}
+        - {title: "1997 Copa América Group A", revision: 1362570919}
+        - {title: "1997 Copa América final", revision: 1386050666}
+        - {title: "1997 Copa América Final", revision: 1386050666}
+    - label: "1999"
+      start_year: 1999
+      wikipedia_source:
+        - {title: "1999 Copa América", revision: 1374830844}
+        - {title: "1999 Copa América Group A", revision: 1350834790}
+        - {title: "1999 Copa América Group B", revision: 1357177863}
+        - {title: "1999 Copa América Group C", revision: 1283554780}
+        - {title: "1999 Copa América knockout stage", revision: 1357177876}
+        - {title: "1999 Copa América final", revision: 1342341012}
+    - label: "2001"
+      start_year: 2001
+      wikipedia_source:
+        - {title: "2001 Copa América", revision: 1374657032}
+        - {title: "2001 Copa América Group A", revision: 1357274096}
+        - {title: "2001 Copa América Group B", revision: 1381250390}
+        - {title: "2001 Copa América Group C", revision: 1258039596}
+        - {title: "2001 Copa América knockout stage", revision: 1381250424}
+        - {title: "2001 Copa América final", revision: 1381250480}
+    - label: "2004"
+      start_year: 2004
+      wikipedia_source:
+        - {title: "2004 Copa América", revision: 1380214820}
+        - {title: "2004 Copa América Group A", revision: 1383106597}
+        - {title: "2004 Copa América Group B", revision: 1321321596}
+        - {title: "2004 Copa América Group C", revision: 1356966339}
+        - {title: "2004 Copa América knockout stage", revision: 1383106611}
+        - {title: "2004 Copa América final", revision: 1367555651}
+    - label: "2007"
+      start_year: 2007
+      wikipedia_source:
+        - {title: "2007 Copa América", revision: 1381067017}
+        - {title: "2007 Copa América Group A", revision: 1361905484}
+        - {title: "2007 Copa América Group B", revision: 1368873905}
+        - {title: "2007 Copa América Group C", revision: 1361905393}
+        - {title: "2007 Copa América knockout stage", revision: 1383689850}
+        - {title: "2007 Copa América Final", revision: 1342340844}
+        - {title: "2007 Copa América final", revision: 1342340844}
+    - label: "2015"
+      start_year: 2015
+      wikipedia_source:
+        - {title: "2015 Copa América", revision: 1381240233}
+        - {title: "2015 Copa América Final", revision: 1372544145}
+        - {title: "2015 Copa América Group A", revision: 1382229463}
+        - {title: "2015 Copa América Group C", revision: 1240970263}
+        - {title: "2015 Copa América knockout stage", revision: 1369828994}
+        - {title: "2015 Copa América Group B", revision: 1279153463}
+        - {title: "2015 Copa América final", revision: 1372544145}
+    - label: "2016"
+      start_year: 2016
+      wikipedia_source:
+        - {title: "Copa América Centenario", revision: 1383873750}
+        - {title: "Copa América Centenario Final", revision: 1379145506}
+        - {title: "Copa América Centenario Group A", revision: 1383794553}
+        - {title: "Copa América Centenario Group C", revision: 1379379197}
+        - {title: "Copa América Centenario knockout stage", revision: 1383281195}
+        - {title: "Copa América Centenario Group B", revision: 1381410955}
+        - {title: "Copa América Centenario Group D", revision: 1365939429}
+        - {title: "Copa América Centenario final", revision: 1379145506}
+    - label: "2019"
+      start_year: 2019
+      wikipedia_source:
+        - {title: "2019 Copa América", revision: 1383879393}
+        - {title: "2019 Copa América Final", revision: 1367692944}
+        - {title: "2019 Copa América Group A", revision: 1361905168}
+        - {title: "2019 Copa América Group B", revision: 1361905138}
+        - {title: "2019 Copa América Group C", revision: 1376279426}
+        - {title: "2019 Copa América knockout stage", revision: 1376279433}
+        - {title: "2019 Copa América final", revision: 1367692944}
     - label: "2011"
       start_year: 2011
       file: copa-america/2011--argentina/copa.txt
