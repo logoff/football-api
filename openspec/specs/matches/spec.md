@@ -23,7 +23,7 @@ The system SHALL store each match with:
 - `decided_by`: `REGULAR`, `EXTRA_TIME`, or `PENALTIES` (nullable until `COMPLETED`)
 - home and away penalty-shootout scores (null unless `decided_by` is `PENALTIES`)
 - a stage: `QUALIFYING`, `PRELIMINARY`, `ROUND`, `LEAGUE`, `GROUP`, `PLAYOFF`, `R32`, `R16`, `QF`, `SF`, `THIRD_PLACE`, `FIFTH_PLACE`, or `FINAL`; an optional matchday number, which for `ROUND` is the round's number; and the source's round label
-- an `occurrence`: 1 for a pairing's first game in a stage, 2 for a further game with the same home team in that stage, and so on in source order. A further listing counts as a new game only when the previous one has a score; otherwise it is the same game rescheduled
+- an `occurrence`: 1 for a pairing's first game in a stage, 2 for a further game with the same home team in that stage, and so on in source order. A further listing counts as a new game only when the previous one has a score or is `CANCELLED`; otherwise it is the same game rescheduled
 
 #### Scenario: Filtering matches by competition and season
 
@@ -148,6 +148,12 @@ The system SHALL store each match with:
 - **GIVEN** La Liga 1929, read from a results grid that gives no dates
 - **WHEN** a client GETs one of its matches
 - **THEN** `kickoff_utc` is null and `matchday` is null, and the match has its score and status `COMPLETED`
+
+#### Scenario: Abandoned match and its replay
+
+- **GIVEN** a Wikipedia season that lists Argentina v Uruguay on 16 July 1916, seeded as abandoned, and again on 17 July
+- **WHEN** it is synced
+- **THEN** two matches exist: `occurrence` 1 `CANCELLED` without a score, and `occurrence` 2 `COMPLETED` 0–0
 
 ### Requirement: Goal scorers
 
