@@ -688,12 +688,29 @@ def read_matches(seed: CompetitionSeed, s: SeasonSource, sources: Path) -> tuple
     if s.json_file:
         if not (sources / s.json_file).exists():
             log.info("%s %s: JSON mirror %s missing; using text file", seed.name, s.label, s.json_file)
-            return text_matches, s.file
+            return rename_rounds(text_matches, s, s.file), s.file
         json_matches = read_json(sources / s.json_file)
         if is_current(json_matches, text_matches):
-            return json_matches, s.json_file
+            return rename_rounds(json_matches, s, s.json_file), s.json_file
         log.info("%s %s: JSON mirror not current; using text file", seed.name, s.label)
-    return text_matches, s.file
+    return rename_rounds(text_matches, s, s.file), s.file
+
+
+def rename_rounds(matches: list[ParsedMatch], s: SeasonSource, path: str) -> list[ParsedMatch]:
+    """Each part of a round label the seed's `rounds` lists becomes the label given, such as 1950's
+    `Final Round`, a round robin (fix-world-cup-final-stages). A listed heading no match has fails the season."""
+    if not s.rounds:
+        return matches
+    rounds = {h.lower(): label for h, label in s.rounds.items()}
+    renamed: set[str] = set()
+    out: list[ParsedMatch] = []
+    for m in matches:
+        parts = m.round_label.split(" / ")
+        renamed |= rounds.keys() & {p.lower() for p in parts}
+        out.append(replace(m, round_label=" / ".join(rounds.get(p.lower(), p) for p in parts)))
+    if missing := sorted(h for h in s.rounds if h.lower() not in renamed):
+        raise SyncError(f"{path}: no matches under the renamed heading(s) {', '.join(map(repr, missing))}")
+    return out
 
 
 async def sync_season(

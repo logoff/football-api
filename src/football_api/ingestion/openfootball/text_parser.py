@@ -397,7 +397,8 @@ _ORDINALS = {"first": 1, "second": 2, "third": 3, "fourth": 4, "fifth": 5}
 
 _STAGE_RULES: list[tuple[re.Pattern[str], Stage]] = [
     (re.compile(r"qualif", re.I), Stage.QUALIFYING),
-    (re.compile(r"third[- ]place|3rd place", re.I), Stage.THIRD_PLACE),
+    # `Bronze final` is FIFA's name for the 2026 third-place match: before the final rule.
+    (re.compile(r"third[- ]place|3rd place|bronze", re.I), Stage.THIRD_PLACE),
     (re.compile(r"fifth place|5th place", re.I), Stage.FIFTH_PLACE),
     # German knockout labels in some UEFA files: Sechzehntel-/Achtel-/Viertel-/Halbfinale.
     (re.compile(r"sechzehntelfinale", re.I), Stage.R32),

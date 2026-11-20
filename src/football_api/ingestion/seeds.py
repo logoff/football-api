@@ -61,8 +61,10 @@ class WikipediaPin(_Seed):
 
 
 _OPENFOOTBALL_FIELDS = ("file", "tz", "json_file", "events", "squads")
-# Options of a Wikipedia season; each is left out of the season fingerprint while unset.
-WIKIPEDIA_OPTIONS = ("wikipedia_grids", "wikipedia_skip", "wikipedia_qids", "wikipedia_rounds", "wikipedia_abandoned")
+# Options of a Wikipedia season.
+WIKIPEDIA_OPTIONS = ("wikipedia_grids", "wikipedia_skip", "wikipedia_qids", "wikipedia_abandoned")
+# Season options left out of the season fingerprint while unset, so adding one doesn't change every season's.
+OPTIONAL_FIELDS = (*WIKIPEDIA_OPTIONS, "rounds")
 
 
 class AbandonedMatch(_Seed):
@@ -114,11 +116,12 @@ class SeasonSource(_Seed):
         description="Wikidata QIDs for club titles a box links to an article that doesn't exist "
         "(cup-winners-cup-and-uefa-cup-from-wikipedia D4)",
     )
-    wikipedia_rounds: dict[str, str] | None = Field(
+    rounds: dict[str, str] | None = Field(
         default=None,
         min_length=1,
-        description="Section headings a Wikipedia season reads as the round label given, such as `Results: Group "
-        "stage` for a tournament played as one round robin (euro-and-copa-america-from-wikipedia D3)",
+        description="Headings a season reads as the round label given, such as `Results: Group stage` for a "
+        "tournament played as one round robin: a Wikipedia section heading, or a part of an openfootball round "
+        "label (euro-and-copa-america-from-wikipedia D3, fix-world-cup-final-stages)",
     )
     wikipedia_abandoned: list[AbandonedMatch] | None = Field(
         default=None,

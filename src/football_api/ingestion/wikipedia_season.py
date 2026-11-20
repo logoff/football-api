@@ -126,7 +126,7 @@ async def read_season(src: SeasonSource, store: RevisionStore, seeded: dict[str,
     skip = {h.lower() for h in src.wikipedia_skip or []}
     skipped: set[str] = set()
     # Headings read as another round label, such as a round robin's `Results` (euro-and-copa-america-from-wikipedia D3).
-    rounds = {h.lower(): label for h, label in (src.wikipedia_rounds or {}).items()}
+    rounds = {h.lower(): label for h, label in (src.rounds or {}).items()}
     renamed: set[str] = set()
     labelled: list[list[tuple[MatchBox, WikipediaPin]]] = []
     for pin in pins:
@@ -142,7 +142,7 @@ async def read_season(src: SeasonSource, store: RevisionStore, seeded: dict[str,
         labelled.append([(b, pin) for b in boxes])
     if missing := sorted(h for h in src.wikipedia_skip or [] if h.lower() not in skipped):
         raise WikipediaSourceError(f"{main}: no boxes under the skipped section(s) {', '.join(map(repr, missing))}")
-    if missing := sorted(h for h in src.wikipedia_rounds or {} if h.lower() not in renamed):
+    if missing := sorted(h for h in src.rounds or {} if h.lower() not in renamed):
         raise WikipediaSourceError(f"{main}: no boxes under the renamed section(s) {', '.join(map(repr, missing))}")
     # The page each kept box came from: its first copy, as `merge_boxes` keeps the first.
     pin_of = {(b.day, b.home, b.away): pin for page in reversed(labelled) for b, pin in reversed(page)}
@@ -230,6 +230,8 @@ async def read_grid_season(src: SeasonSource, store: RevisionStore, seeded: dict
     row's club at home. Rows and columns pair by position, and must resolve to the same club."""
     pins = src.wikipedia_source
     assert pins, f"{src.label} has no Wikipedia pins"
+    if src.rounds:
+        raise WikipediaSourceError(f"{pins[0].title}: `rounds` renames headings above match boxes; a league's grids have none")
     found = [(g, pin) for pin in pins for g in parse_season_grids(await store.html(pin))]
     matches: list[ParsedMatch] = []
     clubs: dict[str, str] = {}

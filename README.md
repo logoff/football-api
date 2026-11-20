@@ -114,7 +114,7 @@ The sync refuses to run until the API container has applied the migrations (exit
 | UEFA European Championship | TOURNAMENT | 1960 to 2024 (17)       | ✅      | all but 1984, 1992 | most         | 2021, 2024 | none               |
 | CONMEBOL Copa América      | TOURNAMENT | 1916 to 2024 (48)       | ✅      | 2011, 2021, 2024   | 2024         | 2021, 2024 | none               |
 
-Euro 2020, played in 2021, has the season label `2021`. The Club World Cup's placement match has stage `FIFTH_PLACE`.
+Euro 2020, played in 2021, has the season label `2021`. The Club World Cup's placement match has stage `FIFTH_PLACE`. The 1950 World Cup's final round was a round robin of four, so its matches are `GROUP` in a second group stage, with a table; the 2026 third-place match, which FIFA calls the Bronze final, is `THIRD_PLACE`.
 
 Cups start where the source does: the FA Cup at Round 1 (the first round proper), the Coupe de France at round 7. Numbered cup rounds have stage `ROUND` with the round's number in `matchday`, and a preliminary round that is part of the competition proper has stage `PRELIMINARY`; clients that switch over `stage` should expect both. A pairing played again with the same home team in the same round (FA Cup 2023-24: Scarborough Athletic v Forest Green Rovers, drawn and then replayed at Scarborough after a voided replay) is two matches with `occurrence` 1 and 2.
 
@@ -206,7 +206,7 @@ Known gaps:
 
 ## How it works
 
-- `seeds/competitions.yaml`: the competitions, their source files, and each file's hand-verified time zone. A season taken from Wikipedia lists its pages instead, each pinned to a revision (`wikipedia_source`). `just wikipedia-pins "<article>"` prints the pins at the current revisions, and given the competition QID and season label it lists what moving them would change. Pinned revisions are fetched once and cached under `.cache/sources/wikipedia`.
+- `seeds/competitions.yaml`: the competitions, their source files, and each file's hand-verified time zone. A season taken from Wikipedia lists its pages instead, each pinned to a revision (`wikipedia_source`). `just wikipedia-pins "<article>"` prints the pins at the current revisions, and given the competition QID and season label it lists what moving them would change. Pinned revisions are fetched once and cached under `.cache/sources/wikipedia`. A season can read a heading as the round it stands for (`rounds`), such as the 1950 World Cup's `Final Round`, which was a round robin.
 - `seeds/standings.yaml`: point deductions and off-the-table orders for standings, each with a source.
 - `seeds/teams.yaml`: canonical teams, each with its Wikidata QID and every openfootball spelling. A team that appears only in Wikipedia seasons has no spelling: the QID of the club article a match box links identifies it. A season whose file uses a team name not listed here fails to sync. A spelling can apply only from or until a year (`{name: "Yugoslavia", until: 1992}`), for a name that meant different teams over time. `reference_wikidata` lists other Wikidata items verification references use for the same side (the Dutch East Indies of 1938, linked as Indonesia). `tools/propose_teams.py` drafts entries for new sources; review them before committing.
 - `just sync` is idempotent: running it again with unchanged sources leaves the database byte-for-byte identical, UUIDs included.
