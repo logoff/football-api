@@ -34,7 +34,7 @@ The parser handles, at minimum:
 
 - matchday headers (`Matchday N`, `Regular Season - N`, `Round of 16`, `Final`, etc.)
 - cup round headers (`Round N`, `N. Round`, `N. Runde`, `1st Round`, `First round`, `Preliminary round`, `Quarterfinals`, `Semi-finals`, etc.)
-- group headers in English or German (`Group A`, `Gruppe G`, `Gruppe 1`) and placement matches (`Match for fifth place`, `5th Place`)
+- group headers in English or German (`Group A`, `Gruppe G`, `Gruppe 1`) and placement matches (`Match for fifth place`, `5th Place`, `Bronze final`)
 - date markers, with or without a weekday (`Fri Aug 15`, `June 14`, `Jun 14 2016`), on their own line or at the start of a match line, optionally followed by a kickoff time and a venue (`June 10 @ Düsseldorf  West Germany 1-1 Italy`, `Jul 1  21:45  Argentina 1-1 Bolivia`)
 - match lines with home team, away team, and final score
 - comments (lines starting with `#`) and blank lines
@@ -72,6 +72,11 @@ The parser handles, at minimum:
 
 - **WHEN** the header `Gruppe G` is parsed
 - **THEN** it maps to stage `GROUP`
+
+#### Scenario: Bronze final
+
+- **WHEN** the header `Bronze final` (World Cup 2026) is parsed
+- **THEN** it maps to stage `THIRD_PLACE`, not `FINAL`
 
 ### Requirement: Open Football JSON path
 
@@ -506,25 +511,32 @@ A Wikipedia season seeded with `wikipedia_skip` SHALL read no box under a sectio
 - **WHEN** it is synced
 - **THEN** the season fails with an error naming the section
 
-### Requirement: Headings renamed to rounds
+### Requirement: Headings renamed by the seed
 
-A Wikipedia season seeded with `wikipedia_rounds` SHALL read the boxes under each listed heading as the round label given for it, and take their stage from that label. A listed heading that the pinned pages don't have SHALL fail the season, so a moved pin can't silently stop renaming a round.
+A season seeded with `rounds` SHALL read the matches under each listed heading as the round label given for it, and take their stage from that label. Matching is case-insensitive and on a whole heading. For a Wikipedia season a heading is a section heading above a match box. For an openfootball season it is a part of the round label, which joins the file's headings with `/`. A listed heading that no match has SHALL fail the season, so a moved pin or an edited file can't silently stop renaming a round. A season read from results grids SHALL reject the field.
 
 #### Scenario: Tournament played as one round robin
 
-- **GIVEN** the 1916 South American Championship, whose boxes sit under `Results`, seeded with `wikipedia_rounds: {Results: Group stage}`
+- **GIVEN** the 1916 South American Championship, whose boxes sit under `Results`, seeded with `rounds: {Results: Group stage}`
 - **WHEN** it is synced
 - **THEN** its matches have stage `GROUP` with no group name, and form one table of four teams
 
 #### Scenario: Final round that is a group
 
-- **GIVEN** the 1989 Copa América, whose four-team final round sits under `Final round`, seeded with `wikipedia_rounds: {Final round: Second group stage}`
+- **GIVEN** the 1989 Copa América, whose four-team final round sits under `Final round`, seeded with `rounds: {Final round: Second group stage}`
 - **WHEN** it is synced
 - **THEN** those matches have stage `GROUP` in phase 2, not `FINAL`
 
+#### Scenario: openfootball final round that is a group
+
+- **GIVEN** the 1950 World Cup, whose file lists its four-team final round under `Final Round`, seeded with `rounds: {Final Round: Second group stage}`
+- **WHEN** it is synced
+- **THEN** its six final-round matches have stage `GROUP` in phase 2, and form one table of four teams
+- **AND** its first-round groups are unchanged
+
 #### Scenario: Heading that isn't there
 
-- **GIVEN** a season seeded with `wikipedia_rounds: {Results: Group stage}` whose pinned pages have no `Results` section
+- **GIVEN** a season seeded with `rounds: {Results: Group stage}` that has no `Results` heading
 - **WHEN** it is synced
 - **THEN** the season fails with an error naming the heading
 
